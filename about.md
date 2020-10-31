@@ -4,12 +4,17 @@ title: About
 permalink: /about/
 ---
 
-Some information about you!
+蚓无爪牙之利，筋骨之强，上食埃土，下饮黄泉，用心一也。
 
 ### More Information
 
-A place to include any other types of information that you'd like to include about yourself.
+A developer and algorithm engineer at Tencent LTD. 
+
+Research Interest: 
+- MPP computing structure
+- Auto job scheduling/parameter search
+- Hardware boosting
 
 ### Contact me
 
-[email@domain.com](mailto:email@domain.com)
+[fifteencai@tencent.com](mailto:fifteencai@tencent.com)
