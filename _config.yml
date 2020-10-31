@@ -3,14 +3,14 @@
 #
 
 # Name of your site (displayed in the header)
-name: 飞翔的范佩西
+name: MPP技术研究
 
 # Short bio or description (displayed in the header)
-description: 为什么是life is short, 而不是int 或 double
+description: 蚓无爪牙之利，筋骨之强，上食埃土，下饮黄泉，用心一也
 
 # URL of your avatar or profile pic (you could use your GitHub profile pic)
 #avatar: http://avatarprinting.com/wp-content/uploads/2013/02/printed-online-avatar.jpg
-avatar: http://c.hiphotos.baidu.com/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=5165238ffa198618554ae7d62b844516/77094b36acaf2edd41b2ef078f1001e938019399.jpg
+avatar: https://raw.githubusercontent.com/ColdZoo/coldzoo.github.io/master/images/avatar.png 
 
 #
 # Flags below are optional
@@ -22,12 +22,12 @@ footer-links:
   email:
   facebook:
   flickr:
-  github: barryclark/jekyll-now
+  github: 
   instagram:
   linkedin:
   pinterest:
   rss: # just type anything here for a working RSS icon, make sure you set the "url" above!
-  twitter: jekyllrb
+  twitter: 
   stackoverflow: # your stackoverflow profile, e.g. "users/50476/bart-kiers"
   youtube: # channel/<your_long_string> or user/<user-name>
   googleplus: # anything in your profile username that comes after plus.google.com/
@@ -42,7 +42,7 @@ google_analytics:
 
 # Your website URL (e.g. http://barryclark.github.io or http://www.barryclark.co)
 # Used for Sitemap.xml and your RSS feed
-url:
+url: fifteencai.tech
 
 # If you're hosting your site at a Project repository on GitHub pages
 # (http://yourusername.github.io/repository-name)
