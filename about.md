@@ -9,7 +9,7 @@ permalink: /about/
 
   A developer at Tencent LTD. 
   
-  Research field: Realtime，Large-scale, Flexible data processing. 
+  Realtime，Large-scale, Flexible data processing. 
 
 ### Research Interest: 
 - MPP computing structure
