@@ -1,5 +1,5 @@
 
-# GSO-2016: a Sentiment analysis framework and dataset for short visual content
+# GSO-2016: A sentiment analyzing framework and dataset for short visual content
 
 GIF sentiment analysis is IMPORTANT
 
