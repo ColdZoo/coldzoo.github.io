@@ -1,13 +1,13 @@
 
-# 2016 Paper 
+# GSO-2016: a Sentiment analysis framework and dataset for short visual content
 
 GIF sentiment analysis is IMPORTANT
 
--->IS USEFUL IN MANY FIELDS: election prediction, economic index evaluation
+USEFUL IN MANY FIELDS: election prediction, economic index evaluation
 
 GIF sentiment analysis is DIFFICULT
 
--->What we know about GIF sentiment are :
+What we know about GIF sentiment are :
 		
 * Relies on mid-level concepts. These concepts haven’t been researched before [Problem 1]
 * How mid-level concepts lead to sentiment polarity is UNKNOWN [Problem 2]
