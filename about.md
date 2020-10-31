@@ -5,13 +5,13 @@ permalink: /about/
 ---
 蚓无爪牙之利，筋骨之强，上食埃土，下饮黄泉，用心一也。
 
-### More Information
+### I’m
 
   A developer at Tencent LTD. 
   
-  Realtime，Large-scale, Flexible data processing. 
+  Interested in Realtime，Large-scale, Flexible data processing. 
 
-### Research Interest: 
+### More Interests
 - MPP computing structure
 - Auto job scheduling/parameter search
 - Hardware boosting
