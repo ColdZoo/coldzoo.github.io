@@ -8,7 +8,8 @@ permalink: /about/
 
 ### More Information
 
-A developer and algorithm engineer at Tencent LTD. 
+A developer/algorithm engineer at Tencent LTD. 
+Field: Realtime，Large-scale, Flexible data processing. 
 
 Research Interest: 
 - MPP computing structure
