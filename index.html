@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="蔡政的个人主页 — Full-Stack Engineer & Indie Maker" />
+  <title>蔡政 · Full-Stack Engineer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <style>
+    /* ── Design Tokens ── */
+    :root {
+      --bg-base: #f2f1f6;
+      --bg-card: rgba(255,255,255,0.72);
+      --bg-card-hover: rgba(255,255,255,0.88);
+      --glass-border: rgba(255,255,255,0.6);
+      --glass-shadow: 0 8px 32px rgba(60,60,100,0.10), 0 1.5px 4px rgba(60,60,100,0.06);
+      --glass-shadow-hover: 0 16px 48px rgba(60,60,100,0.16), 0 2px 8px rgba(60,60,100,0.08);
+      --gradient-hero: linear-gradient(135deg, #e8eaf6 0%, #ede9f6 30%, #e3e8f8 60%, #dde7f5 100%);
+      --gradient-accent: linear-gradient(135deg, #5b6cf9 0%, #a78bfa 100%);
+      --color-primary: #5b6cf9;
+      --color-text: #1c1c1e;
+      --color-text-secondary: #48484a;
+      --color-text-muted: #8e8e93;
+      --radius-window: 14px;
+      --radius-card: 18px;
+      --radius-pill: 999px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-mono: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-base);
+      color: var(--color-text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── macOS Menu Bar ── */
+    .menubar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      height: 48px;
+      background: rgba(242,241,246,0.82);
+      backdrop-filter: blur(24px) saturate(1.8);
+      -webkit-backdrop-filter: blur(24px) saturate(1.8);
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      transition: background 0.3s;
+    }
+    .menubar.scrolled { background: rgba(242,241,246,0.95); }
+    .menubar .apple-logo { 
+      width: 18px; height: 18px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 170 170'%3E%3Cpath fill='%231c1c1e' d='M150.7 130.4c-3 4.4-6.4 8.5-10.3 12.1-5.4 5.1-11.4 7.2-18 6.3-6.3-.9-12-3.5-17.2-5.6-6-2.4-11.5-3.7-17.4-.3-5.6 3.2-11.3 5.3-17.6 5.6-7.3.4-13.3-2.3-18.4-7.4-10.2-10.3-16.8-23-19.2-37.3-1.8-10.8-.3-21.2 4.8-30.9 5.6-10.6 14.3-17.2 26.3-18.8 6.6-.9 12.9.6 18.8 3.8 2.8 1.5 5.5 3.2 8.6 5 4.3-2.5 8.4-4.8 12.6-6.9 10.3-5.1 21.3-5.8 32.3-2.1 9.6 3.2 16.5 9.6 20.7 18.7-9.2 5.6-13.8 13.8-13.3 24.4.4 9.3 4.3 16.6 11.4 22.2 1.4 1.1 2.9 2.1 4.9 3.5-.9 2.6-1.8 5-3 7.7zM85.4 37.8c.2-11.6 5.4-20.6 14.6-27.3 8.7-6.4 18.6-8 29-4.9 1.2 7.5-.3 14.6-4.6 20.9-5.5 8-13.6 12.6-23.6 13.1-5.2.3-10.1-.9-15.4-1.8z'/%3E%3C/svg%3E") center/contain no-repeat;
+      opacity: 0.9;
+      cursor: pointer;
+    }
+    .menubar .menu-items { display: flex; gap: 4px; }
+    .menubar .menu-item {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--color-text);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .menubar .menu-item:hover { background: rgba(0,0,0,0.07); }
+    .menubar .menu-item.active { font-weight: 700; }
+    .menubar .spacer { flex: 1; }
+    .menubar .menubar-right { 
+      display: flex; align-items: center; gap: 12px; 
+      font-size: 12px; color: var(--color-text-secondary); 
+    }
+    .menubar .menubar-time { font-weight: 500; font-size: 13px; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 100px 24px 60px;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: var(--gradient-hero);
+    }
+    .hero-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.45;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb1 { width: 520px; height: 520px; background: radial-gradient(circle, #a78bfa, transparent); top: -100px; right: -60px; animation-delay: 0s; }
+    .orb2 { width: 400px; height: 400px; background: radial-gradient(circle, #7b9dff, transparent); bottom: -80px; left: -40px; animation-delay: -4s; }
+    .orb3 { width: 300px; height: 300px; background: radial-gradient(circle, #f9a8d4, transparent); top: 30%; left: 30%; animation-delay: -8s; }
+    @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,20px) scale(1.08); } }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      max-width: 1100px;
+      width: 100%;
+      align-items: center;
+    }
+
+    .hero-left { display: flex; flex-direction: column; gap: 20px; opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s ease forwards; }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: var(--radius-pill);
+      padding: 5px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-primary);
+      width: fit-content;
+      backdrop-filter: blur(10px);
+    }
+    .hero-tag::before { content: "●"; font-size: 8px; color: #34c759; }
+
+    .hero-name {
+      font-size: 56px;
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #1c1c1e 0%, #3a3a50 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-title {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      letter-spacing: -0.3px;
+    }
+    .hero-title .accent { color: var(--color-primary); font-weight: 600; }
+    .hero-desc {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+      max-width: 420px;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--gradient-accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-pill);
+      padding: 11px 28px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(91,108,249,0.35);
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(91,108,249,0.45); }
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--color-text);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: var(--radius-pill);
+      padding: 11px 28px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-secondary:hover { background: var(--bg-card-hover); transform: translateY(-2px); }
+
+    /* macOS 窗口卡片 */
+    .hero-window {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-window);
+      box-shadow: var(--glass-shadow), 0 0 0 1px rgba(255,255,255,0.5) inset;
+      backdrop-filter: blur(24px) saturate(1.8);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.8s ease 0.2s forwards;
+    }
+    .window-titlebar {
+      height: 40px;
+      background: rgba(246,246,248,0.9);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 8px;
+    }
+    .traffic-light { width: 12px; height: 12px; border-radius: 50%; transition: transform 0.15s; }
+    .traffic-light:hover { transform: scale(1.15); }
+    .tl-red { background: #ff5f57; }
+    .tl-yellow { background: #febc2e; }
+    .tl-green { background: #28c840; }
+    .window-title { flex: 1; text-align: center; font-size: 12px; font-weight: 500; color: var(--color-text-muted); }
+    .window-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+
+    .terminal-line { font-family: var(--font-mono); font-size: 13px; color: var(--color-text-secondary); }
+    .terminal-line .prompt { color: var(--color-primary); font-weight: 600; }
+    .terminal-line .cmd { color: #1c1c1e; }
+    .terminal-line .comment { color: var(--color-text-muted); }
+
+    .skill-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
+    .chip {
+      background: rgba(91,108,249,0.1);
+      color: var(--color-primary);
+      border: 1px solid rgba(91,108,249,0.2);
+      border-radius: var(--radius-pill);
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .chip.green { background: rgba(52,199,89,0.1); color: #1d8838; border-color: rgba(52,199,89,0.25); }
+    .chip.orange { background: rgba(255,159,10,0.12); color: #b56200; border-color: rgba(255,159,10,0.3); }
+    .chip.purple { background: rgba(167,139,250,0.12); color: #6741d9; border-color: rgba(167,139,250,0.3); }
+
+    /* ── SECTION 通用 ── */
+    .section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 24px;
+    }
+    .section-header { margin-bottom: 40px; opacity: 0; transform: translateY(20px); }
+    .section-header.visible { animation: fadeInUp 0.6s ease forwards; }
+    .section-eyebrow {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.8px;
+      color: var(--color-text);
+    }
+    .section-subtitle {
+      font-size: 16px;
+      color: var(--color-text-muted);
+      margin-top: 6px;
+    }
+
+    /* ── PROJECTS ── */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .project-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--glass-shadow);
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .project-card.visible { animation: fadeInUp 0.5s ease forwards; }
+    .project-card:hover { transform: translateY(-4px); box-shadow: var(--glass-shadow-hover); }
+    .project-card-header {
+      height: 130px;
+      position: relative;
+      overflow: hidden;
+    }
+    .project-thumb {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 42px;
+    }
+    .thumb-1 { background: linear-gradient(135deg, #dde3ff, #e8d5ff); }
+    .thumb-2 { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+    .thumb-3 { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+    .thumb-4 { background: linear-gradient(135deg, #fce7f3, #fbcfe8); }
+    .thumb-5 { background: linear-gradient(135deg, #e0f2fe, #bae6fd); }
+    .thumb-6 { background: linear-gradient(135deg, #f3e8ff, #e9d5ff); }
+
+    .project-window-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 28px;
+      background: rgba(255,255,255,0.5);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 5px;
+    }
+    .ptl { width: 9px; height: 9px; border-radius: 50%; }
+    .ptl-r { background: rgba(255,95,87,0.7); }
+    .ptl-y { background: rgba(254,188,46,0.7); }
+    .ptl-g { background: rgba(40,200,64,0.7); }
+
+    .project-body { padding: 16px; }
+    .project-name { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; margin-bottom: 6px; }
+    .project-desc { font-size: 13px; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 12px; }
+    .project-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .ptag {
+      font-size: 11px; font-weight: 500;
+      background: rgba(0,0,0,0.05);
+      border-radius: 6px;
+      padding: 2px 8px;
+      color: var(--color-text-secondary);
+    }
+
+    /* ── EXPERIENCE ── */
+    .timeline { display: flex; flex-direction: column; gap: 0; }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 24px;
+      padding: 28px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      position: relative;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    .timeline-item.visible { animation: fadeInLeft 0.5s ease forwards; }
+    @keyframes fadeInLeft { to { opacity: 1; transform: translateX(0); } }
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: 135px; top: 36px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--gradient-accent);
+      box-shadow: 0 0 0 3px rgba(91,108,249,0.15);
+    }
+    .timeline-item::after {
+      content: "";
+      position: absolute;
+      left: 139px; top: 46px; bottom: -1px;
+      width: 2px;
+      background: linear-gradient(to bottom, rgba(91,108,249,0.3), transparent);
+    }
+    .timeline-item:last-child::after { display: none; }
+    .timeline-date { font-size: 12px; color: var(--color-text-muted); font-weight: 500; padding-top: 2px; text-align: right; }
+    .timeline-content { padding-left: 24px; }
+    .timeline-role { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 3px; }
+    .timeline-company {
+      font-size: 14px; font-weight: 500;
+      color: var(--color-primary); margin-bottom: 8px;
+    }
+    .timeline-desc { font-size: 14px; color: var(--color-text-muted); line-height: 1.6; }
+
+    /* ── SKILLS ── */
+    .skills-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .skill-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--glass-shadow);
+      backdrop-filter: blur(20px);
+      padding: 20px;
+      transition: all 0.2s;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .skill-card.visible { animation: fadeInUp 0.4s ease forwards; }
+    .skill-card:hover { transform: translateY(-2px); box-shadow: var(--glass-shadow-hover); }
+    .skill-icon { font-size: 28px; margin-bottom: 10px; }
+    .skill-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .skill-items { font-size: 12px; color: var(--color-text-muted); line-height: 1.6; }
+    .skill-bar-wrap { margin-top: 10px; height: 4px; background: rgba(0,0,0,0.06); border-radius: 2px; overflow: hidden; }
+    .skill-bar { height: 4px; border-radius: 2px; background: var(--gradient-accent); width: 0; transition: width 1s ease; }
+    .skill-bar.visible { width: var(--width); }
+
+    /* ── BLOG ── */
+    .blog-list { display: flex; flex-direction: column; gap: 12px; }
+    .blog-item {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--glass-shadow);
+      backdrop-filter: blur(20px);
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 20px;
+      transition: all 0.2s;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateX(-20px);
+      text-decoration: none;
+      color: inherit;
+    }
+    .blog-item.visible { animation: fadeInLeft 0.5s ease forwards; }
+    .blog-item:hover { transform: translateX(4px); box-shadow: var(--glass-shadow-hover); }
+    .blog-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+    .blog-category {
+      font-size: 11px; font-weight: 600;
+      background: rgba(91,108,249,0.1);
+      color: var(--color-primary);
+      border-radius: 6px;
+      padding: 2px 8px;
+    }
+    .blog-date { font-size: 12px; color: var(--color-text-muted); }
+    .blog-title { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; margin-bottom: 4px; }
+    .blog-excerpt { font-size: 13px; color: var(--color-text-muted); line-height: 1.5; }
+    .blog-arrow { font-size: 20px; color: var(--color-text-muted); transition: transform 0.2s; }
+    .blog-item:hover .blog-arrow { transform: translateX(4px); color: var(--color-primary); }
+
+    /* ── CONTACT ── */
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .contact-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--glass-shadow);
+      backdrop-filter: blur(20px);
+      padding: 28px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .contact-card.visible { animation: fadeInUp 0.5s ease forwards; }
+    .contact-title { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 8px; }
+    .contact-desc { font-size: 14px; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 20px; }
+    .social-links { display: flex; flex-direction: column; gap: 12px; }
+    .social-link {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(0,0,0,0.03);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .social-link:hover { background: rgba(91,108,249,0.06); border-color: rgba(91,108,249,0.2); }
+    .social-icon { font-size: 20px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.8); border-radius: 8px; }
+    .social-info { flex: 1; }
+    .social-name { font-size: 14px; font-weight: 600; }
+    .social-handle { font-size: 12px; color: var(--color-text-muted); }
+
+    /* ── macOS Dock ── */
+    .dock-wrapper {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+    }
+    .dock {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(30px) saturate(1.8);
+      -webkit-backdrop-filter: blur(30px) saturate(1.8);
+      border: 1px solid rgba(255,255,255,0.75);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.6) inset;
+    }
+    .dock-item {
+      display: flex; flex-direction: column; align-items: center;
+      cursor: pointer;
+      transition: transform 0.15s cubic-bezier(0.4,0,0.2,1);
+      position: relative;
+    }
+    .dock-item:hover { transform: scale(1.35) translateY(-8px); }
+    .dock-item:hover .dock-tooltip { opacity: 1; transform: translateY(0); }
+    .dock-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      transition: all 0.2s;
+    }
+    .dock-tooltip {
+      position: absolute;
+      bottom: 68px;
+      background: rgba(28,28,30,0.85);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: all 0.15s;
+      pointer-events: none;
+    }
+    .dock-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(0,0,0,0.25); margin-top: 4px; }
+    .dock-sep { width: 1px; height: 40px; background: rgba(0,0,0,0.1); margin: 0 4px; }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      padding: 40px 24px 100px;
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      max-width: 1100px; margin: 0 auto;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(0,0,0,0.07), transparent);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .hero-content { grid-template-columns: 1fr; text-align: center; }
+      .hero-left { align-items: center; }
+      .hero-desc { max-width: 100%; }
+      .hero-actions { justify-content: center; }
+      .projects-grid { grid-template-columns: repeat(2, 1fr); }
+      .skills-grid { grid-template-columns: repeat(2, 1fr); }
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .hero-name { font-size: 40px; }
+      .projects-grid { grid-template-columns: 1fr; }
+      .skills-grid { grid-template-columns: 1fr; }
+      .timeline { grid-template-columns: 1fr; }
+      .timeline-item { grid-template-columns: 1fr; gap: 8px; }
+      .timeline-item::before, .timeline-item::after { display: none; }
+      .timeline-content { padding-left: 0; }
+      .timeline-date { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ① macOS Menu Bar -->
+<nav class="menubar" id="menubar">
+  <span class="apple-logo"></span>
+  <div class="menu-items">
+    <a href="#hero" class="menu-item active">蔡政</a>
+    <a href="#projects" class="menu-item">项目</a>
+    <a href="#experience" class="menu-item">经历</a>
+    <a href="#skills" class="menu-item">技能</a>
+    <a href="#blog" class="menu-item">文章</a>
+    <a href="#contact" class="menu-item">联系</a>
+  </div>
+  <span class="spacer"></span>
+  <div class="menubar-right">
+    <span>🔋</span>
+    <span>📶</span>
+    <span class="menubar-time" id="menubar-time">12:00</span>
+  </div>
+</nav>
+
+<!-- ② HERO -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="orb1 hero-orb"></div>
+  <div class="orb2 hero-orb"></div>
+  <div class="orb3 hero-orb"></div>
+
+  <div class="hero-content">
+    <div class="hero-left">
+      <div class="hero-tag">全栈 / 独立开发者 · 可加入新机会</div>
+      <h1 class="hero-name">蔡政</h1>
+      <p class="hero-title">Full-Stack Engineer &amp; <span class="accent">Indie Maker</span></p>
+      <p class="hero-desc">
+        热爱构建优雅、高性能的产品。擅长从想法到上线的全链路开发，
+        关注用户体验与系统设计的平衡之道。
+      </p>
+      <div class="hero-actions">
+        <a href="#projects" class="btn-primary">查看我的项目 →</a>
+        <a href="#contact" class="btn-secondary">联系我</a>
+      </div>
+    </div>
+
+    <!-- Terminal 窗口 -->
+    <div class="hero-window">
+      <div class="window-titlebar">
+        <span class="traffic-light tl-red"></span>
+        <span class="traffic-light tl-yellow"></span>
+        <span class="traffic-light tl-green"></span>
+        <span class="window-title">~/caizheng — zsh</span>
+      </div>
+      <div class="window-body">
+        <div class="terminal-line"><span class="prompt">~</span> <span class="cmd">whoami</span></div>
+        <div class="terminal-line" style="color:#34c759;padding-left:12px">蔡政 · Full-Stack Developer</div>
+        <div class="terminal-line" style="margin-top:8px"><span class="prompt">~</span> <span class="cmd">cat skills.txt</span></div>
+        <div class="skill-chips">
+          <span class="chip">React</span>
+          <span class="chip">Next.js</span>
+          <span class="chip green">Node.js</span>
+          <span class="chip green">Go</span>
+          <span class="chip purple">PostgreSQL</span>
+          <span class="chip orange">Docker</span>
+          <span class="chip">TypeScript</span>
+          <span class="chip purple">Redis</span>
+        </div>
+        <div class="terminal-line" style="margin-top:8px"><span class="prompt">~</span> <span class="cmd">git log --oneline -3</span></div>
+        <div class="terminal-line comment" style="padding-left:12px">a3f92c1 feat: 个人主页 macOS 重构</div>
+        <div class="terminal-line comment" style="padding-left:12px">7bd145e fix: 性能优化 &amp; SEO</div>
+        <div class="terminal-line comment" style="padding-left:12px">2e8a330 init: 项目上线 🎉</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ③ PROJECTS -->
+<section class="section" id="projects">
+  <div class="section-header">
+    <div class="section-eyebrow">Projects</div>
+    <h2 class="section-title">精选项目</h2>
+    <p class="section-subtitle">从想法到产品，这是我做的一些东西</p>
+  </div>
+
+  <div class="projects-grid">
+    <div class="project-card">
+      <div class="project-card-header">
+        <div class="project-thumb thumb-1">🚀</div>
+        <div class="project-window-bar">
+          <span class="ptl ptl-r"></span><span class="ptl ptl-y"></span><span class="ptl ptl-g"></span>
+        </div>
+      </div>
+      <div class="project-body">
+        <div class="project-name">项目名称 A</div>
+        <div class="project-desc">一句话描述这个项目做了什么，解决了什么问题，用了多少用户。</div>
+        <div class="project-tags">
+          <span class="ptag">Next.js</span><span class="ptag">Prisma</span><span class="ptag">Vercel</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-card-header">
+        <div class="project-thumb thumb-2">🌿</div>
+        <div class="project-window-bar">
+          <span class="ptl ptl-r"></span><span class="ptl ptl-y"></span><span class="ptl ptl-g"></span>
+        </div>
+      </div>
+      <div class="project-body">
+        <div class="project-name">项目名称 B</div>
+        <div class="project-desc">另一个项目简介，突出亮点和技术特色，或者业务规模与成果。</div>
+        <div class="project-tags">
+          <span class="ptag">Go</span><span class="ptag">PostgreSQL</span><span class="ptag">Docker</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-card-header">
+        <div class="project-thumb thumb-3">⚡</div>
+        <div class="project-window-bar">
+          <span class="ptl ptl-r"></span><span class="ptl ptl-y"></span><span class="ptl ptl-g"></span>
+        </div>
+      </div>
+      <div class="project-body">
+        <div class="project-name">项目名称 C</div>
+        <div class="project-desc">可以是一个工具、开源库或者 SaaS，让访客一眼了解价值点。</div>
+        <div class="project-tags">
+          <span class="ptag">React</span><span class="ptag">Tailwind</span><span class="ptag">API</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ④ EXPERIENCE -->
+<section class="section" id="experience">
+  <div class="section-header">
+    <div class="section-eyebrow">Experience</div>
+    <h2 class="section-title">工作经历</h2>
+  </div>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-date">2024 — 至今</div>
+      <div class="timeline-content">
+        <div class="timeline-role">高级全栈工程师</div>
+        <div class="timeline-company">某某公司 · 全职</div>
+        <div class="timeline-desc">负责核心业务系统重构，推动前端架构升级；主导 xx 项目上线，支撑 xx DAU。</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-date">2022 — 2024</div>
+      <div class="timeline-content">
+        <div class="timeline-role">全栈工程师</div>
+        <div class="timeline-company">前一家公司 · 全职</div>
+        <div class="timeline-desc">从 0 到 1 参与多个产品线建设，独立完成前后端开发及部署上线。</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-date">2018 — 2022</div>
+      <div class="timeline-content">
+        <div class="timeline-role">计算机科学 · 学士</div>
+        <div class="timeline-company">XX 大学</div>
+        <div class="timeline-desc">主修计算机科学与技术，GPA 3.8/4.0，参与多项科研与开源项目。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ⑤ SKILLS -->
+<section class="section" id="skills">
+  <div class="section-header">
+    <div class="section-eyebrow">Skills</div>
+    <h2 class="section-title">技术栈</h2>
+    <p class="section-subtitle">我常用的工具和技术</p>
+  </div>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <div class="skill-icon">⚛️</div>
+      <div class="skill-name">前端开发</div>
+      <div class="skill-items">React · Next.js · TypeScript · Tailwind CSS</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="--width:92%"></div></div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">🛠</div>
+      <div class="skill-name">后端开发</div>
+      <div class="skill-items">Node.js · Go · REST API · GraphQL</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="--width:85%"></div></div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">🗄️</div>
+      <div class="skill-name">数据库</div>
+      <div class="skill-items">PostgreSQL · MySQL · Redis · MongoDB</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="--width:80%"></div></div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">☁️</div>
+      <div class="skill-name">云 & 运维</div>
+      <div class="skill-items">Docker · K8s · AWS · Vercel · CI/CD</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="--width:75%"></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ⑥ BLOG -->
+<section class="section" id="blog">
+  <div class="section-header">
+    <div class="section-eyebrow">Blog</div>
+    <h2 class="section-title">近期文章</h2>
+    <p class="section-subtitle">技术思考与工程实践</p>
+  </div>
+  <div class="blog-list">
+    <a href="#" class="blog-item">
+      <div>
+        <div class="blog-meta">
+          <span class="blog-category">架构</span>
+          <span class="blog-date">2025-12-10</span>
+        </div>
+        <div class="blog-title">从单体到微服务：我的拆分实战经验</div>
+        <div class="blog-excerpt">记录了一次真实的业务拆分过程，踩坑与收获并存……</div>
+      </div>
+      <span class="blog-arrow">→</span>
+    </a>
+    <a href="#" class="blog-item">
+      <div>
+        <div class="blog-meta">
+          <span class="blog-category">性能</span>
+          <span class="blog-date">2025-11-28</span>
+        </div>
+        <div class="blog-title">Next.js 14 App Router 下的服务端渲染优化</div>
+        <div class="blog-excerpt">RSC 带来的新范式让渲染策略发生了根本性变化……</div>
+      </div>
+      <span class="blog-arrow">→</span>
+    </a>
+    <a href="#" class="blog-item">
+      <div>
+        <div class="blog-meta">
+          <span class="blog-category">工具</span>
+          <span class="blog-date">2025-11-05</span>
+        </div>
+        <div class="blog-title">用 Go 写一个高性能的实时消息推送服务</div>
+        <div class="blog-excerpt">WebSocket + Redis Pub/Sub 的组合方案，实现百万级连接……</div>
+      </div>
+      <span class="blog-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ⑦ CONTACT -->
+<section class="section" id="contact">
+  <div class="section-header">
+    <div class="section-eyebrow">Contact</div>
+    <h2 class="section-title">联系我</h2>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-card">
+      <div class="contact-title">一起做点有趣的东西 👋</div>
+      <div class="contact-desc">
+        无论是合作项目、技术交流还是喝一杯咖啡聊聊，都欢迎随时联系。
+        通常在 24 小时内回复。
+      </div>
+      <div class="social-links">
+        <a class="social-link" href="https://github.com" target="_blank">
+          <div class="social-icon">🐙</div>
+          <div class="social-info"><div class="social-name">GitHub</div><div class="social-handle">@caizheng</div></div>
+          <span style="color:var(--color-text-muted)">↗</span>
+        </a>
+        <a class="social-link" href="https://twitter.com" target="_blank">
+          <div class="social-icon">𝕏</div>
+          <div class="social-info"><div class="social-name">X (Twitter)</div><div class="social-handle">@caizheng</div></div>
+          <span style="color:var(--color-text-muted)">↗</span>
+        </a>
+        <a class="social-link" href="mailto:hi@caizheng.tech">
+          <div class="social-icon">📧</div>
+          <div class="social-info"><div class="social-name">Email</div><div class="social-handle">hi@caizheng.tech</div></div>
+          <span style="color:var(--color-text-muted)">↗</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="contact-card" style="background: linear-gradient(135deg, rgba(235,233,255,0.8), rgba(220,230,255,0.6)); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; gap:12px;">
+      <div style="font-size:64px">🌐</div>
+      <div style="font-size:22px; font-weight:700; letter-spacing:-0.4px">caizheng.tech</div>
+      <div style="font-size:14px; color:var(--color-text-muted)">期待与你相遇</div>
+      <a href="mailto:hi@caizheng.tech" class="btn-primary" style="margin-top:8px">发送邮件</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<div class="footer">
+  Built with ❤️ &amp; ☕ · © 2026 蔡政 · macOS Monterey 风格
+</div>
+
+<!-- macOS Dock -->
+<div class="dock-wrapper">
+  <div class="dock">
+    <a href="#hero" class="dock-item">
+      <div class="dock-icon" style="background:linear-gradient(135deg,#6e7ff3,#a78bfa)">👤</div>
+      <div class="dock-tooltip">关于我</div>
+      <div class="dock-dot"></div>
+    </a>
+    <a href="#projects" class="dock-item">
+      <div class="dock-icon" style="background:linear-gradient(135deg,#34c759,#30d158)">🚀</div>
+      <div class="dock-tooltip">项目</div>
+      <div class="dock-dot"></div>
+    </a>
+    <a href="#blog" class="dock-item">
+      <div class="dock-icon" style="background:linear-gradient(135deg,#ff9f0a,#ffcc02)">✍️</div>
+      <div class="dock-tooltip">博客</div>
+    </a>
+    <a href="#experience" class="dock-item">
+      <div class="dock-icon" style="background:linear-gradient(135deg,#0a84ff,#30b0c7)">💼</div>
+      <div class="dock-tooltip">经历</div>
+    </a>
+    <div class="dock-sep"></div>
+    <a href="#contact" class="dock-item">
+      <div class="dock-icon" style="background:linear-gradient(135deg,#ff375f,#ff6060)">📧</div>
+      <div class="dock-tooltip">联系</div>
+    </a>
+  </div>
+</div>
+
+<script>
+  // Menu Bar 时间更新
+  function updateTime() {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const day = weekdays[now.getDay()];
+    document.getElementById('menubar-time').textContent = `${day} ${hours}:${minutes}`;
+  }
+  updateTime();
+  setInterval(updateTime, 60000);
+
+  // Menu Bar 滚动效果
+  const menubar = document.getElementById('menubar');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+      menubar.classList.add('scrolled');
+    } else {
+      menubar.classList.remove('scrolled');
+    }
+  });
+
+  // 滚动动画
+  const observerOptions = {
+    root: null,
+    rootMargin: '0px',
+    threshold: 0.1
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        // 技能条动画
+        if (entry.target.classList.contains('skill-card')) {
+          const bar = entry.target.querySelector('.skill-bar');
+          if (bar) bar.classList.add('visible');
+        }
+      }
+    });
+  }, observerOptions);
+
+  // 观察所有需要动画的元素
+  document.querySelectorAll('.section-header, .project-card, .timeline-item, .skill-card, .blog-item, .contact-card').forEach(el => {
+    observer.observe(el);
+  });
+
+  // 菜单项高亮
+  const sections = document.querySelectorAll('section[id]');
+  const menuItems = document.querySelectorAll('.menu-item');
+  
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.clientHeight;
+      if (window.scrollY >= sectionTop - 200) {
+        current = section.getAttribute('id');
+      }
+    });
+    
+    menuItems.forEach(item => {
+      item.classList.remove('active');
+      if (item.getAttribute('href') === `#${current}`) {
+        item.classList.add('active');
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
