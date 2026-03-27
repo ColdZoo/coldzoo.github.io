@@ -275,7 +275,7 @@ def build_all_reports():
     all_reports = []
 
     md_files = sorted(
-        [f for f in os.listdir(REPORTS_DIR) if re.match(r'report_\d{4}-\d{2}-\d{2}.*\.md$', f)],
+        [f for f in os.listdir(REPORTS_DIR) if f.endswith('.md')],
         reverse=True  # 最新在前
     )
 

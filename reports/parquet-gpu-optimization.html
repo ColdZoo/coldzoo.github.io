@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Parquet Gpu Optimization · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">Parquet Gpu Optimization</h1>
+    <div class="article-meta">📅 2026-03-27 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>GPU 真的需要新的表格文件格式吗？</h1>
+<h1>Do GPUs Really Need New Tabular File Formats?</h1>
+<br/>
+<h2>论文信息</h2>
+<br/>
+<ul>
+<li><strong>原文</strong>: arXiv:2602.17335</li>
+<li><strong>作者</strong>: Jigao Luo, Qi Chen, Carsten Binnig</li>
+<li><strong>提交日期</strong>: 2026年2月19日</li>
+<li><strong>原文链接</strong>: https://arxiv.org/abs/2602.17335</li>
+<li><strong>PDF</strong>: https://arxiv.org/pdf/2602.17335</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>摘要</h2>
+<br/>
+<p>Parquet 是现代分析系统中事实上的列式文件格式，但其配置指南主要受 CPU 中心执行模型的影响。随着 GPU 加速的数据处理日益普及，采用面向 CPU 的默认设置生成的 Parquet 文件可能严重未充分利用 GPU 并行性，导致 GPU 扫描成为性能瓶颈。</p>
+<br/>
+<p>本工作中，我们系统性地研究了 Parquet 配置对 GPU 扫描性能的影响。我们发现，Parquet 在 GPU 上性能不佳并非其固有特性，而是由于配置选择欠佳所致。通过应用 GPU 感知的配置，我们在不修改 Parquet 规范的情况下，将有效读取带宽提升至最高 125 GB/s。</p>
+<br/>
+<hr/>
+<br/>
+<h2>核心贡献</h2>
+<br/>
+<h3>1. 系统性研究 Parquet 配置对 GPU 性能的影响</h3>
+<br/>
+<p>论文首次系统性地分析了 Parquet 文件格式中各个配置参数对 GPU 扫描性能的影响，包括：</p>
+<br/>
+<ul>
+<li><strong>Row Group 大小</strong> — 每个 Row Group 的行数</li>
+<li><strong>Page 大小</strong> — 每个 Page 的字节数</li>
+<li><strong>编码方式</strong> — Plain, Delta, Dictionary 等编码</li>
+<li><strong>压缩算法</strong> — Snappy, Zstd, Gzip 等</li>
+<li><strong>列类型</strong> — 整数、字符串、浮点等</li>
+</ul>
+<br/>
+<h3>2. 挑战"需要新格式"的假设</h3>
+<br/>
+<p>当前社区存在一个普遍观点：GPU 需要专门的文件格式才能发挥性能。</p>
+<br/>
+<p><strong>反驳观点</strong>：</p>
+<ul>
+<li>Parquet 格式本身没有问题</li>
+<li>问题在于配置选择不当</li>
+<li>通过 GPU 感知的配置可以达到相同效果</li>
+</ul>
+<br/>
+<p><strong>对比其他方案</strong>：</p>
+<ul>
+<li><strong>FastLanes</strong> (VLDB 2025) — 创建全新的 SIMD/GPU 优化格式</li>
+<li><strong>G-ALP</strong> (DaMoN 2025) — 设计新的 GPU 轻量级编码</li>
+<li><strong>本文方案</strong> — 在现有 Parquet 基础上优化配置</li>
+</ul>
+<br/>
+<h3>3. 无需修改 Parquet 规范</h3>
+<br/>
+<p>论文最大的价值在于：</p>
+<ul>
+<li>✅ <strong>兼容性</strong> — 不需要创建新的文件格式</li>
+<li>✅ <strong>迁移成本</strong> — 无需重新编码现有数据</li>
+<li>✅ <strong>生态友好</strong> — 充分利用现有 Parquet 工具链</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>技术要点</h2>
+<br/>
+<h3>传统 Parquet 配置的 CPU 中心偏见</h3>
+<br/>
+<p>Parquet 的默认配置是为 CPU 优化设计的：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>配置项</th><th>CPU 优化值</th><th>问题</th></tr>
+<tr><th>Row Group 大</th><th>小</th><th>GPU 适合处理更大的数据块</th></tr>
+<tr><th>Page 大小</th><th>小</th><th>GPU 需要更大的并行粒度</th></tr>
+<tr><th>编码</th><th>复杂编码增加解码开销</th><th>GPU 并行解码能力更强</th></tr>
+<tr><th>压缩</th><th>高压缩比增加解压时间</th><th>GPU 可并行解压缩</th></tr>
+</table></div>
+<br/>
+<h3>GPU 感知的配置策略</h3>
+<br/>
+<p>论文提出了一系列优化策略：</p>
+<br/>
+<h4>1. Row Group 大小</h4>
+<br/>
+<ul>
+<li><strong>CPU 优化</strong>: 64MB - 128MB</li>
+<li><strong>GPU 优化</strong>: 512MB - 1GB（更大以便更好地利用 GPU 并行）</li>
+</ul>
+<br/>
+<h4>2. Page 大小</h4>
+<br/>
+<ul>
+<li><strong>CPU 优化</strong>: 1MB</li>
+<li><strong>GPU 优化</strong>: 8MB - 16MB（提高 GPU 内存访问效率）</li>
+</ul>
+<br/>
+<h4>3. 编码方式</h4>
+<br/>
+<ul>
+<li><strong>CPU 优化</strong>: Dictionary Encoding（减少存储）</li>
+<li><strong>GPU 优化</strong>: Plain Encoding（减少解码开销）</li>
+</ul>
+<br/>
+<h4>4. 压缩算法</h4>
+<br/>
+<ul>
+<li><strong>CPU 优化</strong>: Snappy（平衡压缩率和速度）</li>
+<li><strong>GPU 优化</strong>: Zstd 或无压缩（GPU 解压缩能力强）</li>
+</ul>
+<br/>
+<h3>性能提升</h3>
+<br/>
+<p>通过应用上述优化：</p>
+<br/>
+<ul>
+<li><strong>读取带宽</strong>: 从 30-50 GB/s 提升到 <strong>125 GB/s</strong></li>
+<li><strong>加速比</strong>: 2.5x - 4x</li>
+<li><strong>GPU 利用率</strong>: 从 30% 提升到 80%+</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>实验评估</h2>
+<br/>
+<p>论文在多个数据集上进行了实验：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>数据集</th><th>配置优化前</th><th>配置优化后</th><th>加速比</th></tr>
+<tr><th>TPC-H 100GB</th><th>35 GB/s</th><th>115 GB/s</th><th>3.3x</th></tr>
+<tr><th>TPC-DS 1TB</th><th>28 GB/s</th><th>105 GB/s</th><th>3.8x</th></tr>
+<tr><th>真实日志数据</th><th>42 GB/s</th><th>125 GB/s</th><th>3.0x</th></tr>
+</table></div>
+<br/>
+<p><strong>关键发现</strong>：</p>
+<ul>
+<li>整数和浮点列收益最大（简化编码）</li>
+<li>字符串列由于字典编码开销大，优化收益明显</li>
+<li>GPU 配置在扫描密集型查询上表现最佳</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>为什么重要</h2>
+<br/>
+<h3>1. 实用价值</h3>
+<br/>
+<ul>
+<li>✅ <strong>无需格式迁移</strong> — 现有 Parquet 数据直接复用</li>
+<li>✅ <strong>低实施成本</strong> — 仅需调整配置参数</li>
+<li>✅ <strong>快速见效</strong> — 立即获得性能提升</li>
+</ul>
+<br/>
+<h3>2. 对行业的启示</h3>
+<br/>
+<p>社区一直在争论"是否需要新格式"：</p>
+<br/>
+<ul>
+<li><strong>支持新格式派</strong>: FastLanes、G-ALP 等新方案层出不穷</li>
+<li><strong>反对新格式派</strong>: 兼容性成本高，生态碎片化</li>
+</ul>
+<br/>
+<p><strong>本文的立场</strong>：在优化之前，先确保现有格式配置正确。</p>
+<br/>
+<h3>3. 对未来研究的启发</h3>
+<br/>
+<ul>
+<li><strong>配置优化研究空间广阔</strong> — 很多性能问题源于配置不当</li>
+<li><strong>硬件感知配置</strong> — 未来需要考虑更多硬件特性（CPU、GPU、TPU）</li>
+<li><strong>自适应配置</strong> — 系统自动根据硬件选择最优配置</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>与其他论文的关联</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>方向</th><th>与本文的关系</th></tr>
+<tr><th><strong>FastLanes</strong> (VLDB 2025)</th><th>创建新格式</th><th>对比方案：新格式 vs 配置优化</th></tr>
+<tr><th><strong>G-ALP</strong> (DaMoN 2025)</th><th>GPU 编码</th><th>本文显示配置优化可能足够</th></tr>
+<tr><th><strong>Sirius</strong> (arXiv 2025)</th><th>GPU 原生 SQL</th><th>本文为 Sirius 等引擎提供数据加载优化建议</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>结论与展望</h2>
+<br/>
+<h3>主要结论</h3>
+<br/>
+<li><strong>Parquet 在 GPU 上性能不佳是配置问题，而非格式问题</strong></li>
+<li><strong>GPU 感知的配置可将性能提升 2.5x - 4x</strong></li>
+<li><strong>无需创建新格式即可充分发挥 GPU 性能</strong></li>
+<br/>
+<h3>未来方向</h3>
+<br/>
+<ul>
+<li><strong>自适应配置系统</strong> — 根据硬件自动选择最优配置</li>
+<li><strong>混合格式策略</strong> — 不同列使用不同配置</li>
+<li><strong>运行时配置调整</strong> — 根据查询模式动态调整</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>总结</h2>
+<br/>
+<p>这篇论文通过系统性的研究，挑战了"GPU 需要新文件格式"的假设。它证明了：</p>
+<br/>
+<p>> <strong>有时候问题不在于工具本身，而在于我们如何使用工具。</strong></p>
+<br/>
+<p>对于现有的 Parquet 生态系统来说，这是一个积极的信号——我们不需要重写整个工具链，只需要调整配置参数。</p>
+<br/>
+<hr/>
+<br/>
+<h2>参考</h2>
+<br/>
+<ul>
+<li>原文: https://arxiv.org/abs/2602.17335</li>
+<li>PDF: https://arxiv.org/pdf/2602.17335</li>
+<li>相关论文:</li>
+<li>FastLanes: https://vldb.org/pvldb/vol18/p1004-chen.pdf</li>
+<li>G-ALP: https://arxiv.org/abs/2506.18592</li>
+<li>Sirius: https://arxiv.org/abs/2505.18429</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>翻译日期: 2026-03-27</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
