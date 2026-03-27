@@ -111,18 +111,25 @@ def parse_filename(fname: str):
     """
     report_2026-03-27.md            → date=2026-03-27, suffix=''
     report_2026-03-16_supplement.md → date=2026-03-16, suffix='_supplement'
+    parquet-gpu-optimization.md    → date=2026-03-27, suffix='_translation'
     返回 (date_str, suffix, html_name, title, tags)
     """
+    # 标准格式：report_YYYY-MM-DD[...].md
     m = re.match(r'report_(\d{4}-\d{2}-\d{2})(.*?)\.md$', fname)
-    if not m:
-        return None
-    date_str = m.group(1)
-    suffix   = m.group(2)          # e.g. '_supplement' or ''
-    html_name = f"report-{date_str}{suffix.replace('_','-')}.html"
-    title = f"数据库研究论文追踪报告 · {date_str}" + (" 补充" if "supplement" in suffix else "")
+    if m:
+        date_str = m.group(1)
+        suffix   = m.group(2)
+        html_name = f"report-{date_str}{suffix.replace('_','-')}.html"
+        title = f"数据库研究论文追踪报告 · {date_str}" + (" 补充" if "supplement" in suffix else "")
+        return date_str, suffix, html_name, title
 
-    # 自动分配标签（基于内容关键词，稍后扫描正文）
-    return date_str, suffix, html_name, title
+    # 翻译/独立文章格式：使用当前日期作为 date
+    # 使用文件名本身（去掉 .md）作为 html_name 和 title
+    base_name = fname[:-3]  # remove .md
+    today = datetime.now().strftime("%Y-%m-%d")
+    html_name = f"{base_name}.html"
+    title = base_name.replace('-', ' ').replace('_', ' ').title()
+    return today, '_translation', html_name, title
 
 def detect_tags(md_content: str) -> list:
     """扫描正文关键词自动打标签"""
