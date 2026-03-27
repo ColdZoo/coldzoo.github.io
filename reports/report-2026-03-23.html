@@ -9,45 +9,36 @@
       --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
       --glass-border:rgba(255,255,255,0.6);
       --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
-      --gradient-accent:linear-gradient(135deg,#5b6cf9 0%,#a78bfa 100%);
       --color-primary:#5b6cf9; --color-text:#1c1c1e;
       --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
       --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
       --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
     }
     *{box-sizing:border-box;margin:0;padding:0;}
-    html{scroll-behavior:smooth;}
     body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
-
     .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
     .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
     .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
     .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
     .menubar .spacer{flex:1;}
     .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
-
     .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
     .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
     .back-link:hover{background:rgba(91,108,249,0.13);}
-
     .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
     .article-header{margin-bottom:36px;}
     .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
-    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;}
-    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border:1px solid rgba(91,108,249,0.18);}
-    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border:1px solid rgba(255,159,10,0.2);}
-    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border:1px solid rgba(167,139,250,0.2);}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
     .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
     .article-meta{font-size:13px;color:var(--color-text-muted);}
-
-    .article-body{
-      background:var(--bg-card);border:1px solid var(--glass-border);
-      border-radius:18px;box-shadow:var(--glass-shadow);
-      backdrop-filter:blur(20px);padding:32px 36px;
-    }
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
     .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
     .article-body h1:first-child{margin-top:0;}
-    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;color:var(--color-text);}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
     .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
     .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
     .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
@@ -64,7 +55,7 @@
     .article-body a:hover{text-decoration:underline;}
     .table-wrap{overflow-x:auto;margin:16px 0;}
     .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
-    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);color:var(--color-text);}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
     .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
     .article-body tr:last-child td{border-bottom:none;}
   </style>
@@ -76,19 +67,14 @@
   <span class="spacer"></span>
   <span class="menubar-time" id="menubar-time"></span>
 </nav>
-
-<div class="back-bar">
-  <a href="../blog.html" class="back-link">← 返回列表</a>
-</div>
-
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
 <div class="article-wrap">
   <div class="article-header">
     <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
     <h1 class="article-title">数据库研究论文追踪报告 · 2026-03-23</h1>
     <div class="article-meta">📅 2026-03-23 &nbsp;·&nbsp; 数据库研究论文追踪</div>
   </div>
-  <div class="article-body">
-    <h1>数据库研究论文追踪报告 - 2026-03-23</h1>
+  <div class="article-body"><h1>数据库研究论文追踪报告 - 2026-03-23</h1>
 <br/>
 <h2>📊 每日摘要</h2>
 <br/>
@@ -222,17 +208,15 @@
 <br/>
 <p><em>报告生成时间: 2026-03-23 09:00</em>  </p>
 <p><em>下次更新: 2026-03-24 09:00</em></p>
-<br/>
-  </div>
+<br/></div>
 </div>
-
 <script>
   function updateTime() {
     const now = new Date();
-    const h = now.getHours().toString().padStart(2,'0');
-    const m = now.getMinutes().toString().padStart(2,'0');
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
     const days = ['周日','周一','周二','周三','周四','周五','周六'];
-    document.getElementById('menubar-time').textContent = `${days[now.getDay()]} ${h}:${m}`;
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
   }
   updateTime(); setInterval(updateTime, 60000);
 </script>
