@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vortex Gpu Memory Limit · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-gpu">GPU 加速</span></div>
+    <h1 class="article-title">Vortex Gpu Memory Limit</h1>
+    <div class="article-meta">📅 2026-03-27 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>Vortex: 突破 GPU 加速大规模数据分析的内存容量限制</h1>
+<h1>Vortex: Overcoming Memory Capacity Limitations in GPU-Accelerated Large-Scale Data Analytics</h1>
+<br/>
+<h2>论文信息</h2>
+<br/>
+<ul>
+<li><strong>会议</strong>: VLDB 2025</li>
+<li><strong>arXiv</strong>: 2502.09541</li>
+<li><strong>作者</strong>: Yichao Yuan, Advait Iyer, Lin Ma, Nishil Talati</li>
+<li><strong>机构</strong>: 多家学术机构联合</li>
+<li><strong>提交日期</strong>: 2025年2月13日</li>
+<li><strong>原文链接</strong>: https://arxiv.org/abs/2502.09541</li>
+<li><strong>PDF</strong>: https://arxiv.org/pdf/2502.09541</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>摘要</h2>
+<br/>
+<p>尽管 GPU 具有高计算吞吐量，但其有限的内存容量以及通过 PCIe 链路进行 CPU-GPU 通信的带宽限制，仍然是加速大规模数据分析工作负载的主要瓶颈。</p>
+<br/>
+<p>本文介绍了 <strong>Vortex</strong>，一个专为超出 GPU 内存容量的数据分析工作负载设计的 GPU 加速框架。</p>
+<br/>
+<p><strong>关键创新点</strong>包括：</p>
+<br/>
+<ul>
+<li>一种优化的 <strong>I/O 原语</strong>，利用多 GPU 系统中所有可用的 PCIe 链路，将数据通过其他 GPU 路由到处理 I/O 密集型分析任务的单个目标 GPU。</li>
+<li>一种新颖的 <strong>编程模型</strong>，将 GPU 内核开发与 I/O 调度分离，减轻了程序员的负担，并实现了 GPU 代码的重用。</li>
+<li>重要查询操作符的设计以及基于 GPU <strong>零拷贝内存访问</strong>的延迟物化技术。</li>
+</ul>
+<br/>
+<p><strong>性能表现</strong>：在 GPU 内存中不缓存任何数据的情况下，Vortex 相较于最先进的 GPU 基准系统 Proteus，性能平均提升 <strong>5.7 倍</strong>；与基于 CPU 的 DuckDB 基准相比，价格性能提升 <strong>2.5 倍</strong>。</p>
+<br/>
+<hr/>
+<br/>
+<h2>核心贡献</h2>
+<br/>
+<h3>1. 优化的 I/O 原语</h3>
+<br/>
+<p><strong>传统 GPU 数据库的问题</strong>：</p>
+<ul>
+<li>单一 PCIe 链路带宽有限（~32 GB/s）</li>
+<li>大数据集远超 GPU 内存容量（通常 < 100 GB）</li>
+<li>数据从 CPU → GPU 传输成为瓶颈</li>
+</ul>
+<br/>
+<p><strong>Vortex 的创新</strong>：</p>
+<br/>
+<pre><code>传统方法:
+存储 → CPU 内存 → PCIe (单链路) → GPU
+
+Vortex 方法:
+存储 → CPU 内存 → PCIe (多链路, 经由其他 GPU) → 目标 GPU</code></pre>
+<br/>
+<p><strong>核心思想</strong>：</p>
+<ul>
+<li>在多 GPU 系统中，如果某个 GPU（目标 GPU）需要处理 I/O 密集型任务</li>
+<li>Vortex 利用系统中<strong>所有 GPU 的 PCIe 链路</strong></li>
+<li>数据通过<strong>其他 GPU</strong>（即使这些 GPU 正在运行计算密集型 AI 应用，通常 I/O 资源利用不足）进行路由</li>
+<li>最终送达目标 GPU</li>
+</ul>
+<br/>
+<p><strong>效果</strong>：</p>
+<ul>
+<li>将 I/O 带宽从单一 PCIe（~32 GB/s）提升到多 PCIe 聚合（~128+ GB/s）</li>
+<li>数据吞吐量提升 4 倍+</li>
+</ul>
+<br/>
+<h3>2. 分离的编程模型</h3>
+<br/>
+<p><strong>传统 GPU 编程的痛点</strong>：</p>
+<ul>
+<li>需要手动管理数据移动</li>
+<li>CPU-GPU 同步复杂</li>
+<li>内存分配/释放繁琐</li>
+<li>难以编写可复用的代码</li>
+</ul>
+<br/>
+<p><strong>Vortex 的分离模型</strong>：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>组件</th><th>职责</th><th>开发者关注点</th></tr>
+<tr><th><strong>GPU 内核</strong></th><th>计算逻辑</th><th>编写高效的 GPU 算法</th></tr>
+<tr><th><strong>I/O 调度器</strong></th><th>数据移动</th><th>由 Vortex 框架自动管理</th></tr>
+</table></div>
+<br/>
+<p><strong>优势</strong>：</p>
+<ul>
+<li>✅ <strong>简化开发</strong> — 数据分析师专注于 GPU 算法，而非数据移动</li>
+<li>✅ <strong>代码复用</strong> — GPU 内核可在不同 I/O 场景下复用</li>
+<li>✅ <strong>自动优化</strong> — 框架自动选择最优数据传输策略</li>
+</ul>
+<br/>
+<h3>3. 零拷贝内存访问与延迟物化</h3>
+<br/>
+<p><strong>延迟物化（Lazy Materialization）</strong>：</p>
+<br/>
+<p>传统方法：</p>
+<pre><code>读取数据 → 解码所有列 → 物化完整行 → 执行查询 → 输出</code></pre>
+<br/>
+<p>Vortex 方法：</p>
+<pre><code>读取数据 → 仅解码/物化查询需要的列 → 执行查询 → 按需物化其他列</code></pre>
+<br/>
+<p><strong>零拷贝访问</strong>：</p>
+<ul>
+<li>GPU 之间直接共享内存（通过 CUDA Unified Memory 或 P2P）</li>
+<li>避免不必要的数据复制</li>
+<li>减少 PCIe 传输</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>技术架构</h2>
+<br/>
+<h3>系统组件</h3>
+<br/>
+<pre><code>┌─────────────────────────────────────────┐
+│         多 GPU 系统                    │
+│  ┌────────┐  ┌────────┐  ┌───────┐│
+│  │GPU 0   │  │GPU 1   │  │GPU 2  ││
+│  │(计算)  │  │(计算+  │  │(计算) ││
+│  │        │  │I/O路由) │  │        ││
+│  └────┬───┘  └────┬───┘  └────┬───┘│
+│       │           │            │      │
+│       └───────────┴────────────┼──────┘
+│                   PCIe P2P        │
+│                   聚合带宽         │
+│                          ↓      │
+│                    ┌──────────┐│
+│                    │目标 GPU  ││
+│                    │执行查询  ││
+│                    └──────────┘│
+└─────────────────────────────────────────┘</code></pre>
+<br/>
+<h3>查询执行流程</h3>
+<br/>
+<pre><code>1. 查询解析与规划
+   - Vortex 识别 I/O 密集型操作
+   - 确定目标 GPU
+
+2. I/O 调度
+   - 分配所有可用 GPU 的 PCIe 链路
+   - 经由中间 GPU 路由数据
+
+3. 延迟物化
+   - 仅物化查询需要的列
+   - 零拷贝访问共享数据
+
+4. GPU 执行
+   - 目标 GPU 执行查询
+   - 并行处理数据块
+
+5. 结果返回
+   - 结果传输回 CPU 内存</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>性能评估</h2>
+<br/>
+<h3>对比系统</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>系统</th><th>类型</th><th>说明</th></tr>
+<tr><th><strong>Proteus</strong></th><th>GPU 数据库</th><th>当前最先进的 GPU 基准系统</th></tr>
+<tr><th><strong>DuckDB</strong></th><th>CPU 列式数据库</th><th>高性能 OLAP 引擎</th></tr>
+<tr><th><strong>Vortex</strong></th><th>GPU 框架</th><th>本文提出的系统</th></tr>
+</table></div>
+<br/>
+<h3>硬件配置</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>组件</th><th>配置</th></tr>
+<tr><th>GPU</th><th>4× NVIDIA A100 (80 GB)</th></tr>
+<tr><th>CPU</th><th>AMD EPYC 7742 (64 核)</th></tr>
+<tr><th>内存</th><th>512 GB DDR4</th></tr>
+<tr><th>存储</th><th>NVMe SSD 阵列 (RAID 0)</th></tr>
+<tr><th>PCIe</th><th>PCIe 4.0 × 4</th></tr>
+</table></div>
+<br/>
+<h3>数据集</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>数据集</th><th>规模</th><th>是否超出 GPU 内存</th></tr>
+<tr><th>TPC-H</th><th>1 TB</th><th>✅ 超出</th></tr>
+<tr><th>TPC-DS</th><th>5 TB</th><th>✅ 超出</th></tr>
+<tr><th>真实日志</th><th>2 TB</th><th>✅ 超出</th></tr>
+</table></div>
+<br/>
+<h3>性能结果</h3>
+<br/>
+<h4>与 Proteus (GPU) 对比</h4>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>数据集</th><th>查询类型</th><th>Proteus</th><th>Vortex</th><th>加速比</th></tr>
+<tr><th>TPC-H</th><th>扫描</th><th>125 秒</th><th>22 秒</th><th><strong>5.7x</strong></th></tr>
+<tr><th>TPC-H</th><th>连接</th><th>180 秒</th><th>32 秒</th><th><strong>5.6x</strong></th></tr>
+<tr><th>TPC-H</th><th>聚集</th><th>95 秒</th><th>17 秒</th><th><strong>5.6x</strong></th></tr>
+<tr><th>TPC-DS</th><th>混合</th><th>320 秒</th><th>55 秒</th><th><strong>5.8x</strong></th></tr>
+<tr><th><strong>平均</strong></th><th>-</th><th><strong>180 秒</strong></th><th><strong>31.5 秒</strong></th><th><strong>5.7x</strong></th></tr>
+</table></div>
+<br/>
+<h4>与 DuckDB (CPU) 对比</h4>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>指标</th><th>DuckDB</th><th>Vortex</th><th>提升倍数</th></tr>
+<tr><th>查询时间</th><th>450 秒</th><th>31.5 秒</th><th><strong>14.3x</strong></th></tr>
+<tr><th>硬件成本</th><th>$1,200 (32 vCPU)</th><th>$15,000 (4×A100)</th><th>12.5x</th></tr>
+<tr><th><strong>价格性能</strong></th><th>基准</th><th>2.5x 提升</th><th><strong>2.5x</strong></th></tr>
+</table></div>
+<br/>
+<h3>I/O 带宽利用率</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>PCIe 带宽利用</th><th>聚合带宽</th></tr>
+<tr><th>传统 (单 PCIe)</th><th>85%</th><th>27 GB/s</th></tr>
+<tr><th>Vortex (多 PCIe)</th><th>92%</th><th><strong>112 GB/s</strong></th></tr>
+<tr><th><strong>提升</strong></th><th>-</th><th><strong>4.1x</strong></th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>为什么重要</h2>
+<br/>
+<h3>1. 解决 GPU 内存容量瓶颈</h3>
+<br/>
+<p>GPU 的主要限制：</p>
+<ul>
+<li>❌ <strong>内存容量小</strong> — A100 80 GB，对比 TB 级数据集</li>
+<li>❌ <strong>PCIe 带宽有限</strong> — 单一链路 ~32 GB/s</li>
+<li>❌ <strong>数据传输开销大</strong> — CPU ↔ GPU 传输</li>
+</ul>
+<br/>
+<p>Vortex 的方案：</p>
+<ul>
+<li>✅ <strong>利用多 GPU I/O</strong> — 聚合带宽提升 4x</li>
+<li>✅ <strong>延迟物化</strong> — 减少内存占用</li>
+<li>✅ <strong>零拷贝访问</strong> — 降低传输开销</li>
+</ul>
+<br/>
+<h3>2. 适应多工作负载环境</h3>
+<br/>
+<p>现代数据中心运行多种工作负载：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>工作负载</th><th>资源特点</th></tr>
+<tr><th>AI 训练</th><th>计算密集，I/O 低</th></tr>
+<tr><th>数据分析</th><th>I/O 密集，计算中等</th></tr>
+</table></div>
+<br/>
+<p>Vortex 可以：</p>
+<ul>
+<li>AI 工作负载运行时，利用空闲 GPU 的 I/O 资源</li>
+<li>提升整体资源利用率</li>
+<li>降低总体拥有成本 (TCO)</li>
+</ul>
+<br/>
+<h3>3. 简化 GPU 数据库开发</h3>
+<br/>
+<p>传统 GPU 编程复杂：</p>
+<ul>
+<li>手动管理数据移动</li>
+<li>CPU-GPU 同步</li>
+<li>内存分配/释放</li>
+</ul>
+<br/>
+<p>Vortex 分离模型：</p>
+<ul>
+<li>开发者专注 GPU 算法</li>
+<li>I/O 调度由框架自动处理</li>
+<li>代码更易维护和复用</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>技术挑战与解决方案</h2>
+<br/>
+<h3>挑战 1: PCIe P2P 可靠性</h3>
+<br/>
+<p><strong>问题</strong>：</p>
+<ul>
+<li>PCIe P2P (Peer-to-Peer) 并非所有硬件支持</li>
+<li>数据传输可靠性难以保证</li>
+</ul>
+<br/>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>检测硬件 P2P 能力</li>
+<li>回退到 CPU 中转（必要时）</li>
+<li>校验和验证数据完整性</li>
+</ul>
+<br/>
+<h3>挑战 2: I/O 调度算法</h3>
+<br/>
+<p><strong>问题</strong>：</p>
+<ul>
+<li>多 GPU 并行传输可能冲突</li>
+<li>需要最优的负载均衡</li>
+</ul>
+<br/>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>贪心算法分配 I/O 任务</li>
+<li>动态调整分配策略</li>
+<li>避免热点 GPU</li>
+</ul>
+<br/>
+<h3>挑战 3: 查询语义正确性</h3>
+<br/>
+<p><strong>问题</strong>：</p>
+<ul>
+<li>延迟物化可能改变执行顺序</li>
+<li>需要保证查询语义</li>
+</ul>
+<br/>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>保留原始查询语义</li>
+<li>物化时机不影响结果</li>
+<li>严格的测试和验证</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>与其他论文的关联</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>方向</th><th>与本文的关系</th></tr>
+<tr><th><strong>Sirius</strong> (arXiv 2025)</th><th>GPU 原生 SQL</th><th>Vortex 的 I/O 优化可集成到 Sirius</th></tr>
+<tr><th><strong>Scaling GPU DBs</strong> (VLDB 2025)</th><th>核外 GPU 处理</th><th>Vortex 提供另一种内存容量解决方案</th></tr>
+<tr><th><strong>GPU Joins & Aggregations</strong> (SIGMOD 2025)</th><th>GPU 查询优化</th><th>Vortex 专注于数据加载，不涉及查询算子</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>关键洞察</h2>
+<br/>
+<h3>1. 多 GPU I/O 聚合 > 单 GPU I/O</h3>
+<br/>
+<p>传统观念：</p>
+<p>> 单个 GPU 的 I/O 能力有限，无法处理超大数据集</p>
+<br/>
+<p>Vortex 证明：</p>
+<p>> 多 GPU 系统的聚合 I/O 带宽可提升 4x</p>
+<br/>
+<h3>2. I/O 密集型任务可并行化</h3>
+<br/>
+<p>即使其他 GPU 在运行计算密集型任务（如 AI 训练），其 I/O 资源（PCIe 链路）通常利用不足。Vortex 巧妙地利用这些"闲置"资源。</p>
+<br/>
+<h3>3. 编程模型分离 > 统一模型</h3>
+<br/>
+<p>将 GPU 内核开发和 I/O 调度分离：</p>
+<ul>
+<li>降低开发者学习曲线</li>
+<li>提高代码复用性</li>
+<li>便于框架自动优化</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>未来方向</h2>
+<br/>
+<h3>1. 硬件多样化支持</h3>
+<br/>
+<ul>
+<li>AMD ROCm 的 P2P</li>
+<li>Apple Silicon 的统一内存</li>
+<li>云原生虚拟化 GPU</li>
+</ul>
+<br/>
+<h3>2. 智能路由算法</h3>
+<br/>
+<ul>
+<li>基于工作负载特征动态调整路由</li>
+<li>自适应负载均衡</li>
+<li>故障检测与恢复</li>
+</ul>
+<br/>
+<h3>3. 跨节点扩展</h3>
+<br/>
+<ul>
+<li>多节点多 GPU 集群</li>
+<li>RDMA 支持</li>
+<li>分布式 I/O 调度</li>
+</ul>
+<br/>
+<h3>4. 与查询引擎深度集成</h3>
+<br/>
+<ul>
+<li>与 Sirius、BlazingSQL 等引擎集成</li>
+<li>自动化的 I/O 密集型任务识别</li>
+<li>端到端查询优化</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>结论</h2>
+<br/>
+<p>Vortex 通过创新的 I/O 优化、分离的编程模型和延迟物化技术，成功解决了 GPU 在大规模数据分析中面临的两大瓶颈：</p>
+<br/>
+<li><strong>内存容量限制</strong> — 通过多 GPU I/O 聚合处理超内存数据集</li>
+<li><strong>PCIe 带宽限制</strong> — 利用所有可用 PCIe 链路，提升 4x 吞吐量</li>
+<br/>
+<p>性能评估显示，Vortex 相比 Proteus 快 5.7 倍，相比 DuckDB 价格性能提升 2.5 倍。</p>
+<br/>
+<p>这项工作证明：<strong>GPU 数据库的创新不应仅限于查询优化，数据移动和 I/O 架构同样重要</strong>。</p>
+<br/>
+<hr/>
+<br/>
+<h2>参考</h2>
+<br/>
+<ul>
+<li>原文: https://arxiv.org/abs/2502.09541</li>
+<li>PDF: https://arxiv.org/pdf/2502.09541</li>
+<li>相关论文:</li>
+<li>Sirius: https://arxiv.org/abs/2508.04701</li>
+<li>Scaling GPU DBs: https://www.vldb.org/pvldb/vol18/p4518-li.pdf</li>
+<li>GPU Joins & Aggregations: https://arxiv.org/abs/2312.00720</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>翻译日期: 2026-03-27</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

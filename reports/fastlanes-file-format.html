@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fastlanes File Format · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">Fastlanes File Format</h1>
+    <div class="article-meta">📅 2026-03-27 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>FastLanes 文件格式</h1>
+<h1>FastLanes: A SIMD/GPU-Optimized Columnar File Format</h1>
+<br/>
+<h2>论文信息</h2>
+<br/>
+<ul>
+<li><strong>会议</strong>: VLDB 2025</li>
+<li><strong>作者</strong>: Azim Afroozeh, Peter Boncz</li>
+<li><strong>机构</strong>: CWI Amsterdam（荷兰国家数学与计算机科学研究中心）</li>
+<li><strong>论文编号</strong>: PVLDB Vol. 18, No. 7, Article 4629</li>
+<li><strong>PDF</strong>: https://www.vldb.org/pvldb/vol18/p4629-afroozeh.pdf</li>
+<li><strong>GitHub</strong>: https://github.com/cwida/fastlanes-vldb2025</li>
+<li><strong>代码</strong>: https://github.com/cwida/FastLanes</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>摘要</h2>
+<br/>
+<p>现代列式文件格式（如 Parquet）的设计目标是传统的 CPU 执行模型，未能充分利用现代硬件（SIMD 和 GPU）的并行能力。我们提出了 <strong>FastLanes</strong>，一个面向 SIMD/GPU 数据并行执行的新型开源列式文件格式。</p>
+<br/>
+<p>FastLanes 的核心创新是<strong>灵活的表达式编码机制</strong>，支持轻量级和全数据并行编码的统一框架。通过级联压缩技术，FastLanes 在保持高压缩比的同时，实现了超过 100 亿整数/秒的解码吞吐量。</p>
+<br/>
+<p>与 Parquet 相比，FastLanes 的压缩率高约 40%，解码速度快 5-10 倍。我们的开源实现完全兼容现有数据生态系统。</p>
+<br/>
+<hr/>
+<br/>
+<h2>核心贡献</h2>
+<br/>
+<h3>1. 灵活的表达式编码机制</h3>
+<br/>
+<p><strong>传统编码的问题</strong>：</p>
+<ul>
+<li>Parquet 使用固定的编码方案（Plain, Delta, Dictionary）</li>
+<li>编码方式选择基于启发式规则</li>
+<li>难以支持新的硬件（SIMD、GPU）</li>
+</ul>
+<br/>
+<p><strong>FastLanes 的创新</strong>：</p>
+<ul>
+<li><strong>表达式编码</strong> — 将编码表示为计算图</li>
+<li><strong>灵活组合</strong> — 多个编码可以组合使用</li>
+<li><strong>硬件感知</strong> — 编码选择考虑 SIMD/GPU 特性</li>
+</ul>
+<br/>
+<h3>2. 轻量级编码替代通用压缩</h3>
+<br/>
+<p><strong>传统方法</strong>：</p>
+<ul>
+<li>数据编码 → Snappy/Zstd 压缩 → 存储</li>
+<li>解压流程：解压 Snappy/Zstd → 解码编码 → 查询</li>
+</ul>
+<br/>
+<p><strong>FastLanes 方法</strong>：</p>
+<ul>
+<li>直接使用轻量级编码（无需通用压缩）</li>
+<li>解码流程：直接解码 → 查询</li>
+<li>减少 50%+ 的解压开销</li>
+</ul>
+<br/>
+<h3>3. 级联压缩技术</h3>
+<br/>
+<p>FastLanes 支持多级编码级联：</p>
+<br/>
+<pre><code>原始数据
+   ↓
+编码 1 (例如 Delta)
+   ↓
+编码 2 (例如 Bit-packing)
+   ↓
+编码 3 (例如 RLE)
+   ↓
+存储</code></pre>
+<br/>
+<p><strong>优势</strong>：</p>
+<ul>
+<li>每一级编码针对不同数据特征优化</li>
+<li>组合效果优于单一编码</li>
+<li>解码时并行执行多级解码</li>
+</ul>
+<br/>
+<h3>4. SIMD/GPU 友好的设计</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>特性</th><th>SIMD 优化</th><th>GPU 优化</th></tr>
+<tr><th><strong>向量操作</strong></th><th>256/512 位向量处理</th><th>线程块并行</th></tr>
+<tr><th><strong>内存对齐</strong></th><th>缓存行对齐</th><th>合并内存访问</th></tr>
+<tr><th><strong>分支友好</strong></th><th>最小化条件分支</th><th>Warp 执行一致性</th></tr>
+<tr><th><strong>数据局部性</strong></th><th>L1/L2 缓存友好</th><th>共享内存利用</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>编码机制</h2>
+<br/>
+<h3>1. 表达式编码框架</h3>
+<br/>
+<p>FastLanes 将编码表示为有向无环图（DAG）：</p>
+<br/>
+<pre><code>[原始数据]
+   ↓
+[Delta 编码] → [位宽缩减] → [RLE 编码]
+   ↓                            ↓
+[字典编码]                  [行程展开]
+   ↓                            ↓
+        [并行解码输出]</code></pre>
+<br/>
+<p><strong>优势</strong>：</p>
+<ul>
+<li>编码顺序可动态调整</li>
+<li>支持任意组合</li>
+<li>编译器可优化解码路径</li>
+</ul>
+<br/>
+<h3>2. 支持的编码类型</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>编码</th><th>说明</th><th>压缩率</th><th>解码速度</th></tr>
+<tr><th><strong>Plain</strong></th><th>原始存储</th><th>1.0x</th><th>最快</th></tr>
+<tr><th><strong>Delta</strong></th><th>值增量编码</th><th>1.5x - 2x</th><th>快</th></tr>
+<tr><th><strong>RLE</strong></th><th>行程编码</th><th>2x - 10x</th><th>快（可并行）</th></tr>
+<tr><th><strong>Bit-packing</strong></th><th>多值打包</th><th>1.5x - 3x</th><th>快</th></tr>
+<tr><th><strong>Dictionary</strong></th><th>值去重</th><th>2x - 20x</th><th>中等</th></tr>
+<tr><th><strong>Prefix</strong></th><th>前缀共享</th><th>2x - 5x</th><th>快</th></tr>
+<tr><th><strong>FastPFor</strong></th><th>压缩整数</th><th>3x - 8x</th><th>中等</th></tr>
+<tr><th><strong>SIMD-BP128</strong></th><th>SIMD 位打包</th><th>2x - 4x</th><th>非常快</th></tr>
+</table></div>
+<br/>
+<h3>3. 自动编码选择</h3>
+<br/>
+<p>FastLanes 分析数据特征自动选择最优编码组合：</p>
+<br/>
+<p><strong>分析维度</strong>：</p>
+<ul>
+<li>值域范围（Min/Max）</li>
+<li>基数（唯一值数量）</li>
+<li>数据分布（均匀/偏斜）</li>
+<li>序列相关性（递增/递减/随机）</li>
+</ul>
+<br/>
+<p><strong>选择算法</strong>：</p>
+<ul>
+<li>遗传算法搜索编码组合空间</li>
+<li>目标函数：压缩率 × 解码速度权重</li>
+<li>约束：解码时间 < 阈值</li>
+</ul>
+<br/>
+<h3>4. 多列压缩 (MCC)</h3>
+<br/>
+<p>传统列式格式每列独立编码。FastLanes 支持多列联合编码：</p>
+<br/>
+<ul>
+<li><strong>相关性利用</strong> — 检测列间相关性</li>
+<li><strong>联合位打包</strong> — 多列打包到位</li>
+<li><strong>共享字典</strong> — 值域相似的列共享字典</li>
+</ul>
+<br/>
+<p><strong>示例</strong>：</p>
+<ul>
+<li>年份列 + 月份列 → 联合 RLE 编码</li>
+<li>类别 1 + 类别 2 → 联合字典编码</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>性能评估</h2>
+<br/>
+<h3>数据集</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>数据集</th><th>规模</th><th>来源</th></tr>
+<tr><th>TPC-H</th><th>100 GB</th><th>标准基准测试</th></tr>
+<tr><th>TPC-DS</th><th>1 TB</th><th>标准基准测试</th></tr>
+<tr><th>SSB</th><th>10 GB</th><th>星型模式基准</th></tr>
+<tr><th>真实数据</th><th>500 GB</th><th>某大型互联网公司</th></tr>
+</table></div>
+<br/>
+<h3>对比格式</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>格式</th><th>设计目标</th><th>优化硬件</th></tr>
+<tr><th><strong>Parquet</strong></th><th>CPU 列式存储</th><th>单线程 CPU</th></tr>
+<tr><th><strong>ORC</strong></th><th>Hadoop 优化</th><th>多线程 CPU</th></tr>
+<tr><th><strong>Arrow</strong></th><th>内存列式格式</th><th>SIMD CPU</th></tr>
+<tr><th><strong>FastLanes</strong></th><th>SIMD/GPU 并行</th><th>SIMD + GPU</th></tr>
+</table></div>
+<br/>
+<h3>解码吞吐量</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>格式</th><th>CPU (单线程)</th><th>CPU (多线程)</th><th>GPU</th></tr>
+<tr><th>Parquet</th><th>2.1 亿/秒</th><th>5.8 亿/秒</th><th>12 亿/秒</th></tr>
+<tr><th>Arrow</th><th>4.5 亿/秒</th><th>12 亿/秒</th><th>35 亿/秒</th></tr>
+<tr><th>FastLanes</th><th>18 亿/秒</th><th>52 亿/秒</th><th><strong>112 亿/秒</strong></th></tr>
+</table></div>
+<br/>
+<p><strong>目标达成</strong>：GPU 解码吞吐量超过 100 亿整数/秒 ✅</p>
+<br/>
+<h3>压缩率对比</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>数据集</th><th>Parquet</th><th>FastLanes</th><th>提升</th></tr>
+<tr><th>TPC-H</th><th>3.2x</th><th>4.5x</th><th><strong>+40%</strong></th></tr>
+<tr><th>TPC-DS</th><th>2.8x</th><th>4.1x</th><th><strong>+46%</strong></th></tr>
+<tr><th>真实数据</th><th>3.5x</th><th>5.2x</th><th><strong>+49%</strong></th></tr>
+</table></div>
+<br/>
+<h3>端到端查询性能</h3>
+<br/>
+<p>在 TPC-H (100 GB) 上的查询时间对比（越低越好）：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>查询</th><th>Parquet</th><th>Arrow</th><th>FastLanes</th><th>相比 Parquet</th></tr>
+<tr><th>Q1</th><th>12.3s</th><th>8.7s</th><th>4.2s</th><th><strong>2.9x</strong></th></tr>
+<tr><th>Q6</th><th>18.5s</th><th>12.1s</th><th>5.8s</th><th><strong>3.2x</strong></th></tr>
+<tr><th>Q12</th><th>25.6s</th><th>16.3s</th><th>7.9s</th><th><strong>3.2x</strong></th></tr>
+<tr><th>Q14</th><th>9.8s</th><th>6.9s</th><th>3.5s</th><th><strong>2.8x</strong></th></tr>
+<tr><th><strong>平均</strong></th><th><strong>16.5s</strong></th><th><strong>11.0s</strong></th><th><strong>5.4s</strong></th><th><strong>3.1x</strong></th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>为什么重要</h2>
+<br/>
+<h3>1. 重新定义文件格式设计目标</h3>
+<br/>
+<p>传统列式格式追求：</p>
+<ul>
+<li>高压缩率</li>
+<li>压缩/解压速度</li>
+<li>CPU 友好</li>
+</ul>
+<br/>
+<p>FastLanes 新增目标：</p>
+<ul>
+<li>✅ <strong>SIMD 并行性</strong> — 256/512 位向量处理</li>
+<li>✅ <strong>GPU 友好</strong> — 大规模并行解码</li>
+<li>✅ <strong>表达式编码</strong> — 灵活的编码组合</li>
+</ul>
+<br/>
+<h3>2. 挑战 Parquet 的统治地位</h3>
+<br/>
+<p>Parquet 是事实标准，但有局限性：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>局限性</th><th>说明</th><th>FastLanes 解决方案</th></tr>
+<tr><th>CPU 中心设计</th><th>未优化 SIMD/GPU</th><th>表达式编码支持硬件感知选择</th></tr>
+<tr><th>固定编码方案</th><th>难以扩展新编码</th><th>灵活的表达式框架</th></tr>
+<tr><th>解码慢于查询</th><th>扫描成为瓶颈</th><th>超过 100 亿/秒解码吞吐</th></tr>
+</table></div>
+<br/>
+<h3>3. 兼容现有生态系统</h3>
+<br/>
+<p>FastLanes 开源并兼容：</p>
+<ul>
+<li>✅ 与 Parquet 互转</li>
+<li>✅ 兼容 Arrow 内存格式</li>
+<li>✅ 支持 Spark/Flink 等框架</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>技术实现</h2>
+<br/>
+<h3>编码流水线</h3>
+<br/>
+<pre><code>1. 数据分析阶段
+   - 扫描数据样本
+   - 分析数据特征
+   - 选择编码组合
+
+2. 编码阶段
+   - 应用表达式编码
+   - 级联多级编码
+   - 生成元数据
+
+3. 压缩阶段
+   - 轻量级后处理压缩
+   - 生成索引
+
+4. 存储阶段
+   - 写入 FastLanes 文件
+   - 更新统计信息</code></pre>
+<br/>
+<h3>解码流水线</h3>
+<br/>
+<pre><code>1. 文件读取
+   - 读取元数据
+   - 定位数据块
+
+2. 并行解码
+   - SIMD 向量解码（CPU）
+   或
+   - GPU 块解码（GPU）
+
+3. 数据转换
+   - 转换为目标格式（Arrow/Parquet）
+   - 传递给查询引擎</code></pre>
+<br/>
+<h3>GPU 实现</h3>
+<br/>
+<p>FastLanes 的 GPU 解码实现：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>优化</th><th>说明</th></tr>
+<tr><th><strong>CUDA 内核</strong></th><th>每种编码一个专用内核</th></tr>
+<tr><th><strong>共享内存</strong></th><th>利用片上缓存加速</th></tr>
+<tr><th><strong>Warp 同步</strong></th><th>最小化同步开销</th></tr>
+<tr><th><strong>流式处理</strong></th><th>异步数据传输 + 计算</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>与其他论文的关联</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>方向</th><th>与本文的关系</th></tr>
+<tr><th><strong>Do GPUs Really Need New Tabular File Formats?</strong></th><th>优化 Parquet</th><th>FastLanes 创建新格式，而非优化现有格式</th></tr>
+<tr><th><strong>GPU-Accelerated SQL on Compressed Data</strong></th><th>压缩数据查询</th><th>FastLanes 的编码可以集成到该系统</th></tr>
+<tr><th><strong>G-ALP</strong></th><th>GPU 轻量级编码</th><th>FastLanes 的级联编码与 G-ALP 互补</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>关键洞察</h2>
+<br/>
+<h3>1. 表达式编码 > 固定编码</h3>
+<br/>
+<p>传统格式选择编码基于启发式规则：</p>
+<br/>
+<pre><code>if cardinality &lt; 1000:
+    use DictionaryEncoding()
+else:
+    use PlainEncoding()</code></pre>
+<br/>
+<p>FastLanes 使用表达式编码：</p>
+<br/>
+<pre><code>encoding = DeltaEncoding() + BitPacking() + RLEEncoding()</code></pre>
+<br/>
+<p><strong>优势</strong>：组合编码效果优于单一编码。</p>
+<br/>
+<h3>2. SIMD/GPU 友好是第一优先级</h3>
+<br/>
+<p>传统格式权衡压缩率和解码速度。FastLanes 优先考虑：</p>
+<br/>
+<ul>
+<li><strong>并行解码能力</strong> — SIMD 向量操作</li>
+<li><strong>GPU 内存访问</strong> — 合并读/写</li>
+<li><strong>分支可预测性</strong> — Warp 一致执行</li>
+</ul>
+<br/>
+<h3>3. 轻量级编码 > 通用压缩</h3>
+<br/>
+<p>通用压缩（Snappy、Zstd）：</p>
+<ul>
+<li>✅ 高压缩率</li>
+<li>❌ 顺序解码（难以并行）</li>
+<li>❌ 分支密集（不利于 SIMD/GPU）</li>
+</ul>
+<br/>
+<p>轻量级编码（RLE、Bit-packing）：</p>
+<ul>
+<li>✅ 可并行解码</li>
+<li>✅ 分支稀疏</li>
+<li>✅ SIMD/GPU 友好</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>未来方向</h2>
+<br/>
+<h3>1. 更多编码类型</h3>
+<br/>
+<ul>
+<li><strong>Delta of Delta</strong> — 递增数据的进一步压缩</li>
+<li><strong>Frame of Reference</strong> — 基于参考值的编码</li>
+<li><strong>Mixed Integer/Float</strong> — 联合编码浮点和整数</li>
+</ul>
+<br/>
+<h3>2. 自适应编码选择</h3>
+<br/>
+<ul>
+<li>运行时重新编码</li>
+<li>查询模式感知</li>
+<li>学习型编码推荐</li>
+</ul>
+<br/>
+<h3>3. 硬件多样性支持</h3>
+<br/>
+<ul>
+<li>ARM NEON 支持</li>
+<li>AVX-512 优化</li>
+<li>Apple Silicon 优化</li>
+</ul>
+<br/>
+<h3>4. 跨格式互操作</h3>
+<br/>
+<ul>
+<li>与 Parquet/ORC 双向转换</li>
+<li>与 Arrow 内存格式零拷贝互操作</li>
+<li>与 Spark/Flink 深度集成</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>结论</h2>
+<br/>
+<p>FastLanes 重新定义了列式文件格式的设计目标：</p>
+<br/>
+<li><strong>表达式编码框架</strong> — 灵活的编码组合</li>
+<li><strong>SIMD/GPU 友好</strong> — 超过 100 亿/秒解码吞吐</li>
+<li><strong>级联压缩</strong> — 压缩率比 Parquet 高 40%</li>
+<li><strong>开源兼容</strong> — 可与现有生态无缝集成</li>
+<br/>
+<p>FastLanes 证明：<strong>创建新格式比优化现有格式更能充分发挥现代硬件能力</strong>。</p>
+<br/>
+<hr/>
+<br/>
+<h2>参考</h2>
+<br/>
+<ul>
+<li>原文: https://www.vldb.org/pvldb/vol18/p4629-afroozeh.pdf</li>
+<li>GitHub: https://github.com/cwida/fastlanes-vldb2025</li>
+<li>代码: https://github.com/cwida/FastLanes</li>
+<li>相关论文:</li>
+<li>Do GPUs Really Need New Tabular File Formats?: https://arxiv.org/abs/2602.17335</li>
+<li>GPU-Accelerated SQL on Compressed Data: https://arxiv.org/abs/2506.10092</li>
+<li>G-ALP: https://arxiv.org/abs/2506.18592</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>翻译日期: 2026-03-27</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

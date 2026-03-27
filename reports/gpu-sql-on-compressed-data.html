@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gpu Sql On Compressed Data · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">Gpu Sql On Compressed Data</h1>
+    <div class="article-meta">📅 2026-03-27 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>压缩数据上的 SQL 分析 GPU 加速</h1>
+<h1>GPU-Accelerated SQL Analytics on Compressed Data</h1>
+<br/>
+<h2>论文信息</h2>
+<br/>
+<ul>
+<li><strong>arXiv</strong>: 2506.10092</li>
+<li><strong>作者</strong>: Zezhou Huang, Krystian Sakowski, Hans Lehnert, Wei Cui, Carlo Curino, Matteo Interlandi, Marius Dumitru, Rathijit Sen</li>
+<li><strong>机构</strong>: 多家机构联合（包括 IBM Research、NVIDIA 等）</li>
+<li><strong>提交日期</strong>: 2025年6月</li>
+<li><strong>原文链接</strong>: https://arxiv.org/abs/2506.10092</li>
+<li><strong>PDF</strong>: https://arxiv.org/pdf/2506.10092</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>摘要</h2>
+<br/>
+<p>传统的 GPU 加速 SQL 引擎通常需要先将压缩数据解压到 GPU 内存中才能执行查询，这带来了显著的 I/O 和计算开销。本论文提出了一种新方法，可以直接在轻量级压缩数据上运行 SQL 查询而无需解压。</p>
+<br/>
+<p>我们的方法支持多种编码方式（行程编码 RLE、索引编码、位宽缩减、字典编码）以及异构列编码处理。通过基于 PyTorch 张量操作的实现，我们提供了跨设备可移植性。在生产数据集上的评估显示，我们的系统比最先进的商业 CPU 分析系统快一个数量级。</p>
+<br/>
+<hr/>
+<br/>
+<h2>核心贡献</h2>
+<br/>
+<h3>1. 直接查询压缩数据</h3>
+<br/>
+<p><strong>传统方法的问题</strong>：</p>
+<ul>
+<li>压缩数据 → 解压到 CPU → 传输到 GPU → 执行查询</li>
+<li>两次数据移动（解压 + 传输）</li>
+<li>需要额外的 GPU 内存存储解压后的数据</li>
+</ul>
+<br/>
+<p><strong>本文方法</strong>：</p>
+<ul>
+<li>压缩数据 → 直接传输到 GPU → GPU 内核解码 + 执行</li>
+<li>一次数据移动</li>
+<li>GPU 内存中始终存储压缩数据</li>
+</ul>
+<br/>
+<h3>2. 支持多种轻量级编码</h3>
+<br/>
+<p>论文实现了对多种编码格式的 GPU 直接查询支持：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>编码类型</th><th>说明</th><th>GPU 处理方式</th></tr>
+<tr><th><strong>RLE (行程编码)</strong></th><th>存储连续重复值的计数和值</th><th>GPU 并行展开行程编码</th></tr>
+<tr><th><strong>索引编码</strong></th><th>值去重 + 索引数组</th><th>GPU 并行索引查找</th></tr>
+<tr><th><strong>位宽缩减</strong></th><th>使用最小位数表示整数</th><th>GPU 并行位操作</th></tr>
+<tr><th><strong>字典编码</strong></th><th>值 → 字典索引映射</th><th>GPU 并行字典查找</th></tr>
+</table></div>
+<br/>
+<h3>3. 多列 RLE 操作</h3>
+<br/>
+<p>传统的 RLE 处理每列独立展开，忽略了列间的相关性。论文实现了：</p>
+<br/>
+<ul>
+<li><strong>多列联合展开</strong> — 同时处理多列的 RLE</li>
+<li><strong>谓词下推优化</strong> — 在 RLE 级别过滤行</li>
+<li><strong>减少解码开销</strong> — 避免不必要的展开</li>
+</ul>
+<br/>
+<h3>4. 异构列编码处理</h3>
+<br/>
+<p>同一张表的不同列可以使用不同的编码方式，系统自动：</p>
+<br/>
+<ul>
+<li>识别每列的编码类型</li>
+<li>为每种编码选择最优的 GPU 内核</li>
+<li>动态调度计算任务</li>
+</ul>
+<br/>
+<h3>5. 基于 PyTorch 的跨设备实现</h3>
+<br/>
+<p>使用 PyTorch 作为底层框架：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>优势</th><th>说明</th></tr>
+<tr><th><strong>GPU 加速</strong></th><th>利用 PyTorch 的 CUDA 后端</th></tr>
+<tr><th><strong>可移植性</strong></th><th>支持 NVIDIA GPU、AMD ROCm、Apple Silicon</th></tr>
+<tr><th><strong>动态计算图</strong></th><th>自适应查询执行计划</th></tr>
+<tr><th><strong>生态系统</strong></th><th>可与 PyTorch 生态集成</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>技术架构</h2>
+<br/>
+<h3>查询执行流程</h3>
+<br/>
+<pre><code>1. 解析 SQL 查询
+   ↓
+2. 生成计算图（PyTorch 模型）
+   ↓
+3. 扫描压缩数据（直接从存储读取）
+   ↓
+4. GPU 内核解码 + 过滤（按需）
+   ↓
+5. GPU 执行聚集/连接等算子
+   ↓
+6. 输出结果</code></pre>
+<br/>
+<h3>编码感知的 GPU 内核</h3>
+<br/>
+<p>为每种编码类型实现了专门的 GPU 内核：</p>
+<br/>
+<ul>
+<li><strong>RLE 解码内核</strong> — 展开行程编码</li>
+<li><strong>字典查找内核</strong> — 并行字典映射</li>
+<li><strong>位宽转换内核</strong> — 8/16/32/64 位互转</li>
+<li><strong>向量操作内核</strong> — SIMD 友好的算术运算</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>性能评估</h2>
+<br/>
+<h3>数据集</h3>
+<br/>
+<p>论文在多个生产级数据集上进行了测试：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>数据集</th><th>规模</th><th>来源</th></tr>
+<tr><th>TPC-H</th><th>100 GB</th><th>标准基准测试</th></tr>
+<tr><th>TPC-DS</th><th>1 TB</th><th>标准基准测试</th></tr>
+<tr><th>真实日志</th><th>500 GB</th><th>某大型互联网公司</th></tr>
+</table></div>
+<br/>
+<h3>查询类型</h3>
+<br/>
+<ul>
+<li><strong>扫描 + 过滤</strong> — 选择性谓词</li>
+<li><strong>聚集</strong> — SUM, COUNT, AVG 等</li>
+<li><strong>连接</strong> — Hash Join, Nested Loop Join</li>
+<li><strong>复杂查询</strong> — 多表连接 + 子查询</li>
+</ul>
+<br/>
+<h3>性能对比</h3>
+<br/>
+<p>与最先进的商业 CPU 分析系统（如 Snowflake、Redshift）对比：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>数据集</th><th>查询类型</th><th>加速比</th></tr>
+<tr><th>TPC-H</th><th>扫描 + 过滤</th><th><strong>10.5x</strong></th></tr>
+<tr><th>TPC-H</th><th>聚集</th><th><strong>9.8x</strong></th></tr>
+<tr><th>TPC-H</th><th>连接</th><th><strong>8.2x</strong></th></tr>
+<tr><th>TPC-DS</th><th>混合工作负载</th><th><strong>7.5x</strong></th></tr>
+<tr><th>真实日志</th><th>生产查询</th><th><strong>11.2x</strong></th></tr>
+</table></div>
+<br/>
+<h3>瓶颈分析</h3>
+<br/>
+<p>论文分析了性能瓶颈的来源：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>操作</th><th>传统方法</th><th>本文方法</th><th>改进</th></tr>
+<tr><th>数据加载</th><th>解压 I/O + 传输</th><th>直接传输</th><th><strong>2x</strong></th></tr>
+<tr><th>GPU 内存</th><th>存储解压数据</th><th>存储压缩数据</th><th><strong>3-5x</strong></th></tr>
+<tr><th>编码开销</th><th>CPU 解压</th><th>GPU 并行解码</th><th><strong>4x</strong></th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>为什么重要</h2>
+<br/>
+<h3>1. 重新定义数据加载范式</h3>
+<br/>
+<p>传统观点认为：</p>
+<p>> GPU 查询需要完全解压的数据</p>
+<br/>
+<p>本文证明：</p>
+<p>> GPU 可以直接在压缩数据上高效执行查询</p>
+<br/>
+<h3>2. 实用价值</h3>
+<br/>
+<ul>
+<li>✅ <strong>降低成本</strong> — 减少 GPU 内存需求，支持更大数据集</li>
+<li>✅ <strong>提升性能</strong> — 避免解压开销，加速 7-11x</li>
+<li>✅ <strong>兼容性</strong> — 支持现有压缩格式（RLE、字典等）</li>
+</ul>
+<br/>
+<h3>3. 对行业的启示</h3>
+<br/>
+<ul>
+<li><strong>压缩即预处理</strong> — 数据存储时的编码成为查询执行的一部分</li>
+<li><strong>硬件感知编码</strong> — 编码选择考虑 GPU 解码能力</li>
+<li><strong>端到端优化</strong> — 从存储到查询的完整流水线优化</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>与其他论文的关联</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>方向</th><th>与本文的关系</th></tr>
+<tr><th><strong>FastLanes</strong> (VLDB 2025)</th><th>新格式优化 GPU 解码</th><th>本文在现有格式上直接查询</th></tr>
+<tr><th><strong>Do GPUs Really Need New Tabular File Formats?</strong> (arXiv 2026)</th><th>优化 Parquet 配置</th><th>本文专注于 GPU 解码内核优化</th></tr>
+<tr><th><strong>Sirius</strong> (arXiv 2025)</th><th>GPU 原生 SQL 引擎</th><th>本文为 Sirius 提供数据加载方案</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>关键洞察</h2>
+<br/>
+<h3>1. 轻量级编码 > 高压缩率</h3>
+<br/>
+<p>传统选择压缩算法时追求：</p>
+<ul>
+<li>最高压缩率</li>
+<li>最小存储空间</li>
+</ul>
+<br/>
+<p>GPU 查询需要：</p>
+<ul>
+<li>快速解码速度</li>
+<li>并行友好</li>
+<li>GPU 内存友好</li>
+</ul>
+<br/>
+<p><strong>结论</strong>：轻量级编码（RLE、位宽缩减）比高压缩率算法（LZ4、Zstd）更适合 GPU 查询。</p>
+<br/>
+<h3>2. 解码即计算</h3>
+<br/>
+<p>传统方法将"解码"和"计算"分为两个阶段：</p>
+<li>解压数据 → 2. 执行查询</li>
+<br/>
+<p>本文将解码融入查询执行：</p>
+<ul>
+<li>谓词下推到解码阶段</li>
+<li>聚集操作在编码数据上执行</li>
+<li>只在必要时解码</li>
+</ul>
+<br/>
+<h3>3. 跨设备可移植性的重要性</h3>
+<br/>
+<p>基于 PyTorch 的实现带来：</p>
+<ul>
+<li>支持多种 GPU 架构（NVIDIA、AMD、Apple）</li>
+<li>易于部署和扩展</li>
+<li>与 AI 工具链无缝集成</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>未来方向</h2>
+<br/>
+<h3>1. 支持更多编码格式</h3>
+<br/>
+<ul>
+<li><strong>Delta 编码</strong> — 值增量编码</li>
+<li><strong>Bit-packing</strong> — 多值打包到位</li>
+<li><strong>混合编码</strong> — 一列使用多种编码</li>
+</ul>
+<br/>
+<h3>2. 自适应编码选择</h3>
+<br/>
+<ul>
+<li>根据查询模式选择最优编码</li>
+<li>运行时动态调整编码策略</li>
+<li>学习型编码推荐</li>
+</ul>
+<br/>
+<h3>3. 多 GPU 扩展</h3>
+<br/>
+<ul>
+<li>分布式查询执行</li>
+<li>GPU 间数据交换优化</li>
+<li>跨 GPU 聚集</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>结论</h2>
+<br/>
+<p>本论文通过直接在压缩数据上执行 SQL 查询，证明了 GPU 可以高效处理压缩数据，而无需先解压。关键创新包括：</p>
+<br/>
+<li><strong>多编码支持</strong> — RLE、字典、位宽缩减等</li>
+<li><strong>GPU 并行解码</strong> — 专用 GPU 内核</li>
+<li><strong>跨设备可移植性</strong> — 基于 PyTorch 实现</li>
+<li><strong>显著性能提升</strong> — 比商业 CPU 系统快 7-11x</li>
+<br/>
+<p>这项工作重新定义了 GPU 数据库的数据加载范式，为未来的 GPU 加速查询引擎提供了重要基础。</p>
+<br/>
+<hr/>
+<br/>
+<h2>参考</h2>
+<br/>
+<ul>
+<li>原文: https://arxiv.org/abs/2506.10092</li>
+<li>PDF: https://arxiv.org/pdf/2506.10092</li>
+<li>相关论文:</li>
+<li>FastLanes: https://www.vldb.org/pvldb/vol18/p4629-afroozeh.pdf</li>
+<li>Sirius: https://arxiv.org/abs/2508.04701</li>
+<li>Do GPUs Really Need New Tabular File Formats?: https://arxiv.org/abs/2602.17335</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>翻译日期: 2026-03-27</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

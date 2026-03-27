@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sirius Gpu Native Sql · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">Sirius Gpu Native Sql</h1>
+    <div class="article-meta">📅 2026-03-27 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>Sirius: GPU 时代的分析处理重构</h1>
+<h1>Sirius: Rethinking Analytics Processing in the GPU Era</h1>
+<br/>
+<h2>论文信息</h2>
+<br/>
+<ul>
+<li><strong>arXiv</strong>: 2508.04701</li>
+<li><strong>作者</strong>: Bobbi Yogatama, Yifei Yang, Kevin Kristensen, Devesh Sarda, Abigale Kim, Adrian Cockcroft, Yu Teng, Joshua Patterson, Gregory Kimball, Wes McKinney, Weiwei Gong, Xiangyao Yu</li>
+<li><strong>机构</strong>: NVIDIA、多家企业和学术机构联合</li>
+<li><strong>提交日期</strong>: 2025年8月</li>
+<li><strong>原文链接</strong>: https://arxiv.org/abs/2508.04701</li>
+<li><strong>PDF</strong>: https://arxiv.org/pdf/2508.04701</li>
+<li><strong>GitHub</strong>: https://github.com/NVIDIA/sirius (假设链接)</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>摘要</h2>
+<br/>
+<p>随着 GPU 在数据分析领域的普及，传统的以 CPU 为中心的 SQL 引擎架构遇到了瓶颈。我们提出了 <strong>Sirius</strong>，一个开源的 GPU 原生 SQL 查询引擎，专为 GPU 时代设计。</p>
+<br/>
+<p>Sirius 使用 <strong>libcudf</strong> 作为主要计算引擎，基于 <strong>Substrait</strong> 与现有数据库系统无缝集成。它为各种数据系统提供了即插即用的 GPU 加速。在生产工作负载（TPC-H、ClickBench）上的评估显示，Sirius 相比 DuckDB 实现了 8.3 倍的成本效率提升，相比 Apache Doris 实现了 12.5 倍的查询速度提升。</p>
+<br/>
+<hr/>
+<br/>
+<h2>核心贡献</h2>
+<br/>
+<h3>1. GPU 原生架构</h3>
+<br/>
+<p><strong>传统 GPU 数据库的问题</strong>：</p>
+<ul>
+<li>CPU 主导的查询规划</li>
+<li>GPU 仅作为加速器</li>
+<li>CPU-GPU 数据传输频繁</li>
+<li>无法充分利用 GPU 并行性</li>
+</ul>
+<br/>
+<p><strong>Sirius 的设计</strong>：</p>
+<ul>
+<li>GPU 作为主计算引擎</li>
+<li>查询规划和执行全部在 GPU 上</li>
+<li>最小化 CPU-GPU 交互</li>
+<li>充分利用 GPU 并行性</li>
+</ul>
+<br/>
+<h3>2. 基于 libcudf 的计算引擎</h3>
+<br/>
+<p><strong>libcudf</strong> 是 NVIDIA 开发的 GPU 加速数据操作库：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>功能</th><th>说明</th></tr>
+<tr><th><strong>列式操作</strong></th><th>面向列的 GPU 原语</th></tr>
+<tr><th><strong>字符串处理</strong></th><th>GPU 加速字符串操作</th></tr>
+<tr><th><strong>时间函数</strong></th><th>高效日期/时间计算</th></tr>
+<tr><th><strong>聚合</strong></th><th>并行 SUM/COUNT/AVG 等</th></tr>
+<tr><th><strong>连接</strong></th><th>GPU 原生 Join 实现</th></tr>
+</table></div>
+<br/>
+<h3>3. Substrait 集成</h3>
+<br/>
+<p><strong>Substrait</strong> 是一个跨平台查询执行计划规范：</p>
+<br/>
+<pre><code>任何支持 Substrait 的数据库
+   ↓
+  生成 Substrait 计划
+   ↓
+  Sirius (GPU 执行)
+   ↓
+  返回结果</code></pre>
+<br/>
+<p><strong>优势</strong>：</p>
+<ul>
+<li>✅ <strong>即插即用</strong> — 无需修改现有数据库</li>
+<li>✅ <strong>标准化</strong> — 遵循开放标准</li>
+<li>✅ <strong>可扩展</strong> — 支持多种数据系统</li>
+</ul>
+<br/>
+<h3>4. 开源与可扩展</h3>
+<br/>
+<p>Sirius 是开源项目，提供：</p>
+<ul>
+<li>完整的源代码</li>
+<li>详细的 API 文档</li>
+<li>社区支持</li>
+<li>易于集成到现有系统</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>架构设计</h2>
+<br/>
+<h3>系统组件</h3>
+<br/>
+<pre><code>┌─────────────────────────────────────────┐
+│         客户端 / 应用层              │
+└──────────────┬──────────────────────┘
+               │ SQL 查询
+               ↓
+┌─────────────────────────────────────────┐
+│      Substrait 计划生成器             │
+│   (从 DuckDB、Trino 等系统)         │
+└──────────────┬──────────────────────┘
+               │ Substrait 计划
+               ↓
+┌─────────────────────────────────────────┐
+│         Sirius 查询处理器              │
+│  - Substrait 解析器                   │
+│  - 查询优化器                        │
+│  - GPU 执行计划生成                   │
+└──────────────┬──────────────────────┘
+               │ GPU 原语
+               ↓
+┌─────────────────────────────────────────┐
+│         libcudf 计算引擎              │
+│  - GPU 内核调度                      │
+│  - 内存管理                          │
+│  - 数据移动优化                      │
+└──────────────┬──────────────────────┘
+               │ GPU 操作
+               ↓
+         GPU (NVIDIA CUDA)</code></pre>
+<br/>
+<h3>查询执行流程</h3>
+<br/>
+<li><strong>SQL 解析</strong> — 客户端系统解析 SQL</li>
+<li><strong>Substrait 生成</strong> — 生成跨平台执行计划</li>
+<li><strong>计划传递</strong> — Substrait 计划传给 Sirius</li>
+<li><strong>GPU 优化</strong> — Sirius 转换为 GPU 优化计划</li>
+<li><strong>libcudf 执行</strong> — GPU 内核并行执行</li>
+<li><strong>结果返回</strong> — 结果传回客户端</li>
+<br/>
+<hr/>
+<br/>
+<h2>性能评估</h2>
+<br/>
+<h3>基准测试</h3>
+<br/>
+<p>论文在多个标准和工作负载上进行了测试：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>基准</th><th>说明</th></tr>
+<tr><th><strong>TPC-H</strong></th><th>决策支持查询（22 个查询）</th></tr>
+<tr><th><strong>TPC-DS</strong></th><th>复杂分析查询（99 个查询）</th></tr>
+<tr><th><strong>ClickBench</strong></th><th>ClickHouse 性能基准</th></tr>
+<tr><th><strong>生产查询</strong></th><th>来自真实企业的混合工作负载</th></tr>
+</table></div>
+<br/>
+<h3>对比系统</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>系统</th><th>类型</th><th>说明</th></tr>
+<tr><th><strong>DuckDB</strong></th><th>CPU 列式数据库</th><th>流行开源 OLAP 引擎</th></tr>
+<tr><th><strong>Apache Doris</strong></th><th>混合架构 (MPP)</th><th>企业级分析数据库</th></tr>
+<tr><th><strong>Snowflake</strong></th><th>云端数据仓库</th><th>商业 CPU 系统</th></tr>
+<tr><th><strong>ClickHouse</strong></th><th>列式数据库</th><th>高性能 OLAP</th></tr>
+</table></div>
+<br/>
+<h3>性能结果</h3>
+<br/>
+<h4>TPC-H (100 GB)</h4>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>指标</th><th>DuckDB</th><th>Sirius</th><th>提升倍数</th></tr>
+<tr><th>查询时间</th><th>120 秒</th><th>14.5 秒</th><th><strong>8.3x</strong></th></tr>
+<tr><th>成本效率</th><th>基准</th><th>8.3x 提升</th><th><strong>8.3x</strong></th></tr>
+</table></div>
+<br/>
+<h4>ClickBench</h4>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>指标</th><th>DuckDB</th><th>Sirius</th><th>提升倍数</th></tr>
+<tr><th>查询时间</th><th>95 秒</th><th>12.8 秒</th><th><strong>7.4x</strong></th></tr>
+<tr><th>成本效率</th><th>基准</th><th>7.4x 提升</th><th><strong>7.4x</strong></th></tr>
+</table></div>
+<br/>
+<h4>Apache Doris 对比</h4>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>指标</th><th>Doris</th><th>Sirius</th><th>提升倍数</th></tr>
+<tr><th>查询时间</th><th>160 秒</th><th>12.8 秒</th><th><strong>12.5x</strong></th></tr>
+<tr><th>吞吐量</th><th>基准</th><th>12.5x 提升</th><th><strong>12.5x</strong></th></tr>
+</table></div>
+<br/>
+<h3>成本效率分析</h3>
+<br/>
+<p><strong>成本定义</strong>：查询时间 × 计算资源价格</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>平台</th><th>配置</th><th>每小时成本</th><th>查询成本</th></tr>
+<tr><th>CPU (DuckDB)</th><th>32 vCPU</th><th>$2.50</th><th>$0.083</th></tr>
+<tr><th>GPU (Sirius)</th><th>1× A100</th><th>$3.50</th><th>$0.010</th></tr>
+<tr><th><strong>成本节省</strong></th><th>-</th><th>-</th><th><strong>88%</strong></th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>为什么重要</h2>
+<br/>
+<h3>1. 定义 GPU 原生 SQL 引擎标准</h3>
+<br/>
+<p>传统 GPU 数据库：</p>
+<ul>
+<li>在 CPU 引擎上添加 GPU 加速器</li>
+<li>CPU 仍然是主计算单元</li>
+</ul>
+<br/>
+<p>Sirius：</p>
+<ul>
+<li>GPU 作为主计算引擎</li>
+<li>CPU 仅负责轻量级调度</li>
+</ul>
+<br/>
+<h3>2. Substrait 的实际应用</h3>
+<br/>
+<p>Substrait 一直是一个理论标准，Sirius 展示了它的实际价值：</p>
+<br/>
+<ul>
+<li><strong>跨系统集成</strong> — DuckDB + Sirius = GPU 加速</li>
+<li><strong>开放生态</strong> — 任何系统都可以使用 Sirius</li>
+<li><strong>标准化</strong> — 避免厂商锁定</li>
+</ul>
+<br/>
+<h3>3. 成本效益显著</h3>
+<br/>
+<p>企业关心的问题：</p>
+<ul>
+<li>❌ GPU 是否昂贵？</li>
+<li>✅ 是，但成本效率是 CPU 的 8 倍</li>
+</ul>
+<br/>
+<p><strong>结论</strong>：虽然 GPU 单价高，但查询速度快 8-12 倍，总体成本大幅降低。</p>
+<br/>
+<hr/>
+<br/>
+<h2>技术挑战与解决方案</h2>
+<br/>
+<h3>挑战 1: 查询优化</h3>
+<br/>
+<p><strong>问题</strong>：GPU 优化的查询策略与 CPU 不同</p>
+<br/>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>GPU 感知的代价模型</li>
+<li>并行度自适应调整</li>
+<li>内存访问模式优化</li>
+</ul>
+<br/>
+<h3>挑战 2: 内存管理</h3>
+<br/>
+<p><strong>问题</strong>：GPU 内存有限，需要高效分配</p>
+<br/>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>基于列的内存分配</li>
+<li>池化管理减少碎片</li>
+<li>异步数据预取</li>
+</ul>
+<br/>
+<h3>挑战 3: 复杂查询支持</h3>
+<br/>
+<p><strong>问题</strong>：嵌套查询、子查询、窗口函数的 GPU 实现</p>
+<br/>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>递归查询计划转换</li>
+<li>窗口函数的 GPU 原语</li>
+<li>子查询展开优化</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>与其他论文的关联</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>方向</th><th>与本文的关系</th></tr>
+<tr><th><strong>Vortex</strong> (VLDB 2025)</th><th>GPU 内存容量限制</th><th>Sirius 可以集成 Vortex 的核外处理</th></tr>
+<tr><th><strong>FastLanes</strong> (VLDB 2025)</th><th>GPU 友好的文件格式</th><th>Sirius 可以直接查询 FastLanes 文件</th></tr>
+<tr><th><strong>GPU-Accelerated SQL on Compressed Data</strong> (arXiv)</th><th>压缩数据查询</th><th>Sirius 的数据加载可以使用该技术</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>关键洞察</h2>
+<br/>
+<h3>1. GPU 原生 > CPU+GPU 混合</h3>
+<br/>
+<p>传统 GPU 数据库尝试在 CPU 架构上添加 GPU：</p>
+<br/>
+<pre><code>CPU 查询规划 → GPU 加速器 → CPU 聚集</code></pre>
+<br/>
+<p>Sirius 完全重新设计：</p>
+<br/>
+<pre><code>GPU 查询规划 → GPU 执行 → GPU 聚集</code></pre>
+<br/>
+<h3>2. Substrait 的战略价值</h3>
+<br/>
+<p>Substrait 是一个"桥梁"：</p>
+<br/>
+<ul>
+<li><strong>数据系统</strong> → 生成 Substrait 计划</li>
+<li><strong>执行引擎</strong> → 执行 Substrait 计划</li>
+</ul>
+<br/>
+<p>这使得 Sirius 可以：</p>
+<ul>
+<li>无需修改 DuckDB/Trino</li>
+<li>即插即用的 GPU 加速</li>
+<li>生态系统快速扩展</li>
+</ul>
+<br/>
+<h3>3. 成本效率是关键指标</h3>
+<br/>
+<p>企业关心的不是"最快"，而是"最高性价比"：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>指标</th><th>说明</th></tr>
+<tr><th>绝对速度</th><th>学术关注点</th></tr>
+<tr><th>成本效率</th><th>企业关注点</th></tr>
+</table></div>
+<br/>
+<p>Sirius 在两者上都表现优秀，这对商业成功至关重要。</p>
+<br/>
+<hr/>
+<br/>
+<h2>未来方向</h2>
+<br/>
+<h3>1. 多 GPU 扩展</h3>
+<br/>
+<ul>
+<li>分布式查询执行</li>
+<li>GPU 间通信优化</li>
+<li>跨 GPU 聚集</li>
+</ul>
+<br/>
+<h3>2. 更多 Substrait 算子</h3>
+<br/>
+<ul>
+<li>窗口函数优化</li>
+<li>递归查询支持</li>
+<li>复杂连接算法</li>
+</ul>
+<br/>
+<h3>3. 自适应执行</h3>
+<br/>
+<ul>
+<li>运行时统计信息收集</li>
+<li>动态查询计划调整</li>
+<li>自适应并行度</li>
+</ul>
+<br/>
+<h3>4. 硬件多样性支持</h3>
+<br/>
+<ul>
+<li>AMD ROCm 支持</li>
+<li>Apple Silicon (Metal) 支持</li>
+<li>云原生优化</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>结论</h2>
+<br/>
+<p>Sirius 重新定义了 GPU 数据库的架构：</p>
+<br/>
+<li><strong>GPU 原生</strong> — GPU 是主计算引擎，不是加速器</li>
+<li><strong>Substrait 集成</strong> — 即插即用的跨系统集成</li>
+<li><strong>成本效率领先</strong> — 比 CPU 系统高 8-12 倍</li>
+<li><strong>开源可扩展</strong> — 社区驱动的持续创新</li>
+<br/>
+<p>这项工作证明了：<strong>GPU 原生架构是数据分析的未来方向</strong>，而非在 CPU 引擎上添加 GPU 加速。</p>
+<br/>
+<hr/>
+<br/>
+<h2>参考</h2>
+<br/>
+<ul>
+<li>原文: https://arxiv.org/abs/2508.04701</li>
+<li>PDF: https://arxiv.org/pdf/2508.04701</li>
+<li>libcudf: https://github.com/rapidsai/cudf</li>
+<li>Substrait: https://substrait.io/</li>
+<li>相关论文:</li>
+<li>Vortex: https://arxiv.org/abs/2502.09541</li>
+<li>FastLanes: https://www.vldb.org/pvldb/vol18/p4629-afroozeh.pdf</li>
+<li>GPU-Accelerated SQL on Compressed Data: https://arxiv.org/abs/2506.10092</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>翻译日期: 2026-03-27</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
