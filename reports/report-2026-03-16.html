@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-03-16 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --gradient-accent:linear-gradient(135deg,#5b6cf9 0%,#a78bfa 100%);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border:1px solid rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border:1px solid rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border:1px solid rgba(167,139,250,0.2);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+
+    .article-body{
+      background:var(--bg-card);border:1px solid var(--glass-border);
+      border-radius:18px;box-shadow:var(--glass-shadow);
+      backdrop-filter:blur(20px);padding:32px 36px;
+    }
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;color:var(--color-text);}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);color:var(--color-text);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+
+<div class="back-bar">
+  <a href="../blog.html" class="back-link">← 返回列表</a>
+</div>
+
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-encoding">数据编码</span><span class="tag tag-gpu">GPU 加速</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-03-16</h1>
+    <div class="article-meta">📅 2026-03-16 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body">
+    <h1>数据库研究论文追踪报告 - 2026-03-16</h1>
+<br/>
+<h2>摘要</h2>
+<p>发现 <strong>3 篇高度相关论文</strong>，匹配您在数据编码/解码和 GPU 加速方面的研究兴趣。</p>
+<br/>
+<hr/>
+<br/>
+<h2>📊 按分类论文</h2>
+<br/>
+<h3>🏷️ 数据编码/解码</h3>
+<br/>
+<h4>1. FastLanes 文件格式</h4>
+<ul>
+<li><strong>会议</strong>: VLDB 2025</li>
+<li><strong>作者</strong>: Azim Afroozeh, Peter Boncz (CWI Amsterdam)</li>
+<li><strong>链接</strong>: <a href="https://www.vldb.org/pvldb/vol18/p4629-afroozeh.pdf" target="_blank">PDF</a> | <a href="https://github.com/cwida/fastlanes-vldb2025" target="_blank">GitHub</a></li>
+</ul>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li>面向 SIMD/GPU 数据并行执行的新型开源大数据文件格式</li>
+<li>灵活的表达式编码机制，支持轻量级、全数据并行编码</li>
+<li>级联压缩技术提升压缩比</li>
+<li>目标: 解码吞吐量超过 100 亿整数/秒</li>
+<li>采用轻量级编码替代通用压缩(如 Snappy)</li>
+</ul>
+<br/>
+<p><strong>相关度</strong>: ⭐⭐⭐⭐⭐ 高 - 直接针对数据编码/解码与 GPU 加速的结合</p>
+<br/>
+<hr/>
+<br/>
+<h3>🏷️ GPU 加速</h3>
+<br/>
+<h4>2. Vortex: 突破 GPU 加速大规模数据分析的内存容量限制</h4>
+<ul>
+<li><strong>会议</strong>: VLDB 2025</li>
+<li><strong>作者</strong>: Yichao Yuan, Advait Iyer, Lin Ma, Nishil Talati</li>
+<li><strong>arXiv</strong>: <a href="https://arxiv.org/abs/2502.09541" target="_blank">2502.09541</a></li>
+</ul>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li>针对超出 GPU 内存容量的数据分析工作负载的 GPU 加速框架</li>
+<li>优化的 I/O 原语，充分利用多 GPU 系统中的所有 PCIe 链路</li>
+<li>新颖的编程模型，将 GPU 内核开发与 I/O 调度分离</li>
+<li>零拷贝内存访问实现延迟物化</li>
+<li><strong>性能</strong>: 相比 Proteus (GPU 基线) 提升 5.7 倍，相比 DuckDB (CPU) 价格性能提升 2.5 倍</li>
+</ul>
+<br/>
+<p><strong>相关度</strong>: ⭐⭐⭐⭐⭐ 高 - 核心 GPU 数据库加速研究</p>
+<br/>
+<hr/>
+<br/>
+<h4>3. 在 GPU 上高效处理连接和分组聚合</h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2025</li>
+<li><strong>作者</strong>: Bowen Wu, Dimitris Koutsoukos, Gustavo Alonso (ETH Zürich)</li>
+<li><strong>链接</strong>: <a href="https://arxiv.org/abs/2312.00720" target="_blank">arXiv</a> | <a href="https://github.com/BowenforGit/sigmod25-reprod" target="_blank">GitHub</a></li>
+</ul>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li>重新审视基于 GPU 的连接和分组聚合实现</li>
+<li>识别四个主要改进领域</li>
+<li>解决 GPU 执行的查询优化问题</li>
+<li>使用代表性工作负载进行全面评估</li>
+</ul>
+<br/>
+<p><strong>相关度</strong>: ⭐⭐⭐⭐ 高 - GPU 查询处理基础</p>
+<br/>
+<hr/>
+<br/>
+<h2>📈 其他值得关注的论文</h2>
+<br/>
+<h3>突破 GPU 内存限制的 GPU 加速数据库</h3>
+<ul>
+<li><strong>会议</strong>: VLDB 2025</li>
+<li><strong>作者</strong>: (来自 VLDB 论文集)</li>
+<li><strong>链接</strong>: <a href="https://www.vldb.org/pvldb/vol18/p4518-li.pdf" target="_blank">PDF</a></li>
+</ul>
+<br/>
+<p><strong>重点</strong>: 单节点成本效益的 GPU 加速分析数据库技术，使单个 GPU 能够高效处理超出 GPU 内存的数据集。</p>
+<br/>
+<hr/>
+<br/>
+<h2>🔍 搜索详情</h2>
+<ul>
+<li><strong>搜索日期</strong>: 2026-03-16</li>
+<li><strong>来源</strong>: VLDB 2025, SIGMOD 2025, arXiv cs.DB</li>
+<li><strong>关键词</strong>: 数据编码、解码、GPU 加速、数据库、SIMD、压缩</li>
+<li><strong>新发现论文</strong>: 3 篇高度相关</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>💡 观察到的关键趋势</h2>
+<br/>
+<li><strong>GPU 内存容量解决方案</strong>: 多篇论文解决 GPU 内存限制问题 (Vortex, Scaling GPU DBs)</li>
+<li><strong>SIMD/GPU 优化格式</strong>: FastLanes 代表面向现代硬件的列式编码新方向</li>
+<li><strong>查询算子优化</strong>: 专注于 GPU 上高效的连接和聚合</li>
+<br/>
+<hr/>
+<br/>
+<h2>📚 资源</h2>
+<br/>
+<ul>
+<li><a href="https://www.vldb.org/2025/" target="_blank">VLDB 2025 论文集</a></li>
+<li><a href="https://2025.sigmod.org/sigmod_papers.shtml" target="_blank">SIGMOD 2025 论文</a></li>
+<li><a href="https://github.com/cwida/fastlanes-vldb2025" target="_blank">FastLanes GitHub</a></li>
+<li><a href="https://github.com/BowenforGit/sigmod25-reprod" target="_blank">SIGMOD GPU 连接复现</a></li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>报告由数据库研究论文追踪器生成</em></p>
+<p><em>下次更新: 每日 09:00</em></p>
+<br/>
+  </div>
+</div>
+
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2,'0');
+    const m = now.getMinutes().toString().padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = `${days[now.getDay()]} ${h}:${m}`;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>研究笔记 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base: #f2f1f6;
+      --bg-card: rgba(255,255,255,0.72);
+      --bg-card-hover: rgba(255,255,255,0.9);
+      --glass-border: rgba(255,255,255,0.6);
+      --glass-shadow: 0 8px 32px rgba(60,60,100,0.10), 0 1.5px 4px rgba(60,60,100,0.06);
+      --glass-shadow-hover: 0 16px 48px rgba(60,60,100,0.16), 0 2px 8px rgba(60,60,100,0.08);
+      --gradient-accent: linear-gradient(135deg, #5b6cf9 0%, #a78bfa 100%);
+      --color-primary: #5b6cf9;
+      --color-text: #1c1c1e;
+      --color-text-secondary: #48484a;
+      --color-text-muted: #8e8e93;
+      --radius-card: 18px;
+      --radius-pill: 999px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-sans); background: var(--bg-base); color: var(--color-text); -webkit-font-smoothing: antialiased; }
+
+    /* Menu Bar */
+    .menubar {
+      position: sticky; top: 0; z-index: 100;
+      height: 48px;
+      background: rgba(242,241,246,0.88);
+      backdrop-filter: blur(24px) saturate(1.8);
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+    }
+    .menubar .logo { font-size: 15px; font-weight: 700; color: var(--color-text); text-decoration: none; }
+    .menubar .menu-items { display: flex; gap: 4px; }
+    .menubar .menu-item { font-size: 13px; font-weight: 500; padding: 4px 10px; border-radius: 6px; cursor: pointer; color: var(--color-text); text-decoration: none; transition: background 0.15s; }
+    .menubar .menu-item:hover { background: rgba(0,0,0,0.07); }
+    .menubar .menu-item.active { font-weight: 700; }
+    .menubar .spacer { flex: 1; }
+    .menubar-time { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
+
+    /* Hero */
+    .page-hero {
+      position: relative; overflow: hidden;
+      padding: 64px 24px 48px;
+      background: linear-gradient(135deg, #e8eaf6 0%, #ede9f6 40%, #e3e8f8 100%);
+    }
+    .hero-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; }
+    .orb1 { width: 400px; height: 400px; background: radial-gradient(circle, #a78bfa, transparent); top: -100px; right: -60px; }
+    .orb2 { width: 300px; height: 300px; background: radial-gradient(circle, #7b9dff, transparent); bottom: -80px; left: -40px; }
+    .page-hero-inner { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; }
+    .page-hero-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--color-primary); margin-bottom: 12px; }
+    .page-hero-title { font-size: 44px; font-weight: 700; letter-spacing: -1px; line-height: 1.1; background: linear-gradient(135deg, #1c1c1e, #3a3a50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 12px; }
+    .page-hero-desc { font-size: 16px; color: var(--color-text-secondary); line-height: 1.7; max-width: 520px; }
+    .page-hero-stats { display: flex; gap: 24px; margin-top: 24px; flex-wrap: wrap; }
+    .stat { display: flex; flex-direction: column; }
+    .stat-num { font-size: 28px; font-weight: 700; color: var(--color-text); letter-spacing: -0.5px; }
+    .stat-label { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+
+    /* Filter bar */
+    .filter-bar {
+      max-width: 760px; margin: 0 auto;
+      padding: 28px 24px 0;
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 14px; border-radius: var(--radius-pill);
+      font-size: 13px; font-weight: 500;
+      border: 1px solid rgba(0,0,0,0.08);
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--color-text-secondary);
+    }
+    .filter-btn:hover { background: var(--bg-card-hover); }
+    .filter-btn.active { background: var(--color-primary); color: #fff; border-color: transparent; box-shadow: 0 2px 8px rgba(91,108,249,0.3); }
+
+    /* Article list */
+    .articles { max-width: 760px; margin: 0 auto; padding: 20px 24px 80px; display: flex; flex-direction: column; gap: 12px; }
+
+    .article-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--glass-shadow);
+      backdrop-filter: blur(20px);
+      padding: 22px 24px;
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .article-card:hover { transform: translateY(-3px) translateX(2px); box-shadow: var(--glass-shadow-hover); background: var(--bg-card-hover); }
+    .article-card.no-news { opacity: 0.65; }
+    .article-card.no-news:hover { opacity: 0.85; }
+
+    .card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .tag {
+      font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 7px;
+    }
+    .tag-new { background: rgba(52,199,89,0.12); color: #1d8838; border: 1px solid rgba(52,199,89,0.2); }
+    .tag-none { background: rgba(0,0,0,0.05); color: var(--color-text-muted); border: 1px solid rgba(0,0,0,0.08); }
+    .tag-encoding { background: rgba(91,108,249,0.1); color: var(--color-primary); border: 1px solid rgba(91,108,249,0.18); }
+    .tag-gpu { background: rgba(255,159,10,0.1); color: #b56200; border: 1px solid rgba(255,159,10,0.2); }
+    .tag-combined { background: rgba(167,139,250,0.12); color: #6741d9; border: 1px solid rgba(167,139,250,0.2); }
+    .card-date { font-size: 12px; color: var(--color-text-muted); }
+    .card-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 6px; }
+    .card-desc { font-size: 13px; color: var(--color-text-muted); line-height: 1.55; }
+    .card-papers { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .paper-chip {
+      font-size: 11px; font-weight: 500;
+      background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 7px; padding: 3px 9px;
+      color: var(--color-text-secondary);
+    }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+    .paper-count { font-size: 12px; color: var(--color-text-muted); display: flex; align-items: center; gap: 4px; }
+    .arrow { font-size: 16px; color: var(--color-text-muted); transition: transform 0.2s; }
+    .article-card:hover .arrow { transform: translate(3px, -2px); color: var(--color-primary); }
+
+    /* Dock */
+    .dock-wrapper { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 200; }
+    .dock { display: flex; align-items: flex-end; gap: 8px; padding: 8px 16px; background: rgba(255,255,255,0.55); backdrop-filter: blur(30px) saturate(1.8); border: 1px solid rgba(255,255,255,0.75); border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.6) inset; }
+    .dock-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.15s cubic-bezier(0.4,0,0.2,1); position: relative; text-decoration: none; }
+    .dock-item:hover { transform: scale(1.35) translateY(-8px); }
+    .dock-item:hover .dock-tooltip { opacity: 1; transform: translateY(0); }
+    .dock-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+    .dock-tooltip { position: absolute; bottom: 68px; background: rgba(28,28,30,0.85); color: #fff; font-size: 11px; font-weight: 500; padding: 4px 8px; border-radius: 6px; white-space: nowrap; opacity: 0; transform: translateY(4px); transition: all 0.15s; pointer-events: none; }
+    .dock-sep { width: 1px; height: 40px; background: rgba(0,0,0,0.1); margin: 0 4px; }
+  </style>
+</head>
+<body>
+
+<nav class="menubar">
+  <a href="index.html" class="logo"> 蔡政</a>
+  <div class="menu-items">
+    <a href="index.html#projects" class="menu-item">项目</a>
+    <a href="index.html#experience" class="menu-item">经历</a>
+    <a href="blog.html" class="menu-item active">研究笔记</a>
+    <a href="index.html#contact" class="menu-item">联系</a>
+  </div>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+
+<div class="page-hero">
+  <div class="orb1 hero-orb"></div>
+  <div class="orb2 hero-orb"></div>
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Research Notes</div>
+    <h1 class="page-hero-title">数据库研究<br>论文追踪</h1>
+    <p class="page-hero-desc">持续追踪 VLDB、SIGMOD 及 arXiv 上关于<strong>数据编码/解码</strong>与 <strong>GPU 加速</strong>方向的最新论文，每日更新。</p>
+    <div class="page-hero-stats">
+      <div class="stat"><span class="stat-num">11</span><span class="stat-label">已追踪论文</span></div>
+      <div class="stat"><span class="stat-num">12</span><span class="stat-label">每日报告</span></div>
+      <div class="stat"><span class="stat-num">2</span><span class="stat-label">核心方向</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="filterCards('all', this)">全部</button>
+  <button class="filter-btn" onclick="filterCards('new', this)">🆕 有新论文</button>
+  <button class="filter-btn" onclick="filterCards('encoding', this)">数据编码</button>
+  <button class="filter-btn" onclick="filterCards('gpu', this)">GPU 加速</button>
+</div>
+
+<div class="articles" id="articles">
+
+  <!-- 2026-03-27 -->
+  <a href="reports/report-2026-03-27.html" class="article-card no-news" data-tags="none">
+    <div class="card-top">
+      <span class="tag tag-none">无新论文</span>
+      <span class="card-date">2026-03-27</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-27</div>
+    <div class="card-desc">今日无新论文发现。知识库保持 11 篇论文稳定状态，已连续 4 天无新论文。持续监控中。</div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 11 篇</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- 2026-03-26 -->
+  <a href="reports/report-2026-03-26.html" class="article-card no-news" data-tags="none">
+    <div class="card-top">
+      <span class="tag tag-none">无新论文</span>
+      <span class="card-date">2026-03-26</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-26</div>
+    <div class="card-desc">今日无新论文。追踪编码/解码 7 篇、GPU 加速 8 篇、交叉领域 6 篇。</div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 11 篇</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- 2026-03-23 -->
+  <a href="reports/report-2026-03-23.html" class="article-card" data-tags="new encoding gpu combined">
+    <div class="card-top">
+      <span class="tag tag-new">🆕 1 篇新论文</span>
+      <span class="tag tag-combined">编码 + GPU</span>
+      <span class="card-date">2026-03-23</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-23</div>
+    <div class="card-desc">VLDB 2026 接收新论文！《GPU Acceleration of SQL Analytics on Compressed Data》——在压缩数据上直接执行 SQL，无需解压，性能超越商用 CPU 分析系统一个数量级。</div>
+    <div class="card-papers">
+      <span class="paper-chip">GPU Acceleration of SQL Analytics on Compressed Data · VLDB 2026</span>
+    </div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 11 篇 (+1)</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- 2026-03-22 -->
+  <a href="reports/report-2026-03-22.html" class="article-card no-news" data-tags="none">
+    <div class="card-top">
+      <span class="tag tag-none">无新论文</span>
+      <span class="card-date">2026-03-22</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-22</div>
+    <div class="card-desc">今日无新论文。两种技术路线持续对比：创建新格式 (FastLanes) vs 优化现有格式 (Parquet GPU 配置)。</div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 10 篇</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- 2026-03-21 -->
+  <a href="reports/report-2026-03-21.html" class="article-card no-news" data-tags="none">
+    <div class="card-top">
+      <span class="tag tag-none">无新论文</span>
+      <span class="card-date">2026-03-21</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-21</div>
+    <div class="card-desc">今日无新论文。继续追踪 Parquet GPU 感知配置可达到 125 GB/s 读取带宽这一关键洞察。</div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 10 篇</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- 2026-03-20 -->
+  <a href="reports/report-2026-03-20.html" class="article-card" data-tags="new encoding gpu combined">
+    <div class="card-top">
+      <span class="tag tag-new">🆕 1 篇新论文</span>
+      <span class="tag tag-encoding">数据编码</span>
+      <span class="card-date">2026-03-20</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-20</div>
+    <div class="card-desc">新发现：《Do GPUs Really Need New Tabular File Formats?》—— 挑战"必须新格式"的假设，通过 GPU 感知 Parquet 配置实现 125 GB/s 读取带宽，无需格式迁移。</div>
+    <div class="card-papers">
+      <span class="paper-chip">Do GPUs Really Need New Tabular File Formats? · arXiv 2026</span>
+    </div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 10 篇 (+1)</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- 2026-03-19 -->
+  <a href="reports/report-2026-03-19.html" class="article-card no-news" data-tags="none">
+    <div class="card-top">
+      <span class="tag tag-none">无新论文</span>
+      <span class="card-date">2026-03-19</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-19</div>
+    <div class="card-desc">今日无新论文。持续追踪 9 篇论文，涵盖 FastLanes、ZipFlow、Vortex 等核心方向。</div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 9 篇</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- 2026-03-18 -->
+  <a href="reports/report-2026-03-18.html" class="article-card no-news" data-tags="none">
+    <div class="card-top">
+      <span class="tag tag-none">无新论文</span>
+      <span class="card-date">2026-03-18</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-18</div>
+    <div class="card-desc">今日无新论文。知识库保持 9 篇论文稳定状态。</div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 9 篇</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- 2026-03-17 -->
+  <a href="reports/report-2026-03-17.html" class="article-card" data-tags="new encoding gpu combined">
+    <div class="card-top">
+      <span class="tag tag-new">🆕 4 篇新论文</span>
+      <span class="tag tag-combined">编码 + GPU</span>
+      <span class="card-date">2026-03-17</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-17</div>
+    <div class="card-desc">重磅更新！发现 4 篇高度相关论文，包含 GPU 原生 SQL 引擎 Sirius（比 DuckDB 效率提升 8.3 倍）、压缩数据直接查询框架等前沿研究。</div>
+    <div class="card-papers">
+      <span class="paper-chip">压缩数据上的 SQL 分析 GPU 加速</span>
+      <span class="paper-chip">Sirius · arXiv 2025</span>
+      <span class="paper-chip">FastLanes · VLDB 2025</span>
+      <span class="paper-chip">G-ALP · DaMoN 2025</span>
+    </div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 7 篇 (+4)</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- 2026-03-16 supplement -->
+  <a href="reports/report-2026-03-16-supplement.html" class="article-card" data-tags="new encoding gpu combined">
+    <div class="card-top">
+      <span class="tag tag-new">🆕 3 篇新论文</span>
+      <span class="tag tag-combined">编码 + GPU</span>
+      <span class="card-date">2026-03-16 (补充)</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-16 补充</div>
+    <div class="card-desc">补充发现：ZipFlow（编译器驱动压缩优化，比 DuckDB 快 3.14x）、G-ALP（GPU 轻量级编码，同时达到最高压缩比和最高解压吞吐量）、GPU 浮点压缩框架（10.82 GB/s 吞吐）。</div>
+    <div class="card-papers">
+      <span class="paper-chip">ZipFlow · arXiv 2026</span>
+      <span class="paper-chip">G-ALP · DaMoN 2025</span>
+      <span class="paper-chip">GPU Float Compression · arXiv 2025</span>
+    </div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 6 篇 (+3)</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+  <!-- 2026-03-16 -->
+  <a href="reports/report-2026-03-16.html" class="article-card" data-tags="new encoding gpu">
+    <div class="card-top">
+      <span class="tag tag-new">🆕 3 篇新论文</span>
+      <span class="tag tag-encoding">数据编码</span>
+      <span class="tag tag-gpu">GPU 加速</span>
+      <span class="card-date">2026-03-16</span>
+    </div>
+    <div class="card-title">数据库研究论文追踪报告 · 2026-03-16</div>
+    <div class="card-desc">首期报告！发现 3 篇核心论文：FastLanes（SIMD/GPU 新型文件格式，100 亿整数/秒解码吞吐）、Vortex（GPU 内存突破，比 DuckDB 成本效率提升 2.5 倍）、GPU Joins & Aggregations（SIGMOD 2025）。</div>
+    <div class="card-papers">
+      <span class="paper-chip">FastLanes · VLDB 2025</span>
+      <span class="paper-chip">Vortex · VLDB 2025</span>
+      <span class="paper-chip">GPU Joins & Aggregations · SIGMOD 2025</span>
+    </div>
+    <div class="card-footer">
+      <span class="paper-count">📚 累计 3 篇</span>
+      <span class="arrow">↗</span>
+    </div>
+  </a>
+
+</div>
+
+<!-- Dock -->
+<div class="dock-wrapper">
+  <div class="dock">
+    <a href="index.html" class="dock-item">
+      <div class="dock-icon" style="background:linear-gradient(135deg,#6e7ff3,#a78bfa)">🏠</div>
+      <div class="dock-tooltip">主页</div>
+    </a>
+    <a href="index.html#projects" class="dock-item">
+      <div class="dock-icon" style="background:linear-gradient(135deg,#34c759,#30d158)">🚀</div>
+      <div class="dock-tooltip">项目</div>
+    </a>
+    <a href="blog.html" class="dock-item">
+      <div class="dock-icon" style="background:linear-gradient(135deg,#ff9f0a,#ffcc02)">📖</div>
+      <div class="dock-tooltip">研究笔记</div>
+      <div style="width:4px;height:4px;border-radius:50%;background:rgba(0,0,0,0.3);margin-top:4px"></div>
+    </a>
+    <div class="dock-sep"></div>
+    <a href="index.html#contact" class="dock-item">
+      <div class="dock-icon" style="background:linear-gradient(135deg,#ff375f,#ff6060)">📧</div>
+      <div class="dock-tooltip">联系</div>
+    </a>
+  </div>
+</div>
+
+<script>
+  // 时间
+  function updateTime() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2,'0');
+    const m = now.getMinutes().toString().padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = `${days[now.getDay()]} ${h}:${m}`;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+
+  // 筛选
+  function filterCards(tag, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.article-card').forEach(card => {
+      if (tag === 'all') { card.style.display = ''; return; }
+      const tags = card.dataset.tags || '';
+      card.style.display = tags.includes(tag) ? '' : 'none';
+    });
+  }
+</script>
+</body>
+</html>

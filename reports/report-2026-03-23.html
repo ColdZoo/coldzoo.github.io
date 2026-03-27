@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-03-23 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --gradient-accent:linear-gradient(135deg,#5b6cf9 0%,#a78bfa 100%);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border:1px solid rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border:1px solid rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border:1px solid rgba(167,139,250,0.2);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+
+    .article-body{
+      background:var(--bg-card);border:1px solid var(--glass-border);
+      border-radius:18px;box-shadow:var(--glass-shadow);
+      backdrop-filter:blur(20px);padding:32px 36px;
+    }
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;color:var(--color-text);}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);color:var(--color-text);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+
+<div class="back-bar">
+  <a href="../blog.html" class="back-link">← 返回列表</a>
+</div>
+
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-03-23</h1>
+    <div class="article-meta">📅 2026-03-23 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body">
+    <h1>数据库研究论文追踪报告 - 2026-03-23</h1>
+<br/>
+<h2>📊 每日摘要</h2>
+<br/>
+<p><strong>发现 1 篇高度相关的新论文！</strong></p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>指标</th><th>数值</th></tr>
+<tr><th><strong>新发现论文</strong></th><th>1 篇</th></tr>
+<tr><th><strong>知识库论文总数</strong></th><th>11 篇 (+1)</th></tr>
+<tr><th><strong>最后发现新论文</strong></th><th>2026-03-23</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🎉 今日必读</h2>
+<br/>
+<h3><strong>GPU Acceleration of SQL Analytics on Compressed Data</strong> (压缩数据上的 SQL 分析 GPU 加速)</h3>
+<ul>
+<li><strong>来源</strong>: VLDB 2026 (刚被接收！)</li>
+<li><strong>arXiv</strong>: 2506.10092v2</li>
+<li><strong>作者</strong>: Zezhou Huang, Krystian Sakowski, Hans Lehnert, Wei Cui, Carlo Curino, Matteo Interlandi, Marius Dumitru, Rathijit Sen</li>
+<li><strong>原文</strong>: https://arxiv.org/abs/2506.10092</li>
+</ul>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li>✅ <strong>双重关注领域</strong>: 同时覆盖数据编码/解码 + GPU 加速，完美匹配研究兴趣！</li>
+<li>✅ <strong>直接查询压缩数据</strong>: 无需解压即可在 GPU 上执行 SQL 分析查询</li>
+<li>✅ <strong>轻量级编码支持</strong>: 运行长度编码 (RLE)、字典编码、位宽压缩等</li>
+<li>✅ <strong>混合编码列处理</strong>: 支持同一列使用多种编码格式</li>
+<li>✅ <strong>PyTorch 张量操作</strong>: 良好的设备移植性</li>
+<li>✅ <strong>数量级性能提升</strong>: 相较于先进商用 CPU 分析系统</li>
+</ul>
+<br/>
+<p><strong>为什么重要</strong>:</p>
+<ul>
+<li>🎯 解决 GPU 显存容量有限但数据集很大的核心挑战</li>
+<li>🎯 实现端到端 GPU 加速，无需数据解压开销</li>
+<li>🎯 生产级数据集验证，具有实际应用价值</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>📚 知识库更新</h2>
+<br/>
+<h3>新增论文分类</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>分类</th><th>论文数</th><th>新增</th></tr>
+<tr><th><strong>编码/解码领域</strong></th><th>7 篇</th><th>+1</th></tr>
+<tr><th><strong>GPU 加速领域</strong></th><th>8 篇</th><th>+1</th></tr>
+<tr><th><strong>交叉领域</strong></th><th>6 篇</th><th>+1</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🔥 趋势洞察</h2>
+<br/>
+<h3>研究热点演进</h3>
+<br/>
+<pre><code>2025-2026 数据库研究趋势
+├── 文件格式优化
+│   ├── FastLanes (新格式设计)
+│   ├── Parquet GPU 配置优化
+│   └── 轻量级编码集成
+├── GPU 查询处理
+│   ├── 内存限制突破 (Vortex)
+│   ├── 原生 SQL 引擎 (Sirius)
+│   ├── 压缩数据直接查询 (VLDB 2026) 🆕
+│   └── 向量检索加速
+└── 编译器驱动优化
+    └── ZipFlow (压缩数据移动)</code></pre>
+<br/>
+<h3>关键技术方向</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>方向</th><th>代表论文</th><th>核心突破</th></tr>
+<tr><th><strong>压缩数据查询</strong></th><th>GPU Acceleration of SQL Analytics on Compressed Data (VLDB 2026) 🆕</th><th>无需解压直接查询</th></tr>
+<tr><th><strong>新格式设计</strong></th><th>FastLanes (VLDB 2025)</th><th>SIMD/GPU 原生支持</th></tr>
+<tr><th><strong>现有格式优化</strong></th><th>Do GPUs Really Need New Tabular File Formats?</th><th>Parquet 配置优化</th></tr>
+<tr><th><strong>内存突破</strong></th><th>Vortex (VLDB 2025)</th><th>超内存数据处理</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>📖 已追踪论文完整列表 (11篇)</h2>
+<br/>
+<h3>编码/解码领域 (7篇)</h3>
+<li><strong>FastLanes 文件格式</strong> (VLDB 2025) - 面向 SIMD/GPU 的列式格式</li>
+<li><strong>G-ALP</strong> (DaMoN 2025) - GPU 轻量级编码重构</li>
+<li><strong>GPU 浮点压缩框架</strong> (arXiv 2025) - 自适应浮点数据压缩</li>
+<li><strong>压缩数据上的 SQL 分析 GPU 加速</strong> (VLDB 2026) 🆕 - 直接查询压缩数据</li>
+<li><strong>ZipFlow</strong> (arXiv 2026) - 编译器驱动的压缩数据移动</li>
+<li><strong>Do GPUs Really Need New Tabular File Formats?</strong> (arXiv 2026) - Parquet GPU 优化</li>
+<li><strong>GPU 加速超精简型编码数据库</strong> (期刊 2015) - 行列混合存储架构</li>
+<br/>
+<h3>GPU 加速领域 (8篇)</h3>
+<li><strong>Vortex</strong> (VLDB 2025) - 突破 GPU 内存限制</li>
+<li><strong>Sirius</strong> (arXiv 2025) - GPU 原生 SQL 引擎</li>
+<li><strong>GPU Joins & Aggregations</strong> (SIGMOD 2025) - GPU 查询处理优化</li>
+<li><strong>Scaling GPU DBs</strong> (VLDB 2025) - 超内存 GPU 数据处理</li>
+<li><strong>GPU Acceleration of SQL Analytics on Compressed Data</strong> (VLDB 2026) 🆕 - 压缩数据查询加速</li>
+<br/>
+<hr/>
+<br/>
+<h2>🔍 今日搜索记录</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>来源</th><th>关键词</th><th>结果</th></tr>
+<tr><th>VLDB</th><th>data encoding, compression, GPU acceleration</th><th>无新论文</th></tr>
+<tr><th>SIGMOD</th><th>GPU database, query processing</th><th>无新论文</th></tr>
+<tr><th>arXiv</th><th>database encoding, GPU acceleration</th><th><strong>1 篇新论文</strong></th></tr>
+<tr><th>LinkedIn</th><th>论文发布动态</th><th>VLDB 2026 接收通知</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>💡 研究建议</h2>
+<br/>
+<h3>重点关注</h3>
+<li><strong>GPU Acceleration of SQL Analytics on Compressed Data</strong> - 刚被 VLDB 2026 接收，是编码+GPU交叉领域的最新突破</li>
+<li>建议下载全文深入了解其轻量级编码处理机制</li>
+<br/>
+<h3>后续追踪</h3>
+<ul>
+<li>VLDB 2026 正式会议论文列表即将发布</li>
+<li>关注作者团队 (Microsoft Gray Systems Lab) 后续工作</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>报告生成时间: 2026-03-23 09:00</em>  </p>
+<p><em>下次更新: 2026-03-24 09:00</em></p>
+<br/>
+  </div>
+</div>
+
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2,'0');
+    const m = now.getMinutes().toString().padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = `${days[now.getDay()]} ${h}:${m}`;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

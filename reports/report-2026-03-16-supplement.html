@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-03-16 补充 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --gradient-accent:linear-gradient(135deg,#5b6cf9 0%,#a78bfa 100%);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border:1px solid rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border:1px solid rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border:1px solid rgba(167,139,250,0.2);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+
+    .article-body{
+      background:var(--bg-card);border:1px solid var(--glass-border);
+      border-radius:18px;box-shadow:var(--glass-shadow);
+      backdrop-filter:blur(20px);padding:32px 36px;
+    }
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;color:var(--color-text);}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);color:var(--color-text);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+
+<div class="back-bar">
+  <a href="../blog.html" class="back-link">← 返回列表</a>
+</div>
+
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-03-16 补充</h1>
+    <div class="article-meta">📅 2026-03-16 补充 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body">
+    <h1>Database Research Paper Tracker - Supplementary Report (2026-03-16)</h1>
+<br/>
+<h2>🆕 New Research Found Today</h2>
+<br/>
+<h3>Summary</h3>
+<p>发现 <strong>3 篇全新论文</strong>，进一步丰富了编码/解码和 GPU 加速领域的研究图谱。</p>
+<br/>
+<hr/>
+<br/>
+<h2>📊 New Papers</h2>
+<br/>
+<h3>🏷️ Data Encoding / Decoding + GPU Acceleration</h3>
+<br/>
+<h4>1. ZipFlow: a Compiler-based Framework to Unleash Compressed Data Movement for Modern GPUs</h4>
+<ul>
+<li><strong>arXiv</strong>: 2602.08190 (2026年2月)</li>
+<li><strong>Authors</strong>: Gwangoo Yeo, Zhiyang Shen, Wei Cui, Matteo Interlandi, Rathijit Sen, Bailu Ding, Qi Chen, Minsoo Rhu</li>
+<li><strong>PDF</strong>: <a href="https://arxiv.org/pdf/2602.08190" target="_blank">arXiv PDF</a></li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>编译器驱动的端到端优化框架，平衡 I/O 延迟和计算开销</li>
+<li>将压缩算法按并行性分为三种模式，为每种模式设计通用调度策略</li>
+<li>解决 CPU-GPU 数据传输瓶颈问题</li>
+<li><strong>Performance</strong>:</li>
+<li>比 nvCOMP 提升 <strong>2.08x</strong></li>
+<li>比 DuckDB 快 <strong>3.14x</strong> (TPC-H)</li>
+</ul>
+<br/>
+<p><strong>Relevance</strong>: ⭐⭐⭐⭐⭐ High - 编译器优化 + 压缩数据移动 + GPU</p>
+<br/>
+<hr/>
+<br/>
+<h4>2. G-ALP: Rethinking Light-weight Encodings for GPUs</h4>
+<ul>
+<li><strong>Conference</strong>: DaMoN 2025 (Workshop)</li>
+<li><strong>Authors</strong>: Sven Hepkema, Azim Afroozeh, Peter Boncz, Thomas Neumann</li>
+<li><strong>Link</strong>: <a href="https://dl.acm.org/doi/10.1145/3736227.3736242" target="_blank">ACM DL</a> | <a href="https://github.com/cwida/FastLanesGpu-Damon2025" target="_blank">GitHub</a></li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>面向 GPU 的轻量级浮点数据编码方案</li>
+<li>为 OLAP 工作负载设计</li>
+<li>在压缩比和解压吞吐量之间取得最佳平衡</li>
+<li><strong>Achievement</strong>: Highest compression ratio AND highest decompression throughput among all encoding schemes</li>
+</ul>
+<br/>
+<p><strong>Relevance</strong>: ⭐⭐⭐⭐⭐ High - 轻量级编码 + GPU 优化</p>
+<br/>
+<hr/>
+<br/>
+<h4>3. A High-Throughput GPU Framework for Adaptive Lossless Compression of Floating-Point Data</h4>
+<ul>
+<li><strong>arXiv</strong>: 2511.04140 (2025年11月)</li>
+<li><strong>Authors</strong>: Zheng Li (重庆大学) 等，包括 OceanBase, Ant Group 合作者</li>
+<li><strong>PDF</strong>: <a href="https://arxiv.org/pdf/2511.04140" target="_blank">arXiv PDF</a></li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>面向 IoT 和 HPC 浮点数据的 GPU 自适应无损压缩框架</li>
+<li>三项关键创新：</li>
+</ul>
+<li>轻量级异步流水线，隐藏 CPU-GPU 传输延迟</li>
+<li>快速且理论保证的无误差浮点-整数转换</li>
+<li>自适应稀疏位平面编码，处理异常值稀疏性</li>
+<ul>
+<li><strong>Performance</strong> (12个数据集平均):</li>
+<li>压缩比: <strong>0.299</strong> (提升 9.1%)</li>
+<li>压缩吞吐量: <strong>10.82 GB/s</strong> (提升 2.4x)</li>
+<li>解压吞吐量: <strong>12.32 GB/s</strong> (提升 2.4x)</li>
+</ul>
+<br/>
+<p><strong>Relevance</strong>: ⭐⭐⭐⭐⭐ High - 浮点压缩 + GPU 加速</p>
+<br/>
+<hr/>
+<br/>
+<h2>📈 Research Trend Analysis</h2>
+<br/>
+<h3>Emerging Hot Topics</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>趋势</th><th>说明</th></tr>
+<tr><th><strong>编译器驱动优化</strong></th><th>ZipFlow 代表新方向 - 编译器级压缩数据优化</th></tr>
+<tr><th><strong>轻量级编码创新</strong></th><th>G-ALP 针对 GPU 重新设计传统编码</th></tr>
+<tr><th><strong>浮点数据专项</strong></th><th>针对 IoT/HPC 浮点数据的专用压缩框架</th></tr>
+<tr><th><strong>端到端优化</strong></th><th>从数据传输到查询执行的全链路优化</th></tr>
+</table></div>
+<br/>
+<h3>Key Performance Improvements</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>关键指标</th><th>提升幅度</th></tr>
+<tr><th>ZipFlow</th><th>vs nvCOMP</th><th><strong>2.08x</strong></th></tr>
+<tr><th>ZipFlow</th><th>vs DuckDB</th><th><strong>3.14x</strong></th></tr>
+<tr><th>G-ALP</th><th>压缩比 + 解压吞吐量</th><th>双最优</th></tr>
+<tr><th>GPU Float Compression</th><th>压缩吞吐量</th><th><strong>10.82 GB/s</strong></th></tr>
+<tr><th>GPU Float Compression</th><th>解压吞吐量</th><th><strong>12.32 GB/s</strong></th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🔗 Related to Previously Tracked Papers</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>新论文</th><th>关联论文</th><th>关联点</th></tr>
+<tr><th>ZipFlow</th><th>FastLanes</th><th>都关注 GPU 压缩数据移动</th></tr>
+<tr><th>G-ALP</th><th>FastLanes</th><th>同一研究团队 (CWI)，G-ALP 是 FastLanes 的 GPU 编码扩展</th></tr>
+<tr><th>GPU Float Compression</th><th>GPU Acceleration of SQL Analytics on Compressed Data</th><th>都关注 GPU 上的压缩数据处理</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>📚 Total Papers Tracked (Updated)</h2>
+<br/>
+<h3>Data Encoding / Decoding</h3>
+<li>The FastLanes File Format (VLDB 2025)</li>
+<li>G-ALP: Rethinking Light-weight Encodings for GPUs (DaMoN 2025) 🆕</li>
+<li>A High-Throughput GPU Framework for Adaptive Lossless Compression (arXiv 2025) 🆕</li>
+<br/>
+<h3>GPU Acceleration</h3>
+<li>Vortex: Overcoming Memory Capacity Limitations (VLDB 2025)</li>
+<li>Sirius: Rethinking Analytical Processing in the GPU Era (arXiv 2025)</li>
+<li>Efficiently Processing Joins and Grouped Aggregations on GPUs (SIGMOD 2025)</li>
+<li>GPU Acceleration of SQL Analytics on Compressed Data (arXiv 2025)</li>
+<li>ZipFlow: Compiler-based Framework (arXiv 2026) 🆕</li>
+<br/>
+<h3>Combined (Encoding + GPU)</h3>
+<ul>
+<li>GPU Acceleration of SQL Analytics on Compressed Data</li>
+<li>ZipFlow</li>
+<li>G-ALP</li>
+<li>GPU Float Compression Framework</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>🎯 Updated Reading Recommendations</h2>
+<br/>
+<h3>Priority 1 (Must Read)</h3>
+<li><strong>GPU Acceleration of SQL Analytics on Compressed Data</strong> - 完美结合两个方向</li>
+<li><strong>ZipFlow</strong> - 编译器优化新趋势</li>
+<br/>
+<h3>Priority 2 (Highly Recommended)</h3>
+<li><strong>G-ALP</strong> - 轻量级 GPU 编码创新</li>
+<li><strong>The FastLanes File Format</strong> - 文件格式革新</li>
+<br/>
+<h3>Priority 3 (Specialized)</h3>
+<li><strong>GPU Float Compression Framework</strong> - 浮点数据专项</li>
+<li><strong>Sirius</strong> - GPU 原生引擎</li>
+<br/>
+<hr/>
+<br/>
+<p><em>Supplementary report generated on 2026-03-16</em></p>
+<p><em>Main daily report: report_2026-03-17.md</em></p>
+<br/>
+  </div>
+</div>
+
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2,'0');
+    const m = now.getMinutes().toString().padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = `${days[now.getDay()]} ${h}:${m}`;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
