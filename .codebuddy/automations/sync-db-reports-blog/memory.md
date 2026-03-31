@@ -8,5 +8,13 @@
 - GitHub 推送：成功（commit `29388c6`，cd63fd2→29388c6）✅
 - 备注：GITHUB_TOKEN 环境变量在自动化 shell 中未设置，通过 `gh auth token` 获取 token 完成推送。需关注后续推送认证问题。
 
+## 2026-03-30 21:00
+- 检测到新报告：`report_2026-03-30.md`、`report_2026-03-29.md`（2 篇新增）
+- 生成 HTML：`reports/report-2026-03-30.html`、`reports/report-2026-03-29.html` ✅
+- blog.html 已更新，共 23 篇报告 ✅
+- index.html 博客板块已更新（最新 3 篇）✅
+- GitHub 推送：成功（commit `5b36be5`，29388c6→5b36be5）✅
+- 备注：脚本内 GITHUB_TOKEN 推送失败（remote URL 含空 token 占位符），通过 `gh auth token` 获取 token 后手动完成推送。认证问题同前次，每次需借助 gh CLI token。
+
 ## 2026-03-27（历史参考）
 - 首次运行记录，同步了 20 篇报告，推送成功
