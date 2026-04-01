@@ -16,5 +16,13 @@
 - GitHub 推送：成功（commit `5b36be5`，29388c6→5b36be5）✅
 - 备注：脚本内 GITHUB_TOKEN 推送失败（remote URL 含空 token 占位符），通过 `gh auth token` 获取 token 后手动完成推送。认证问题同前次，每次需借助 gh CLI token。
 
+## 2026-03-31 21:00
+- 检测到新报告：`report_2026-03-31.md`（1 篇新增）
+- 生成 HTML：`reports/report-2026-03-31.html` ✅
+- blog.html 已更新，共 24 篇报告 ✅
+- index.html 博客板块已更新（最新 3 篇）✅
+- GitHub 推送：成功（commit `9cb92c9`，5b36be5→9cb92c9）✅
+- 备注：脚本内 GITHUB_TOKEN 推送仍失败（同前次），通过 `gh auth token` 获取 token 完成推送。
+
 ## 2026-03-27（历史参考）
 - 首次运行记录，同步了 20 篇报告，推送成功
