@@ -13,9 +13,27 @@ OUTPUT_DIR   = os.path.join(SITE_DIR, "reports")
 BLOG_HTML    = os.path.join(SITE_DIR, "blog.html")
 INDEX_HTML   = os.path.join(SITE_DIR, "index.html")
 STATE_FILE   = os.path.join(SITE_DIR, ".workbuddy", "report_state.json")
-GIT_TOKEN    = os.environ.get("GITHUB_TOKEN", "")
-GIT_REPO     = f"https://ColdZoo:{GIT_TOKEN}@github.com/ColdZoo/coldzoo.github.io.git"
 GIT_BRANCH   = "gh-pages"
+GIT_USER     = "ColdZoo"
+GIT_REPO_URL = "github.com/ColdZoo/coldzoo.github.io.git"
+
+
+def get_github_token():
+    """优先从 gh CLI 获取 token（最可靠），fallback 到 GITHUB_TOKEN 环境变量。"""
+    # 尝试 gh auth token
+    r = subprocess.run(
+        ["gh", "auth", "token"],
+        capture_output=True, text=True
+    )
+    if r.returncode == 0 and r.stdout.strip():
+        return r.stdout.strip()
+
+    # Fallback：直接读取环境变量
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if token:
+        return token
+
+    return ""
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
@@ -510,7 +528,7 @@ def git_push(new_count, total):
     os.chdir(SITE_DIR)
     subprocess.run(['git', 'checkout', GIT_BRANCH], capture_output=True)
     subprocess.run(['git', 'add', '-A'], capture_output=True)
-    
+
     # 检查是否有变动
     result = subprocess.run(['git', 'diff', '--cached', '--quiet'], capture_output=True)
     if result.returncode == 0:
@@ -520,11 +538,18 @@ def git_push(new_count, total):
     today = datetime.now().strftime("%Y-%m-%d")
     msg = f"Auto: sync {new_count} new report(s) [{today}] (total {total})"
     subprocess.run(['git', 'commit', '-m', msg], capture_output=True)
-    
-    # 设置带 token 的 remote
-    subprocess.run(['git', 'remote', 'set-url', 'origin', GIT_REPO], capture_output=True)
+
+    # 获取 token（优先 gh CLI，fallback 环境变量）
+    token = get_github_token()
+    if not token:
+        print("  ❌ 推送失败: 无法获取 GitHub token（gh auth token 和 GITHUB_TOKEN 均不可用）")
+        return False
+
+    # 构造带 token 的 remote URL（x-access-token 是 GitHub 推荐格式）
+    push_repo = f"https://x-access-token:{token}@{GIT_REPO_URL}"
+    subprocess.run(['git', 'remote', 'set-url', 'origin', push_repo], capture_output=True)
     result = subprocess.run(['git', 'push', 'origin', GIT_BRANCH], capture_output=True, text=True)
-    
+
     if result.returncode == 0:
         print(f"  ✅ 已推送到 GitHub gh-pages 分支")
         return True
