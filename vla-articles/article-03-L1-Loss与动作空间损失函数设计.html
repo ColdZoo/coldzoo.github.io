@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>L1 Loss与动作空间损失函数设计 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:800px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:800px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-diffusion{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-vla{background:rgba(16,185,129,0.1);color:#059669;border-color:rgba(16,185,129,0.2);}
+    .tag-loss{background:rgba(239,68,68,0.1);color:#dc2626;border-color:rgba(239,68,68,0.2);}
+    .tag-semantic{background:rgba(139,92,246,0.1);color:#7c3aed;border-color:rgba(139,92,246,0.2);}
+    .tag-temporal{background:rgba(245,158,11,0.1);color:#b45309;border-color:rgba(245,158,11,0.2);}
+    .tag-cfg{background:rgba(236,72,153,0.1);color:#db2777;border-color:rgba(236,72,153,0.2);}
+    .tag-inference{background:rgba(59,130,246,0.1);color:#2563eb;border-color:rgba(59,130,246,0.2);}
+    .tag-training{background:rgba(34,197,94,0.1);color:#16a34a;border-color:rgba(34,197,94,0.2);}
+    .tag-multimodal{background:rgba(249,115,22,0.1);color:#ea580c;border-color:rgba(249,115,22,0.2);}
+    .tag-competition{background:rgba(234,179,8,0.1);color:#ca8a04;border-color:rgba(234,179,8,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-series{display:inline-block;margin-bottom:16px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#5b6cf9,#a78bfa);color:#fff;}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="vla.html" class="menu-item">← VLA 文章</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="vla.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-series">第 03 篇 · 共 10 篇</div>
+    <div class="article-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+    <h1 class="article-title">L1 Loss与动作空间损失函数设计</h1>
+    <div class="article-meta">📅 2026-04-02 &nbsp;·&nbsp; VLA 机器人控制系列文章</div>
+  </div>
+  <div class="article-body"><h1>系列文章三：L1 Loss 与动作空间损失函数设计——理论证明与实战调参</h1>
+<br/>
+<p>> 作者：WorkBuddy 研究团队</p>
+<p>> 日期：2026-04-02</p>
+<p>> 预计阅读时间：45 分钟</p>
+<p>> 面向读者：需要深入理解扩散训练损失函数设计的比赛选手和研究人员</p>
+<br/>
+<hr/>
+<br/>
+<h2>一、为什么动作空间不能用简单 MSE</h2>
+<br/>
+<h3>1.1 高维动作空间的问题</h3>
+<br/>
+<p>机器人的动作空间通常是 7~14 维（末端位姿 + 夹爪），每个维度代表不同的物理量：位置（米）、旋转（四元数或欧拉角）、夹爪开度（0~1）。</p>
+<br/>
+<p>用 MSE/L2 Loss 训练时：</p>
+<br/>
+<p>$$\mathcal{L}_{\text{MSE}} = \frac{1}{D} \sum_{d=1}^{D} (a_d - \hat{a}_d)^2$$</p>
+<br/>
+<p><strong>问题一：维度灾难</strong></p>
+<br/>
+<p>高维空间中，MSE 的梯度会被<strong>所有维度共同贡献</strong>，但实际有效的梯度信号可能只来自少数几个"活跃"维度。</p>
+<br/>
+<p><strong>问题二：离群动作的梯度爆炸</strong></p>
+<br/>
+<p>机械臂在某些状态下需要执行离群动作（比如紧急避障时的大幅度关节运动）。MSE 对离群点的惩罚是<strong>平方级增长</strong>——一个 outlier 维度可以把整个梯度拉偏：</p>
+<br/>
+<p>$$\frac{\partial \mathcal{L}}{\partial \hat{a}_d} = 2(a_d - \hat{a}_d)$$</p>
+<br/>
+<p>当 $|a_d - \hat{a}_d| = 10$（机器人避障动作），单维梯度就是 20，是正常动作（差 0.5）的 <strong>40 倍</strong>。</p>
+<br/>
+<p><strong>问题三：多模态被抹平</strong></p>
+<br/>
+<p>同一指令可能对应多种合理动作分布，比如抓取物体可以从左侧或右侧出发。MSE 训练会迫使模型预测所有模态的<strong>均值</strong>，这个均值动作可能对任何模态都不是最优的。</p>
+<br/>
+<hr/>
+<br/>
+<h2>二、L1 Loss 的理论基础</h2>
+<br/>
+<h3>2.1 定义</h3>
+<br/>
+<p>$$\mathcal{L}_{\text{L1}} = \frac{1}{D} \sum_{d=1}^{D} |a_d - \hat{a}_d|$$</p>
+<br/>
+<p><strong>关键性质：稀疏梯度</strong></p>
+<br/>
+<p>L1 损失的梯度是<strong>常数</strong>（对正负误差分别 +1 和 -1），不随误差大小增长：</p>
+<br/>
+<p>$$\frac{\partial \mathcal{L}}{\partial \hat{a}_d} = \text{sign}(a_d - \hat{a}_d) \in \{-1, 0, +1\}$$</p>
+<br/>
+<p>这意味着：</p>
+<ul>
+<li>大误差维度不会主导梯度</li>
+<li>所有维度均匀贡献梯度</li>
+<li>对离群点天然鲁棒</li>
+</ul>
+<br/>
+<h3>2.2 统计学视角：L1 vs L2 本质是均值 vs 中位数的选择</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>度量</th><th>优化目标</th><th>对应损失</th></tr>
+<tr><th><strong>均值</strong>（Mean）</th><th>最小化平方期望 $\arg\min \mathbb{E}[(a - \hat{a})^2]$</th><th>L2 / MSE</th></tr>
+<tr><th><strong>中位数</strong>（Median）</th><th>最小化绝对期望 $\arg\min \mathbb{E}[</th><th>a - \hat{a}</th><th>]$</th><th>L1 / MAE</th></tr>
+<tr><th><strong>众数</strong>（Mode）</th><th>最大化概率密度</th><th>0-1 损失（不可微）</th></tr>
+</table></div>
+<br/>
+<p><strong>为什么中位数更适合机器人？</strong></p>
+<br/>
+<p>当数据是多峰的（有多个合理动作模态），<strong>L2 的均值</strong>可能落在所有模态之间——这是最差的动作！</p>
+<br/>
+<p>而 L1 的中位数，在多模态分布下往往落在某个真实模态附近，表现更稳定。</p>
+<br/>
+<h3>2.3 扩散模型中的 L1 Loss</h3>
+<br/>
+<p>在扩散模型的训练中，标准损失是预测噪声 $\epsilon$：</p>
+<br/>
+<p>$$\mathcal{L} = \mathbb{E}_{t, \epsilon, a_0, c} \|\epsilon - \epsilon_\theta(a_t, c, t)\|^2 \quad \text{（L2 版本）}$$</p>
+<br/>
+<p>如果预测目标换成 velocity $v = a_0 - a_T$：</p>
+<br/>
+<p>$$\mathcal{L} = \mathbb{E}_{t, v, a_0, a_T, c} \|v - v_\theta(a_t, c, t)\|_1$$</p>
+<br/>
+<p>这是 π0 和 GR00T-N1 论文中都提到的技巧：<strong>用 L1 预测 velocity 效果更好</strong>。</p>
+<br/>
+<p><strong>原因</strong>：</p>
+<li>Velocity 的分布通常是多峰的（快速运动 vs 精细调整）</li>
+<li>L1 避免了速度为零时的小梯度消失问题</li>
+<li>L1 的均匀梯度让所有动作维度同时受益</li>
+<br/>
+<hr/>
+<br/>
+<h2>三、Huber Loss：L1 和 L2 的自适应混合</h2>
+<br/>
+<h3>3.1 定义</h3>
+<br/>
+<p>$$\mathcal{L}_{\delta}(a, \hat{a}) = \begin{cases} \frac{1}{2}(a - \hat{a})^2 & \text{if } |a - \hat{a}| \leq \delta \\ \delta \cdot |a - \hat{a}| - \frac{1}{2}\delta^2 & \text{if } |a - \hat{a}| > \delta \end{cases}$$</p>
+<br/>
+<p>其中 $\delta$ 是切换阈值（通常设为 1.0 或归一化后的 1.0）。</p>
+<br/>
+<p><strong>直观理解</strong>：</p>
+<ul>
+<li>小误差（$< \delta$）→ 用 L2（精确优化二次区域）</li>
+<li>大误差（$> \delta$）→ 切换到 L1（避免梯度爆炸）</li>
+</ul>
+<br/>
+<h3>3.2 为什么 Huber Loss 在机器人控制中很合理</h3>
+<br/>
+<p>机器人的动作误差分布通常是<strong>重尾分布（heavy-tailed）</strong>：</p>
+<br/>
+<ul>
+<li>95% 的时间：精细操作，误差小（0.01~0.1 量级）</li>
+<li>5% 的时间：避障/抓取，误差大（0.5~2.0 量级）</li>
+</ul>
+<br/>
+<p>Huber Loss 在小误差区域用 L2（精细优化），在大误差区域切换 L1（鲁棒处理）。这是<strong>自适应的</strong>，不需要手动判断哪个维度是离群点。</p>
+<br/>
+<h3>3.3 δ 参数的调节建议</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>δ 值</th><th>行为</th><th>适用场景</th></tr>
+<tr><th>δ = 0.1</th><th>几乎全程 L2</th><th>精细操作任务（定位精度要求 < 1mm）</th></tr>
+<tr><th>δ = 1.0</th><th>中等切换点</th><th>通用机器人操作</th></tr>
+<tr><th>δ = 5.0</th><th>更多 L1 区域</th><th>强干扰环境、避障优先</th></tr>
+<tr><th>δ = <strong>自适应</strong></th><th>根据动作归一化</th><th>推荐方案：$\delta = \text{median}(\</th><th>a - \hat{a}\</th><th>) \times 1.35$（类似 MAD 估计）</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>四、Smooth-L1（伪 Huber）及其变体</h2>
+<br/>
+<h3>4.1 Smooth-L1 / Charbonnier Loss</h3>
+<br/>
+<p>$$\mathcal{L}_{\text{smooth-L1}} = \sqrt{(a - \hat{a})^2 + \epsilon^2} - \epsilon$$</p>
+<br/>
+<p>其中 $\epsilon$ 是一个小常数（e.g., 1e-6），防止梯度为零。</p>
+<br/>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>处处可微（比 L1 更适合反向传播）</li>
+<li>当误差小时近似 L2，误差大时近似 L1</li>
+<li>本质上是 Huber Loss 的平滑版本</li>
+</ul>
+<br/>
+<h3>4.2 Charbonnier Loss 在扩散策略中的应用</h3>
+<br/>
+<p>多个 2024-2025 年的机器人扩散论文（如 PDFactor, Diffusion Policy 原始论文）都使用了 Charbonnier Loss：</p>
+<br/>
+<pre><code>def charbonnier_loss(pred, target, eps=1e-6):
+    """Charbonnier Loss (= Smooth-L1 in some variants)"""
+    diff = pred - target
+    return torch.sqrt(diff * diff + eps) - eps</code></pre>
+<br/>
+<h3>4.3 Generalized Charbonnier Loss</h3>
+<br/>
+<p>在多任务学习中，不同动作维度的量纲可能不同（末端位置 vs 夹爪开度）。可以引入<strong>维度自适应权重</strong>：</p>
+<br/>
+<p>$$\mathcal{L} = \sum_{d=1}^{D} w_d \cdot \sqrt{(a_d - \hat{a}_d)^2 + \epsilon_d^2}$$</p>
+<br/>
+<p>其中 $w_d$ 可以根据动作维度的方差动态调整：</p>
+<br/>
+<p>$$w_d = \frac{1}{\sigma_d + \epsilon}, \quad \sigma_d = \text{std}(a_d \text{ in batch})$$</p>
+<br/>
+<hr/>
+<br/>
+<h2>五、Log-Sum-Exp 损失：端到端的鲁棒设计</h2>
+<br/>
+<h3>5.1 定义</h3>
+<br/>
+<p>$$\mathcal{L}_{\text{LSE}} = \frac{1}{\lambda} \log\left(\sum_{d=1}^{D} \exp(\lambda |a_d - \hat{a}_d|)\right)$$</p>
+<br/>
+<p>当 $\lambda \to \infty$ 时，Log-Sum-Exp 近似于 $\max_d |a_d - \hat{a}_d|$（即最差维度的误差）。</p>
+<p>当 $\lambda \to 0$ 时，Log-Sum-Exp 近似于均值误差。</p>
+<br/>
+<h3>5.2 为什么有用</h3>
+<br/>
+<p>Log-Sum-Exp 是一个<strong>软化的最大范数</strong>：</p>
+<br/>
+<ul>
+<li>当所有维度误差相近时 → 近似均值（L2/L1 行为）</li>
+<li>当某个维度误差突出时 → 放大该维度影响（比 L1 更敏感）</li>
+<li><strong>避免所有维度被均匀惩罚</strong>：机器人动作中，夹爪开度错 0.1 比末端位置错 0.01 更不能接受</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>六、多模态动作分布的专门损失设计</h2>
+<br/>
+<h3>6.1 问题的本质</h3>
+<br/>
+<p>传统 MSE/L1/L2 都是<strong>单峰损失</strong>，但机器人动作天然是多模态的。</p>
+<br/>
+<p>举例："把杯子放到桌子中央"</p>
+<ul>
+<li>模态 A：从左侧接近、抓取、放置（更自然）</li>
+<li>模态 B：从右侧接近、抓取、放置（同样合理）</li>
+</ul>
+<br/>
+<p>用 MSE 训练 → 学会的是 A 和 B 的<strong>均值轨迹</strong>（一个四不像）</p>
+<p>用 L1 训练 → 学会的是某个模态，但一旦数据不平衡，另一个模态会消失</p>
+<br/>
+<h3>6.2 解决方案一：Mixture-of-Experts 损失</h3>
+<br/>
+<p>在 GO-1 的 MoE Action Head 中，每个专家负责不同的动作模态：</p>
+<br/>
+<pre><code>动作先验 z ~ q(z | obs, instruction)
+    → 路由器选择 expert k
+    → expert k 预测动作
+    → 损失 = L1(a, pred_k) + λ · KL(q(z) || p(z))  (鼓励多模态)</code></pre>
+<br/>
+<p><strong>关键</strong>：KL 散度项强制多个专家都被激活，避免单一模态主导。</p>
+<br/>
+<h3>6.3 解决方案二：对抗式动作建模</h3>
+<br/>
+<p>用 <strong>GAN-style</strong> 判别器来区分真实动作和预测动作：</p>
+<br/>
+<p>$$\mathcal{L}_G = -\mathbb{E}[\log D(a_{\text{real}}, c)] - \mathbb{E}[\log(1 - D(G(c), c))]$$</p>
+<br/>
+<p>判别器 $D$ 迫使生成器 $G$ 产生<strong>真实分布的动作</strong>，而不是均值。</p>
+<br/>
+<h3>6.4 解决方案三：Contrastive Learning for Actions</h3>
+<br/>
+<p>对于每个状态-动作对 $(s, a)$，构造正负样本：</p>
+<br/>
+<p>$$\mathcal{L}_{\text{contrast}} = -\log \frac{\exp(\text{sim}(f(s), f(a^+)) / \tau)}{\sum_{a^-} \exp(\text{sim}(f(s), f(a^-)) / \tau)}$$</p>
+<br/>
+<p>其中 $a^+$ 是正向动作，$a^-$ 是负向动作（同一状态下的其他动作）。</p>
+<br/>
+<p>这让模型在动作空间中学习<strong>区分不同模态</strong>，而不是被迫预测均值。</p>
+<br/>
+<hr/>
+<br/>
+<h2>七、扩散模型中损失函数的具体实现</h2>
+<br/>
+<h3>7.1 标准 L2 扩散损失</h3>
+<br/>
+<pre><code>def diffusion_l2_loss(model, obs, action, t):
+    """
+    标准 DDPM L2 损失
+    model: noise prediction network
+    """
+    batch_size = action.shape[0]
+    
+    # 采样 t 和噪声
+    t = torch.randint(0, model.T, (batch_size,), device=action.device)
+    eps = torch.randn_like(action)
+    
+    # 前向扩散
+    sqrt_alpha_bar = model.sqrt_alphas_bar[t][:, None]
+    sqrt_one_minus = model.sqrt_one_minus_alphas_bar[t][:, None]
+    noisy_action = sqrt_alpha_bar * action + sqrt_one_minus * eps
+    
+    # 预测噪声
+    eps_pred = model(noisy_action, obs, t)
+    
+    # L2 损失
+    return ((eps - eps_pred) ** 2).mean()</code></pre>
+<br/>
+<h3>7.2 L1 扩散损失（推荐用于机器人）</h3>
+<br/>
+<pre><code>def diffusion_l1_loss(model, obs, action, t):
+    """L1 损失，扩散模型专用"""
+    batch_size = action.shape[0]
+    
+    t = torch.randint(0, model.T, (batch_size,), device=action.device)
+    eps = torch.randn_like(action)
+    
+    sqrt_alpha_bar = model.sqrt_alphas_bar[t][:, None]
+    sqrt_one_minus = model.sqrt_one_minus_alphas_bar[t][:, None]
+    noisy_action = sqrt_alpha_bar * action + sqrt_one_minus * eps
+    
+    eps_pred = model(noisy_action, obs, t)
+    
+    # L1 损失（推荐）
+    return torch.abs(eps - eps_pred).mean()</code></pre>
+<br/>
+<h3>7.3 Huber 扩散损失</h3>
+<br/>
+<pre><code>def diffusion_huber_loss(model, obs, action, t, delta=1.0):
+    """Huber 损失的扩散版本"""
+    batch_size = action.shape[0]
+    
+    t = torch.randint(0, model.T, (batch_size,), device=action.device)
+    eps = torch.randn_like(action)
+    
+    sqrt_alpha_bar = model.sqrt_alphas_bar[t][:, None]
+    sqrt_one_minus = model.sqrt_one_minus_alphas_bar[t][:, None]
+    noisy_action = sqrt_alpha_bar * action + sqrt_one_minus * eps
+    
+    eps_pred = model(noisy_action, obs, t)
+    
+    # 扩散模型预测的是噪声
+    error = eps - eps_pred  # [batch, action_dim]
+    
+    # Huber 损失
+    abs_error = torch.abs(error)
+    quadratic = torch.clamp(abs_error, max=delta)
+    linear = abs_error - quadratic
+    loss = 0.5 * quadratic ** 2 + delta * linear
+    
+    return loss.mean()</code></pre>
+<br/>
+<h3>7.4 多任务加权损失</h3>
+<br/>
+<pre><code>def weighted_diffusion_loss(model, obs, action, t, 
+                             loss_type='huber',
+                             delta=1.0,
+                             dim_weights=None):
+    """
+    多维度自适应加权损失
+    
+    Args:
+        dim_weights: [D] 权重向量，默认 None 时均匀
+    """
+    batch_size = action.shape[0]
+    action_dim = action.shape[1]
+    
+    t = torch.randint(0, model.T, (batch_size,), device=action.device)
+    eps = torch.randn_like(action)
+    
+    sqrt_alpha_bar = model.sqrt_alphas_bar[t][:, None]
+    sqrt_one_minus = model.sqrt_one_minus_alphas_bar[t][:, None]
+    noisy_action = sqrt_alpha_bar * action + sqrt_one_minus * eps
+    
+    eps_pred = model(noisy_action, obs, t)
+    error = eps - eps_pred
+    
+    if dim_weights is None:
+        # 基于动作维度方差的动态权重
+        with torch.no_grad():
+            dim_weights = 1.0 / (torch.var(action, dim=0) + 1e-6)
+            dim_weights = dim_weights / dim_weights.sum() * action_dim
+    
+    if loss_type == 'l1':
+        per_dim_loss = torch.abs(error)
+    elif loss_type == 'huber':
+        abs_error = torch.abs(error)
+        quadratic = torch.clamp(abs_error, max=delta)
+        linear = abs_error - quadratic
+        per_dim_loss = 0.5 * quadratic ** 2 + delta * linear
+    else:
+        per_dim_loss = error ** 2
+    
+    # 按维度加权
+    weighted_loss = per_dim_loss * dim_weights[None, :]
+    return weighted_loss.mean()</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>八、比赛实战建议</h2>
+<br/>
+<h3>8.1 损失函数选择路线图</h3>
+<br/>
+<pre><code>你的任务特点 → 推荐损失函数
+
+精细操作（误差 &lt; 5mm）：
+  → Smooth-L1 (Charbonnier)，delta=0.1
+
+通用操作（日常家务/工厂任务）：
+  → Huber Loss，delta=1.0（首选）或 L1
+
+避障/对抗性环境（经常有大误差）：
+  → L1 或 Huber，delta=5.0
+
+多模态任务（同一指令多种抓法）：
+  → L1 + MoE loss 或 Contrastive Action Loss
+
+数据噪声大（演示数据质量一般）：
+  → Huber delta=2.0 或 Log-Sum-Exp</code></pre>
+<br/>
+<h3>8.2 δ 参数的动态调节</h3>
+<br/>
+<p>不要固定 δ，建议在训练中使用<strong>退火策略</strong>：</p>
+<br/>
+<pre><code># 训练早期：大 δ，鼓励探索
+# 训练晚期：小 δ，精细收敛
+delta_schedule = {
+    0: 5.0,      # 初期
+    5000: 2.0,   # 中期
+    15000: 1.0,  # 后期
+    30000: 0.5   # 收敛期
+}</code></pre>
+<br/>
+<h3>8.3 归一化是前提</h3>
+<br/>
+<p>在用任何损失函数之前，<strong>必须对动作进行归一化</strong>：</p>
+<br/>
+<pre><code># 方案一：简单 min-max 归一化
+action_norm = (action - action_min) / (action_max - action_min + eps)
+
+# 方案二（推荐）：z-score 归一化
+action_mean = action.mean(dim=0, keepdim=True)
+action_std = action.std(dim=0, keepdim=True) + eps
+action_norm = (action - action_mean) / action_std</code></pre>
+<br/>
+<p>不归一化会导致不同维度的动作量纲差异巨大，MSE/L1 的数值范围不一致。</p>
+<br/>
+<h3>8.4 实验验证建议</h3>
+<br/>
+<p>强烈建议在调参前做一次<strong>损失函数对比实验</strong>（在一小部分数据上）：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>损失函数</th><th>验证集 MSE（低=好）</th><th>验证集多模态保真度</th><th>离群点鲁棒性</th></tr>
+<tr><th>L2 (baseline)</th><th>—</th><th>差</th><th>差</th></tr>
+<tr><th>L1</th><th></th><th></th><th>✅ 好</th></tr>
+<tr><th>Huber δ=1.0</th><th></th><th></th><th>✅ 好</th></tr>
+<tr><th>Huber δ=5.0</th><th></th><th></th><th>✅✅ 最好</th></tr>
+<tr><th>Charbonnier</th><th></th><th></th><th></th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>九、本篇要点总结</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>知识点</th><th>关键结论</th></tr>
+<tr><th>L1 vs L2 的本质</th><th>L2 = 均值，L1 = 中位数，中位数更适合多模态动作</th></tr>
+<tr><th>离群点问题</th><th>L1 梯度有界（±1），L2 梯度随误差增长</th></tr>
+<tr><th>Huber Loss</th><th>自适应 L1/L2，通用机器人操作首选</th></tr>
+<tr><th>δ 参数</th><th>精细任务用小 δ，强干扰用大 δ，建议用退火 schedule</th></tr>
+<tr><th>Charbonnier</th><th>处处可微，Huber 的平滑替代，diffusion policy 原版使用</th></tr>
+<tr><th>维度自适应权重</th><th>不同量纲的动作维度（位置 vs 夹爪）需要不同权重</th></tr>
+<tr><th>归一化是前提</th><th>不管用什么损失函数，动作必须先归一化</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>预告：第四篇预告</h2>
+<br/>
+<p>下一篇文章我们将深入研究 <strong>中间语义层与 Latent Diffusion 的深层次设计</strong>：</p>
+<ul>
+<li>中间语义层的三种实现方式（显式规划层、注意力桥接、VAE 瓶颈）</li>
+<li>Latent Action 的训练目标对比（重建 vs 对比 vs 混合）</li>
+<li>为什么语义层能弥合"语义-运动学鸿沟"</li>
+<li>GO-1 ViLLA 的 latent space 可视化分析</li>
+<li>中间语义层在 ACoT-VLA 中的角色</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>如果有任何具体实现问题，欢迎继续提问。</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

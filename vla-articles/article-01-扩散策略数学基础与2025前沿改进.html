@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>扩散策略数学基础与2025前沿改进 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:800px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:800px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-diffusion{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-vla{background:rgba(16,185,129,0.1);color:#059669;border-color:rgba(16,185,129,0.2);}
+    .tag-loss{background:rgba(239,68,68,0.1);color:#dc2626;border-color:rgba(239,68,68,0.2);}
+    .tag-semantic{background:rgba(139,92,246,0.1);color:#7c3aed;border-color:rgba(139,92,246,0.2);}
+    .tag-temporal{background:rgba(245,158,11,0.1);color:#b45309;border-color:rgba(245,158,11,0.2);}
+    .tag-cfg{background:rgba(236,72,153,0.1);color:#db2777;border-color:rgba(236,72,153,0.2);}
+    .tag-inference{background:rgba(59,130,246,0.1);color:#2563eb;border-color:rgba(59,130,246,0.2);}
+    .tag-training{background:rgba(34,197,94,0.1);color:#16a34a;border-color:rgba(34,197,94,0.2);}
+    .tag-multimodal{background:rgba(249,115,22,0.1);color:#ea580c;border-color:rgba(249,115,22,0.2);}
+    .tag-competition{background:rgba(234,179,8,0.1);color:#ca8a04;border-color:rgba(234,179,8,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-series{display:inline-block;margin-bottom:16px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#5b6cf9,#a78bfa);color:#fff;}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="vla.html" class="menu-item">← VLA 文章</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="vla.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-series">第 01 篇 · 共 10 篇</div>
+    <div class="article-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-cfg">CFG</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+    <h1 class="article-title">扩散策略数学基础与2025前沿改进</h1>
+    <div class="article-meta">📅 2026-04-02 &nbsp;·&nbsp; VLA 机器人控制系列文章</div>
+  </div>
+  <div class="article-body"><h1>系列文章一：扩散策略在机器人控制中的数学基础与 2025 前沿改进</h1>
+<br/>
+<p>> 作者：WorkBuddy 研究团队</p>
+<p>> 日期：2026-04-02</p>
+<p>> 预计阅读时间：40 分钟</p>
+<p>> 面向读者：有一定深度学习基础的机器人研究者和比赛选手</p>
+<br/>
+<hr/>
+<br/>
+<h2>一、从马尔可夫决策过程到动作分布学习</h2>
+<br/>
+<p>机器人控制的核心任务是学习一个策略 $\pi_\theta(a_t | o_t, g)$，其中：</p>
+<ul>
+<li>$o_t$：当前观测（视觉图像 + 机器人状态）</li>
+<li>$g$：语言指令目标（可选）</li>
+<li>$a_t$：当前动作（末端位姿、关节角、夹爪开合等）</li>
+</ul>
+<br/>
+<p>传统方法如 Behavior Cloning（行为克隆）直接用 MSE 回归动作：</p>
+<br/>
+<p>$$\mathcal{L}_{\text{MSE}} = \mathbb{E}_{t, (o,a) \sim \mathcal{D}} \|a_t - \hat{a}_\theta(o_t, g)\|^2$$</p>
+<br/>
+<p><strong>问题所在</strong>：</p>
+<li>动作空间高维（通常 7~14 维），MSE 优化困难</li>
+<li>同一指令可能有多条合理动作路径（多模态），MSE 只能学到均值</li>
+<li>离群动作（夹爪突然张开、避障急停）会被平均效应抹平</li>
+<br/>
+<p>扩散模型的思想恰好解决了这些问题——它不直接回归动作，而是学习把噪声"去噪"成动作。</p>
+<br/>
+<hr/>
+<br/>
+<h2>二、DDPM 数学体系</h2>
+<br/>
+<h3>2.1 前向扩散过程（Forward Process）</h3>
+<br/>
+<p>给定真实动作 $a_0 \sim q(a_0)$，定义 $T$ 步前向扩散：</p>
+<br/>
+<p>$$q(a_t | a_{t-1}) = \mathcal{N}\left(a_t; \sqrt{1 - \beta_t} a_{t-1}, \beta_t I\right)$$</p>
+<br/>
+<p>其中 $\{\beta_t\}_{t=1}^T$ 是预定义的噪声调度（noise schedule）。</p>
+<br/>
+<p>经过闭合推导，任意时间步 $t$ 的分布可以直接写为：</p>
+<br/>
+<p>$$q(a_t | a_0) = \mathcal{N}\left(a_t; \sqrt{\bar{\alpha}_t} a_0, (1 - \bar{\alpha}_t) I\right)$$</p>
+<br/>
+<p>其中：</p>
+<p>$$\alpha_t = 1 - \beta_t, \quad \bar{\alpha}_t = \prod_{i=1}^t \alpha_i$$</p>
+<br/>
+<p><strong>直观理解</strong>：随着 $t$ 增大，$\bar{\alpha}_t \to 0$，$a_t$ 逐渐变成纯噪声。当 $T$ 足够大（通常 100~1000），$a_T \approx \mathcal{N}(0, I)$。</p>
+<br/>
+<h3>2.2 反向过程（Reverse Process）</h3>
+<br/>
+<p>我们训练一个噪声预测网络 $\epsilon_\theta(a_t, c, t)$，其中 $c$ 是条件信息（观测 $o$ 和目标 $g$），$t$ 是时间步嵌入。网络学习预测注入的噪声 $\epsilon$。</p>
+<br/>
+<p>训练损失函数：</p>
+<br/>
+<p>$$\mathcal{L} = \mathbb{E}_{t, \epsilon, a_0, c} \left[ \|\epsilon - \epsilon_\theta(\sqrt{\bar{\alpha}_t} a_0 + \sqrt{1 - \bar{\alpha}_t} \epsilon, c, t)\|^2 \right]$$</p>
+<br/>
+<p>> <strong>注意</strong>：这是 <strong>L2 Loss</strong>。我们稍后在第三篇会详细分析为什么 L1/L2 的选择在机器人控制中至关重要。</p>
+<br/>
+<h3>2.3 推理：迭代去噪</h3>
+<br/>
+<p>从纯噪声 $a_T \sim \mathcal{N}(0, I)$ 开始，依次采样：</p>
+<br/>
+<p>$$a_{t-1} = \frac{1}{\sqrt{\alpha_t}}\left(a_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar{\alpha}_t}} \epsilon_\theta(a_t, c, t)\right) + \sigma_t z$$</p>
+<br/>
+<p>其中 $z \sim \mathcal{N}(0, I)$，$\sigma_t$ 是与 $\beta_t$ 相关的噪声项。</p>
+<br/>
+<p>这个过程叫 <strong>DDPM（Denoising Diffusion Probabilistic Models）</strong> 采样，每步需要完整的前向网络推理，$T$ 通常为 100~1000 步，直接用于机器人实时控制是不可能的。</p>
+<br/>
+<hr/>
+<br/>
+<h2>三、DDIM：把 100 步压到 10 步</h2>
+<br/>
+<p><strong>DDIM（Denoising Diffusion Implicit Models）</strong> 的核心洞察是：DDPM 的随机性并非必要。DDIM 定义了一个确定性的采样轨迹：</p>
+<br/>
+<p>$$a_{t-1} = \sqrt{\bar{\alpha}_{t-1}} \cdot \underbrace{\frac{a_t - \sqrt{1 - \bar{\alpha}_t} \epsilon_\theta(a_t, c, t)}{\sqrt{\bar{\alpha}_t}}}_{\text{predicted } a_0} + \sqrt{1 - \bar{\alpha}_{t-1}} \cdot \underbrace{\epsilon_\theta(a_t, c, t)}_{\text{predicted noise}}$$</p>
+<br/>
+<p>DDIM 可以将采样步数从 100 降到 <strong>10~20 步</strong>，速度提升 5~10 倍，精度损失很小。</p>
+<br/>
+<p><strong>比赛中的实际建议</strong>：</p>
+<ul>
+<li>推理时先用 DDIM-10 或 DDIM-20 测试</li>
+<li>如果任务需要更高精度动作（如精细抓取），可以用 DDIM-50</li>
+<li>$\eta$ 参数控制随机性：$\eta=0$ 时完全确定性，$\eta=1$ 时接近 DDPM</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>四、Flow Matching：2025 年主流范式</h2>
+<br/>
+<h3>4.1 什么是 Flow Matching？</h3>
+<br/>
+<p>Flow Matching（FM）是一种更简洁的扩散式生成建模框架，省去了 DDPM 的复杂噪声调度推导。</p>
+<br/>
+<p><strong>核心思想</strong>：直接在起点（噪声 $x_1$）和终点（数据 $x_0$）之间定义一个常微分方程（ODE）路径：</p>
+<br/>
+<p>$$x_t = (1 - t) \cdot x_1 + t \cdot x_0, \quad t \in [0, 1]$$</p>
+<br/>
+<p>训练时，给定 $x_0$ 和噪声 $x_1$，构造中间样本 $x_t$：</p>
+<br/>
+<p>$$x_t = (1 - t) x_1 + t x_0$$</p>
+<br/>
+<p>预测目标改为 <strong>速度场（velocity）</strong> $\mathbf{v}_\theta(x_t, c, t)$：</p>
+<br/>
+<p>$$\mathcal{L}_{\text{FM}} = \mathbb{E}_{t, x_0, x_1, c} \| \mathbf{v} - \mathbf{v}_\theta(x_t, c, t) \|^2$$</p>
+<br/>
+<p>其中真实速度场是：</p>
+<br/>
+<p>$$\mathbf{v} = x_0 - x_1$$</p>
+<br/>
+<h3>4.2 为什么 Flow Matching 成为 2025 年主流？</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>对比维度</th><th>DDPM</th><th>Flow Matching</th></tr>
+<tr><th>采样步数</th><th>100~1000 步（慢）</th><th>10~50 步（快）</th></tr>
+<tr><th>理论基础</th><th>变分推断（复杂）</th><th>最优传输（简洁）</th></tr>
+<tr><th>轨迹分布</th><th>随机</th><th>可可控（ODE）</th></tr>
+<tr><th>2025 年主流采用</th><th>逐渐退出</th><th><strong>GR00T-N1, π0, GO-1 等都在用</strong></th></tr>
+<tr><th>与 LLM 架构兼容性</th><th>一般</th><th><strong>更好</strong>（统一建模）</th></tr>
+</table></div>
+<br/>
+<p><strong>GR00T-N1</strong>（NVIDIA 2025.03）明确使用 Flow Matching 作为 Action Head：</p>
+<pre><code>Observation → SigLIP + Language Encoder → Feature Concatenation
+           → DiT (Diffusion Transformer) with Flow Matching Head
+           → 输出动作序列</code></pre>
+<br/>
+<p><strong>π0</strong>（Physical Intelligence 2024.10）同样基于 Flow Matching 构建。</p>
+<br/>
+<h3>4.3 Flow Matching 的采样</h3>
+<br/>
+<p>Flow Matching 的采样通过求解 ODE 完成：</p>
+<br/>
+<p>$$\frac{dx}{dt} = -\mathbf{v}_\theta(x, c, t)$$</p>
+<br/>
+<p>使用简单的 Euler 或 RK4 积分即可。步数通常 10~20 步即可达到满意质量。</p>
+<br/>
+<hr/>
+<br/>
+<h2>五、条件引导：让机器人"听话"</h2>
+<br/>
+<h3>5.1 Classifier-Free Guidance（CFG）</h3>
+<br/>
+<p>CFG 是让扩散模型在推理时同时使用条件信息（观测、指令）的关键技术。</p>
+<br/>
+<p><strong>训练阶段</strong>：</p>
+<ul>
+<li>以一定概率 $p$（通常 10~20%）将条件 $c$ 替换为 NULL（空条件）</li>
+<li>网络同时学习有条件和无条件去噪</li>
+</ul>
+<br/>
+<p><strong>推理阶段</strong>：通过线性外推放大条件信号：</p>
+<br/>
+<p>$$\tilde{\epsilon}_\theta(a_t, c, t) = (1 + w) \cdot \epsilon_\theta(a_t, c, t) - w \cdot \epsilon_\theta(a_t, \emptyset, t)$$</p>
+<br/>
+<p>其中 $w \in [0, \infty)$ 是 <strong>引导强度</strong>（guidance scale）：</p>
+<ul>
+<li>$w = 0$：无引导，生成多样但可能偏离指令</li>
+<li>$w = 0.5 \sim 1.5$：标准范围，条件对齐好</li>
+<li>$w > 2$：强引导，动作更精确但可能缺乏多样性</li>
+</ul>
+<br/>
+<p>> <strong>比赛调参建议</strong>：$w$ 是最值得优先调节的超参数。通常 0.75~1.5 之间是安全区间。</p>
+<br/>
+<h3>5.2 无分类器引导在机器人控制中的特殊价值</h3>
+<br/>
+<p>机器人动作的真实分布是多模态的——同一个"把杯子放到碗里"指令，可以从左侧放、右侧放、先抬再放等。CFG 允许模型在<strong>指令精确性</strong>和<strong>动作多样性</strong>之间做权衡。</p>
+<br/>
+<hr/>
+<br/>
+<h2>六、2025 年关键架构改进一览</h2>
+<br/>
+<h3>6.1 从 U-Net 到 DiT（Diffusion Transformer）</h3>
+<br/>
+<p>传统 Diffusion Policy（如 CDNA, DAL）使用 U-Net 作为噪声预测网络。2024-2025 年主流工作全面转向 <strong>DiT（Diffusion Transformer）</strong>：</p>
+<br/>
+<ul>
+<li><strong>DiT 的优势</strong>：序列建模能力强，更容易与 LLM/VLM 架构融合</li>
+<li><strong>代表作</strong>：GR00T-N1、π0、GO-1 都使用 DiT-style Action Head</li>
+</ul>
+<br/>
+<h3>6.2 动作分词器（Action Tokenizer）</h3>
+<br/>
+<p><strong>FAST</strong>（Physical Intelligence, 2025.01）是这个方向的里程碑：</p>
+<br/>
+<p>核心思想：用 <strong>DCT（离散余弦变换）</strong> 把连续动作序列编码为离散 token：</p>
+<br/>
+<pre><code>连续动作 [a_1, a_2, ..., a_N]（N=16~64）
+    → DCT 变换 → 频域表示
+    → 量化 → 离散 token 序列</code></pre>
+<br/>
+<p>这样做的好处：</p>
+<li>可以用 LLM-style 的 <strong>next-token prediction</strong> 来训练动作模型</li>
+<li>训练速度提升 <strong>5 倍</strong>（vs 原始连续动作扩散训练）</li>
+<li>tokenize 后的动作可以跨任务复用</li>
+<br/>
+<p>π0-FAST 就是用这个思想训练的。</p>
+<br/>
+<h3>6.3 两阶段训练 vs 端到端训练</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>范式</th><th>代表工作</th><th>特点</th></tr>
+<tr><th><strong>两阶段</strong></th><th>GO-1 (ViLLA)</th><th>先训 VLM 视觉-语言，再冻住 VLM 训练 Action Head</th></tr>
+<tr><th><strong>端到端</strong></th><th>π0, GR00T-N1</th><th>VLM + Action 一起训练，梯度流畅但需要更多数据</th></tr>
+<tr><th><strong>混合</strong></th><th>OpenVLA</th><th>预训练 VLM + 轻量 Action Adapter，平衡效率和性能</th></tr>
+</table></div>
+<br/>
+<p><strong>比赛建议</strong>：如果你的数据集规模有限（< 10 万条轨迹），优先选择 <strong>两阶段 + 冻住 VLM</strong>；数据量充足时可以尝试端到端。</p>
+<br/>
+<hr/>
+<br/>
+<h2>七、实践：如何在代码里实现一个基础 Diffusion Policy</h2>
+<br/>
+<pre><code>import torch
+import torch.nn as nn
+import math
+
+class SimpleDiffusionPolicy(nn.Module):
+    """
+    最简版 Diffusion Policy（DDPM 训练 + DDIM 推理）
+    仅供理解原理使用，不适合直接上场比赛
+    """
+    def __init__(self, obs_dim=128, action_dim=7, hidden=256, T=100):
+        super().__init__()
+        self.T = T
+        self.action_dim = action_dim
+        
+        # 噪声预测网络（MLP 版本，实际推荐 DiT）
+        self.noise_pred_net = nn.Sequential(
+            nn.Linear(obs_dim + action_dim + 1, hidden),  # obs + action + time
+            nn.SiLU(),
+            nn.Linear(hidden, hidden),
+            nn.SiLU(),
+            nn.Linear(hidden, action_dim)
+        )
+        
+        # 噪声调度
+        self.register_buffer('betas', self._cosine_beta_schedule(T))
+        alphas = 1.0 - self.betas
+        self.register_buffer('alphas_bar', torch.cumprod(alphas, dim=0))
+
+    def _cosine_beta_schedule(self, T, s=0.008):
+        """Cosine schedule，比 linear schedule 更稳定"""
+        steps = torch.arange(T + 1)
+        alphas = torch.cos((steps / T + s) / (1 + s) * math.pi * 0.5) ** 2
+        alphas = alphas / alphas[0]
+        betas = 1 - alphas[1:] / alphas[:-1]
+        return torch.clip(betas, 0.0001, 0.02)
+
+    def forward(self, obs, action_noisy, t):
+        """训练：预测噪声"""
+        # t 是归一化的时间步 [0, 1]
+        x = torch.cat([obs, action_noisy, t], dim=-1)
+        return self.noise_pred_net(x)
+
+    @torch.no_grad()
+    def sample(self, obs, num_steps=20):
+        """推理：DDIM 采样"""
+        batch_size = obs.shape[0]
+        a_t = torch.randn(batch_size, self.action_dim, device=obs.device)
+        
+        # 时间步从 T 倒数到 0
+        timesteps = torch.linspace(self.T, 0, num_steps, device=obs.device).long()
+        
+        for i in range(num_steps - 1):
+            t = timesteps[i]
+            t_next = timesteps[i + 1]
+            
+            # 预测噪声
+            eps = self.forward(obs, a_t, (t / self.T).expand(a_t.shape[0]))
+            
+            # DDIM 更新（简化版）
+            alpha_bar_t = self.alphas_bar[t]
+            alpha_bar_t_next = self.alphas_bar[t_next]
+            
+            a_t = (a_t - torch.sqrt(1 - alpha_bar_t) * eps) / torch.sqrt(alpha_bar_t)
+            a_t = torch.sqrt(alpha_bar_t_next) * a_t + \
+                  torch.sqrt(1 - alpha_bar_t_next) * eps
+        
+        return a_t  # 最终动作</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>八、本篇要点总结</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>知识点</th><th>关键结论</th></tr>
+<tr><th>DDPM 前向/反向</th><th>理解噪声调度的物理意义即可，代码里用现成库</th></tr>
+<tr><th>DDIM 采样</th><th><strong>推理必用</strong>，10~20 步即可，推荐优先测试</th></tr>
+<tr><th>Flow Matching</th><th><strong>2025 年主流范式</strong>，GR00T/π0/GO-1 都在用，优先掌握</th></tr>
+<tr><th>CFG</th><th>$w$ 是最重要的推理超参，建议先扫 [0.5, 1.5] 区间</th></tr>
+<tr><th>DiT > U-Net</th><th>动作网络选 DiT，VLM 融合更自然</th></tr>
+<tr><th>动作分词器</th><th>FAST 等 tokenizer 是加速训练的新方向，关注后续文章</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>预告：第二篇预告</h2>
+<br/>
+<p>下一篇文章我们将深入解析 <strong>VLA 架构演进全景图</strong>：</p>
+<ul>
+<li>从 Behavior Cloning → ACT → Diffusion Policy → VLA 的完整进化链条</li>
+<li><strong>GO-1 的 ViLLA 架构</strong>逐层拆解（VLM backbone + Latent Action + MoE）</li>
+<li><strong>ACoT-VLA</strong> 如何用 Chain-of-Thought 让机器人"先想再做"</li>
+<li><strong>π0 / π0-FAST</strong> 的完整架构设计</li>
+<li><strong>GR00T-N1</strong> 的两阶段训练 pipeline</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>如果你在阅读中遇到任何疑问，或者想针对某个具体模块深入讨论，欢迎随时提问。</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

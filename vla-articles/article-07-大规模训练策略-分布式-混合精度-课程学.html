@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>大规模训练策略 分布式 混合精度 课程学习 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:800px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:800px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-diffusion{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-vla{background:rgba(16,185,129,0.1);color:#059669;border-color:rgba(16,185,129,0.2);}
+    .tag-loss{background:rgba(239,68,68,0.1);color:#dc2626;border-color:rgba(239,68,68,0.2);}
+    .tag-semantic{background:rgba(139,92,246,0.1);color:#7c3aed;border-color:rgba(139,92,246,0.2);}
+    .tag-temporal{background:rgba(245,158,11,0.1);color:#b45309;border-color:rgba(245,158,11,0.2);}
+    .tag-cfg{background:rgba(236,72,153,0.1);color:#db2777;border-color:rgba(236,72,153,0.2);}
+    .tag-inference{background:rgba(59,130,246,0.1);color:#2563eb;border-color:rgba(59,130,246,0.2);}
+    .tag-training{background:rgba(34,197,94,0.1);color:#16a34a;border-color:rgba(34,197,94,0.2);}
+    .tag-multimodal{background:rgba(249,115,22,0.1);color:#ea580c;border-color:rgba(249,115,22,0.2);}
+    .tag-competition{background:rgba(234,179,8,0.1);color:#ca8a04;border-color:rgba(234,179,8,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-series{display:inline-block;margin-bottom:16px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#5b6cf9,#a78bfa);color:#fff;}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="vla.html" class="menu-item">← VLA 文章</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="vla.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-series">第 07 篇 · 共 10 篇</div>
+    <div class="article-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+    <h1 class="article-title">大规模训练策略 分布式 混合精度 课程学习</h1>
+    <div class="article-meta">📅 2026-04-02 &nbsp;·&nbsp; VLA 机器人控制系列文章</div>
+  </div>
+  <div class="article-body"><h1>系列文章七：大规模训练策略——分布式、混合精度与课程学习</h1>
+<br/>
+<p>> 作者：WorkBuddy 研究团队</p>
+<p>> 日期：2026-04-02</p>
+<p>> 预计阅读时间：55 分钟</p>
+<p>> 面向读者：有充足算力，希望训练超大规模 VLA 模型的比赛选手</p>
+<br/>
+<hr/>
+<br/>
+<h2>一、分布式训练的三种范式</h2>
+<br/>
+<h3>1.1 数据并行（Data Parallelism, DP）</h3>
+<br/>
+<p>最简单也最常用的方法：</p>
+<br/>
+<pre><code>GPU 0: batch 0~127      →  forward → backward → grad_0
+GPU 1: batch 128~255    →  forward → backward → grad_1
+GPU 2: batch 256~383    →  forward → backward → grad_2
+GPU 3: batch 384~511    →  forward → backward → grad_3
+                                    ↓
+                            AllReduce (梯度平均)
+                                    ↓
+                            optimizer step (每个 GPU 独立执行)</code></pre>
+<br/>
+<p><strong>优点</strong>：实现简单，效果好，几乎线性加速</p>
+<p><strong>缺点</strong>：每个 GPU 都要完整模型，显存瓶颈依然存在</p>
+<br/>
+<h3>1.2 模型并行（Model Parallelism, MP）</h3>
+<br/>
+<p>把模型拆分到多个 GPU：</p>
+<br/>
+<pre><code>GPU 0: VLM backbone (2B params)
+GPU 1: Action Head (500M params)
+         ↓ 张量重排（all-reduce needed）</code></pre>
+<br/>
+<p><strong>缺点</strong>：GPU 间通信开销大，效率低，复杂</p>
+<br/>
+<h3>1.3 ZeRO-3（DeepSpeed）——推荐方案</h3>
+<br/>
+<p>ZeRO（Zero Redundancy Optimizer）将<strong>优化器状态、梯度、模型参数</strong>分片到不同 GPU：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>Stage</th><th>分片内容</th><th>通信量</th><th>显存节省</th></tr>
+<tr><th>ZeRO-1</th><th>优化器状态分片</th><th>少</th><th>~4x</th></tr>
+<tr><th>ZeRO-2</th><th>+ 梯度分片</th><th>中等</th><th>~8x</th></tr>
+<tr><th><strong>ZeRO-3</strong></th><th>+ 模型参数分片</th><th>多</th><th><strong>~N倍</strong>（N=GPU数）</th></tr>
+</table></div>
+<br/>
+<p>ZeRO-3 让每个 GPU 只存储 <strong>1/N 的模型参数</strong>，需要时通过 <strong>All-Gather</strong> 获取其他分片。</p>
+<br/>
+<p><strong>推荐配置</strong>（8 GPU 训练 3B 模型）：</p>
+<br/>
+<pre><code># deepspeed_config.json
+{
+    "zero_optimization": {
+        "stage": 3,
+        "offload_optimizer": {
+            "device": "cpu",      # CPU offload 优化器状态，进一步省显存
+            "pin_memory": true
+        },
+        "offload_param": {
+            "device": "cpu",      # CPU offload 参数（极端情况）
+            "pin_memory": true
+        },
+        "overlap_comm": true,     # 重叠通信和计算
+        "contiguous_gradients": true,
+        "reduce_bucket_size": 1e8,
+        "stage3_gather_16bit_weights_on_model_save": true
+    },
+    "bf16": {"enabled": true},   # 混合精度
+    "gradient_clipping": 1.0,
+    "gradient_accumulation_steps": 4,
+    "train_batch_size": 256,
+    "train_micro_batch_size_per_gpu": 8
+}</code></pre>
+<br/>
+<h3>1.4 FSDP（Fully Sharded Data Parallel）——PyTorch 原生方案</h3>
+<br/>
+<p>FSDP 是 PyTorch 原生的 ZeRO-3 实现，比 DeepSpeed 集成更紧密：</p>
+<br/>
+<pre><code># 使用 PyTorch FSDP
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import ShardingStrategy, MixedPrecision
+from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
+
+# 混合精度配置
+mp_policy = MixedPrecision(
+    param_dtype=torch.bfloat16,
+    reduce_dtype=torch.float32,    # AllReduce 用 FP32
+    buffer_dtype=torch.bfloat16,
+)
+
+# 自动 wrap 策略（Transformer 层自动分片）
+model = FSDP(
+    base_model,
+    sharding_strategy=ShardingStrategy.FULL_SHARD,
+    mixed_precision=mp_policy,
+    auto_wrap_policy=transformer_auto_wrap_policy,
+    device_id=torch.cuda.current_device(),
+)
+
+# 训练循环
+for batch in dataloader:
+    with FSDP.autocast():
+        output = model(batch)
+        loss = compute_loss(output)
+    
+    model.backward(loss)  # 自动分片梯度
+    model.step()</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>二、混合精度训练：FP8 vs BF16 vs FP32</h2>
+<br/>
+<h3>2.1 精度选择指南</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>精度</th><th>显存占用</th><th>数值稳定性</th><th>支持硬件</th><th>建议</th></tr>
+<tr><th>FP32</th><th>1x</th><th>最稳定</th><th>所有 GPU</th><th>主梯度存 FP32</th></tr>
+<tr><th>BF16</th><th>~0.5x</th><th>好</th><th>Ampere+ (A100/H100)</th><th><strong>首选，精度-效率平衡最好</strong></th></tr>
+<tr><th>FP16</th><th>~0.5x</th><th>一般</th><th>所有 GPU</th><th>容易溢出，不推荐</th></tr>
+<tr><th>FP8</th><th>~0.25x</th><th>较差</th><th>H100 only</th><th>极端省显存用</th></tr>
+</table></div>
+<br/>
+<h3>2.2 BF16 混合精度详解</h3>
+<br/>
+<p>BF16（Brain Float 16）的指数位比 FP16 多，数值范围更大，训练更稳定：</p>
+<br/>
+<pre><code>FP16: 1 sign + 5 exp + 10 mantissa（范围 ~6e-5 ~ 65504）
+BF16: 1 sign + 8 exp + 7 mantissa（范围 ~9e-10 ~ 3e38）</code></pre>
+<br/>
+<p><strong>为什么 BF16 更适合大模型训练</strong>：</p>
+<ul>
+<li>BF16 指数范围接近 FP32，梯度计算不容易溢出</li>
+<li>显存减半，通信带宽减半</li>
+<li>几乎无精度损失</li>
+</ul>
+<br/>
+<h3>2.3 BF16 混合精度训练代码</h3>
+<br/>
+<pre><code># PyTorch 原生 BF16 混合精度
+from torch.cuda.amp import autocast, GradScaler
+
+scaler = GradScaler('cuda', init_scale=65536.0)
+
+for batch in dataloader:
+    # Forward 用 BF16
+    with autocast(dtype=torch.bfloat16):
+        output = model(batch)
+        loss = compute_loss(output)
+    
+    # Backward 用 GradScaler
+    scaler.scale(loss).backward()
+    
+    # 梯度裁剪
+    scaler.unscale_(optimizer)
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+    
+    # Optimizer step
+    scaler.step(optimizer)
+    scaler.update()</code></pre>
+<br/>
+<h3>2.4 DeepSpeed BF16 配置</h3>
+<br/>
+<pre><code>ds_config = {
+    "fp16": {
+        "enabled": False,
+    },
+    "bf16": {
+        "enabled": True,  # 启用 BF16
+    },
+    "gradient_clipping": 1.0,
+    "gradient_accumulation_steps": 4,
+    "zero_optimization": {
+        "stage": 3,
+        "reduce_bucket_size": 1e8,
+        "stage3_prefetch_bucket_size": 1e8,
+        "stage3_param_persistence_threshold": 1e5,
+    }
+}</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>三、梯度累积：如何在有限显存下训练大批量</h2>
+<br/>
+<h3>3.1 原理</h3>
+<br/>
+<p>当单个 GPU 的显存不够放下 batch_size=256 时，可以分 <strong>micro_batch_size=8</strong> 次做前向/反向计算，累积梯度：</p>
+<br/>
+<pre><code>micro_batch_1: loss.backward() → grad_acc += grad_1
+micro_batch_2: loss.backward() → grad_acc += grad_2
+...
+micro_batch_32: loss.backward() → grad_acc += grad_32
+                        ↓
+                   optimizer.step()  # 等累积完再更新
+                   grad_acc.zero_()  # 清零，准备下一轮</code></pre>
+<br/>
+<p>逻辑 batch_size = micro_batch_size × gradient_accumulation_steps × num_gpus</p>
+<br/>
+<h3>3.2 配置建议</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>总 batch_size</th><th>num_gpus</th><th>micro_batch</th><th>accum_steps</th></tr>
+<tr><th>256</th><th>8</th><th>8</th><th>4</th></tr>
+<tr><th>512</th><th>8</th><th>8</th><th>8</th></tr>
+<tr><th>1024</th><th>8</th><th>4</th><th>32</th></tr>
+<tr><th>2048</th><th>8</th><th>2</th><th>128</th></tr>
+</table></div>
+<br/>
+<p><strong>注意</strong>：accum_steps 增大会让训练变慢，但 batch_size 增大通常能提升最终效果——存在一个 sweet spot。</p>
+<br/>
+<hr/>
+<br/>
+<h2>四、课程学习（Curriculum Learning）</h2>
+<br/>
+<h3>4.1 核心思想</h3>
+<br/>
+<p>课程学习让模型<strong>从简单到复杂逐步学习</strong>——这比随机打乱数据训练更高效：</p>
+<br/>
+<pre><code>阶段 1（简单）：单步操作、短轨迹、低干扰
+阶段 2（中等）：多步操作、中等轨迹
+阶段 3（复杂）：长时序、高干扰、未知场景</code></pre>
+<br/>
+<h3>4.2 机器人控制的课程设计</h3>
+<br/>
+<pre><code>class RobotCurriculum:
+    """
+    机器人数据的课程学习调度器
+    """
+    def __init__(self, total_steps):
+        self.total_steps = total_steps
+        
+        # 定义难度维度
+        self.difficulty_dims = {
+            'trajectory_length': {'min': 10, 'max': 200},
+            'num_objects': {'min': 1, 'max': 5},
+            'collision_risk': {'min': 0.0, 'max': 1.0},
+            'instruction_complexity': {'min': 0.0, 'max': 1.0},
+        }
+    
+    def get_difficulty_weight(self, step):
+        """
+        返回各难度维度的权重（step=0 简单，step=total 复杂）
+        """
+        progress = step / self.total_steps
+        
+        # 使用余弦退火到复杂
+        weight = 0.5 * (1 - math.cos(math.pi * progress))
+        
+        return {
+            'trajectory_length': self.lerp(
+                self.difficulty_dims['trajectory_length']['min'],
+                self.difficulty_dims['trajectory_length']['max'],
+                weight
+            ),
+            'num_objects': self.lerp(
+                self.difficulty_dims['num_objects']['min'],
+                self.difficulty_dims['num_objects']['max'],
+                weight
+            ),
+            'collision_risk': self.lerp(0.0, 1.0, weight),
+        }
+    
+    def lerp(self, a, b, t):
+        return a + (b - a) * t
+    
+    def filter_batch(self, batch, step):
+        """根据当前课程阶段过滤/加权 batch"""
+        weights = self.get_difficulty_weight(step)
+        
+        # 计算每个样本的难度分数
+        difficulty_scores = self.compute_difficulty_scores(batch)
+        
+        # 采样权重：简单样本权重低，复杂样本权重高（课程阶段）
+        # 注意：不是丢弃简单样本，而是降低其权重
+        weights_per_sample = torch.tensor([
+            self.score_to_weight(ds, step)
+            for ds in difficulty_scores
+        ])
+        
+        # 归一化
+        weights_per_sample = weights_per_sample / weights_per_sample.sum()
+        
+        # 加权采样
+        indices = torch.multinomial(weights_per_sample, batch_size, replacement=False)
+        return batch[indices]</code></pre>
+<br/>
+<h3>4.3 课程学习的三大策略</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>策略</th><th>做法</th><th>适用场景</th></tr>
+<tr><th><strong>难度过滤</strong></th><th>早期只训练简单样本，忽略复杂样本</th><th>数据充足，模型容量大</th></tr>
+<tr><th><strong>难度加权</strong></th><th>所有样本都训练，但简单样本权重低、复杂样本权重高</th><th>数据不充足，不想浪费数据</th></tr>
+<tr><th><strong>难度混合</strong></th><th>每个 batch 包含不同难度的样本，比例随训练变化</th><th>通用推荐</th></tr>
+</table></div>
+<br/>
+<h3>4.4 GO-1 的课程学习设计</h3>
+<br/>
+<p>GO-1 实际上采用了<strong>两阶段课程</strong>：</p>
+<li><strong>Stage 1</strong>：在高质量真机数据（AgiBot World-Alpha）上训练，这些数据轨迹短、噪声低、任务简单</li>
+<li><strong>Stage 2</strong>：混入大规模视频数据（AgiBot World-Beta），这些数据包含更多样的场景和更长的任务</li>
+<br/>
+<p>这本质上也是一种课程——从简单真机数据到复杂异构数据。</p>
+<br/>
+<hr/>
+<br/>
+<h2>五、预训练-微调策略</h2>
+<br/>
+<h3>5.1 预训练阶段的设计</h3>
+<br/>
+<p><strong>预训练目标</strong>：让 VLM backbone 理解机器人动作的语义（而非直接学会动作控制）</p>
+<br/>
+<pre><code># 预训练阶段：学习 Latent Action 表征
+pretrain_loss = (
+    recon_loss +          # 隐动作 → 重建动作
+    kl_loss +             # 隐空间正则化
+    contrastive_loss      # 相同动作的 obs 拉近，不同动作的 obs 推远
+)
+
+# 预训练数据：海量无标注机器人视频（无需精确 action label）</code></pre>
+<br/>
+<h3>5.2 微调阶段的设计</h3>
+<br/>
+<p><strong>微调目标</strong>：将预训练的隐动作表征映射到具体机器人的动作空间</p>
+<br/>
+<pre><code># 微调阶段：冻结 VLM + Latent Action encoder，训练 Action decoder
+# 或者：全部放开，端到端微调
+
+# 微调数据：高精度示教数据（action label 精确）
+finetune_loss = diffusion_loss  # 纯扩散动作损失</code></pre>
+<br/>
+<h3>5.3 冻结策略对比</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>策略</th><th>做法</th><th>优点</th><th>缺点</th></tr>
+<tr><th><strong>冻住 VLM</strong></th><th>只训练 Action Head</th><th>防止 VLM 灾难性遗忘，数据效率高</th><th>VLM 和 Action 特征可能不对齐</th></tr>
+<tr><th><strong>全部放开</strong></th><th>端到端训练</th><th>特征对齐最好</th><th>需要更多数据，容易过拟合</th></tr>
+<tr><th><strong>渐进放开</strong></th><th>先冻住，后逐步解冻</th><th>平衡两者</th><th>实现复杂</th></tr>
+</table></div>
+<br/>
+<p><strong>比赛建议</strong>：</p>
+<ul>
+<li>数据 < 10 万条 → 冻住 VLM</li>
+<li>数据 10~50 万条 → 冻住 VLM + LoRA adapter</li>
+<li>数据 > 50 万条 → 端到端训练</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>六、检查点与训练恢复</h2>
+<br/>
+<h3>6.1 定期保存检查点</h3>
+<br/>
+<pre><code>def save_checkpoint(model, optimizer, scheduler, step, save_dir):
+    import os
+    checkpoint = {
+        'step': step,
+        'model_state': model.state_dict(),
+        'optimizer_state': optimizer.state_dict(),
+        'scheduler_state': scheduler.state_dict(),
+    }
+    
+    # 普通检查点（每个 epoch 保存一次）
+    torch.save(checkpoint, f'{save_dir}/checkpoint_step_{step}.pt')
+    
+    # 只保存 best 模型
+    if is_best:
+        torch.save(checkpoint, f'{save_dir}/best_model.pt')
+    
+    # ZeRO-3 模型保存（需要特殊处理）
+    # model.consolidate_state_dict()  # 先收集所有分片
+    # torch.save(model.state_dict(), ...)</code></pre>
+<br/>
+<h3>6.2 DeepSpeed ZeRO-3 模型保存</h3>
+<br/>
+<pre><code># 重要：ZeRO-3 下保存完整模型
+with FSDP.state_dict_type(model, ShardingStrategy.FULL_SHARD):
+    # 先收集所有分片到 rank 0
+    state_dict = model.state_dict()
+    torch.save(state_dict, 'model.pt')</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>七、比赛实战：完整训练配置示例</h2>
+<br/>
+<pre><code># 8x H100 训练 GO-1/ViLLA 类模型（3B 参数）
+
+training_config = {
+    # 分布式
+    'distributed_backend': 'nccl',
+    'num_gpus': 8,
+    'strategy': 'deepspeed',  # 或 'fsdp'
+    
+    # 精度
+    'precision': 'bf16',        # 首选 BF16
+    'fp32_master_weights': True,
+    
+    # Batch size
+    'per_gpu_batch_size': 8,   # micro batch
+    'gradient_accumulation_steps': 8,
+    'effective_batch_size': 8 * 8 * 8 = 512,  # per_gpu * accum * num_gpus
+    
+    # ZeRO-3
+    'zero_stage': 3,
+    'offload_optimizer': True,  # CPU offload 优化器，省显存
+    'overlap_comm': True,
+    
+    # 学习率
+    'lr': 1e-4,                # VLM 部分
+    'lr_action_head': 3e-4,   # Action Head 更大 LR
+    'lr_scheduler': 'cosine',
+    'warmup_steps': 1000,
+    'min_lr_ratio': 0.1,
+    
+    # 正则化
+    'weight_decay': 0.01,
+    'gradient_clip': 1.0,
+    'ema_decay': 0.9999,
+    
+    # 数据
+    'num_workers': 8,
+    'prefetch_factor': 2,
+    'pin_memory': True,
+    
+    # 检查点
+    'save_every_n_steps': 1000,
+    'eval_every_n_steps': 500,
+    'save_top_k': 3,
+}</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>八、本篇要点总结</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>知识点</th><th>关键结论</th></tr>
+<tr><th>ZeRO-3 vs FSDP</th><th>ZeRO-3 省显存强，FSDP 集成更紧，首选看团队熟悉度</th></tr>
+<tr><th>BF16 > FP16</th><th>BF16 指数位多，训练稳定，H100/A100 推荐用 BF16</th></tr>
+<tr><th>梯度累积</th><th>effective_batch_size = micro × accum × num_gpus</th></tr>
+<tr><th>课程学习</th><th>从简单到复杂，余弦退火难度权重</th></tr>
+<tr><th>预训练-微调</th><th>预训练学隐动作语义，微调学具体动作映射</th></tr>
+<tr><th>冻住策略</th><th>数据少冻 VLM，数据多端到端</th></tr>
+<tr><th>EMA</th><th>几乎无成本，推理质量显著提升</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>预告：第八篇预告</h2>
+<br/>
+<p>下一篇文章我们将深入研究 <strong>多模态融合</strong>：</p>
+<ul>
+<li>视觉编码器对比：SigLIP vs DINOv2 vs CLIP vs InternVL</li>
+<li>3D 表征：点云 vs NeRF vs DepthAnything——哪种视觉表征最适合机器人</li>
+<li>语言-视觉对齐：对比学习 vs 语言监督</li>
+<li>无标注视频的利用：LAPA、Moto 等工作的数据利用技巧</li>
+<li>视频预测作为辅助任务：让模型"预见"未来</li>
+<li>跨具身泛化的视觉表征设计</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>第八篇让你的模型"看得更清楚"，是感知侧的核心技术。</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

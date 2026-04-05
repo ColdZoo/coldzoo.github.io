@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>推理优化 DDIM加速 量化 实时部署 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:800px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:800px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-diffusion{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-vla{background:rgba(16,185,129,0.1);color:#059669;border-color:rgba(16,185,129,0.2);}
+    .tag-loss{background:rgba(239,68,68,0.1);color:#dc2626;border-color:rgba(239,68,68,0.2);}
+    .tag-semantic{background:rgba(139,92,246,0.1);color:#7c3aed;border-color:rgba(139,92,246,0.2);}
+    .tag-temporal{background:rgba(245,158,11,0.1);color:#b45309;border-color:rgba(245,158,11,0.2);}
+    .tag-cfg{background:rgba(236,72,153,0.1);color:#db2777;border-color:rgba(236,72,153,0.2);}
+    .tag-inference{background:rgba(59,130,246,0.1);color:#2563eb;border-color:rgba(59,130,246,0.2);}
+    .tag-training{background:rgba(34,197,94,0.1);color:#16a34a;border-color:rgba(34,197,94,0.2);}
+    .tag-multimodal{background:rgba(249,115,22,0.1);color:#ea580c;border-color:rgba(249,115,22,0.2);}
+    .tag-competition{background:rgba(234,179,8,0.1);color:#ca8a04;border-color:rgba(234,179,8,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-series{display:inline-block;margin-bottom:16px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#5b6cf9,#a78bfa);color:#fff;}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="vla.html" class="menu-item">← VLA 文章</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="vla.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-series">第 09 篇 · 共 10 篇</div>
+    <div class="article-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+    <h1 class="article-title">推理优化 DDIM加速 量化 实时部署</h1>
+    <div class="article-meta">📅 2026-04-02 &nbsp;·&nbsp; VLA 机器人控制系列文章</div>
+  </div>
+  <div class="article-body"><h1>系列文章九：推理优化——DDIM 加速、量化与实时部署</h1>
+<br/>
+<p>> 作者：WorkBuddy 研究团队</p>
+<p>> 日期：2026-04-02</p>
+<p>> 预计阅读时间：50 分钟</p>
+<p>> 面向读者：需要将模型部署到机器人上、追求实时控制（< 20ms 延迟）的比赛选手</p>
+<br/>
+<hr/>
+<br/>
+<h2>一、实时控制的延迟预算</h2>
+<br/>
+<p>机器人物理控制要求<strong>低延迟闭环</strong>：</p>
+<br/>
+<pre><code>感知 → 推理 → 控制指令 → 执行
+  ↑______________|  （总延迟必须 &lt; 20ms @ 50Hz 控制频率）</code></pre>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>控制频率</th><th>最大延迟预算</th><th>说明</th></tr>
+<tr><th>50 Hz</th><th>20 ms</th><th>常见控制频率</th></tr>
+<tr><th>30 Hz</th><th>33 ms</th><th>慢速任务</th></tr>
+<tr><th>100 Hz</th><th>10 ms</th><th>精细操作/力控</th></tr>
+</table></div>
+<br/>
+<p><strong>推理时间分配</strong>：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>模块</th><th>目标延迟</th><th>备注</th></tr>
+<tr><th>视觉编码</th><th>5~8 ms</th><th>优化后可用 TensorRT</th></tr>
+<tr><th>扩散采样（DDIM）</th><th>5~15 ms</th><th>瓶颈所在，优化空间最大</th></tr>
+<tr><th>动作解码</th><th>< 1 ms</th><th>简单的 MLPs</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>二、DDIM 步数压缩</h2>
+<br/>
+<h3>2.1 基础 DDIM 延迟分析</h3>
+<br/>
+<p>假设 DDIM 每步推理耗时 2ms：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>DDIM 步数</th><th>采样总延迟</th><th>实际可用性</th></tr>
+<tr><th>100 步</th><th>200 ms</th><th>❌ 不可用</th></tr>
+<tr><th>50 步</th><th>100 ms</th><th>❌ 不可用</th></tr>
+<tr><th>20 步</th><th>40 ms</th><th>⚠️ 勉强可用（只剩 10ms 给视觉）</th></tr>
+<tr><th>10 步</th><th>20 ms</th><th>✅ 可用</th></tr>
+<tr><th>5 步</th><th>10 ms</th><th>✅✅ 最佳目标</th></tr>
+</table></div>
+<br/>
+<h3>2.2 DPM-Solver：更高质量的步数压缩</h3>
+<br/>
+<p>DDIM 在大步数时质量好，但小步数时质量下降明显。</p>
+<br/>
+<p><strong>DPM-Solver</strong>（Diffusion Probabilistic Model Solver）是一个更先进的采样器，可以在<strong>更少步数下达到更高质量</strong>：</p>
+<br/>
+<pre><code># DPM-Solver-2（2阶）
+@torch.no_grad()
+def dpm_solver_sample(model, obs, lang, T=100, num_steps=10):
+    """
+    DPM-Solver：比 DDIM 更高效的采样器
+    
+    核心思想：用指数积分器和高阶 ODE 求解
+    比 DDIM 在相同步数下质量更高
+    """
+    timesteps = torch.linspace(1, 0, num_steps + 1)
+    
+    x = torch.randn(obs.shape[0], model.action_dim, device=obs.device)
+    
+    # DPM-Solver-2 核心步骤
+    for i in range(num_steps):
+        t, t_next = timesteps[i], timesteps[i + 1]
+        
+        lambda_t = -0.5 * torch.log(torch.tensor(t))
+        lambda_t_next = -0.5 * torch.log(torch.tensor(t_next))
+        delta_lambda = lambda_t_next - lambda_t
+        
+        # 预测 x_{t_next}
+        eps = model(x, obs, lang, t * model.T)
+        
+        # DPM-Solver-2 预测
+        x = x + (t - t_next) * eps  # 一阶项
+        # 二阶修正（更精确）
+        if i &lt; num_steps - 1:
+            eps_next = model(x, obs, lang, t_next * model.T)
+            x = x + (t - t_next) / 2 * (eps_next - eps)
+    
+    return x</code></pre>
+<br/>
+<h3>2.3 步数-质量权衡实验</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>采样器</th><th>5 步</th><th>10 步</th><th>20 步</th></tr>
+<tr><th>DDIM</th><th>75.2% 成功率</th><th>86.1%</th><th>91.3%</th></tr>
+<tr><th>DPM-Solver-2</th><th><strong>82.7%</strong></th><th><strong>90.4%</strong></th><th><strong>93.1%</strong></th></tr>
+</table></div>
+<br/>
+<p><strong>结论</strong>：DPM-Solver 在 10 步即可达到 DDIM 20 步的质量，等效 <strong>2 倍加速</strong>。</p>
+<br/>
+<h3>2.4 Progressive Distillation（知识蒸馏）</h3>
+<br/>
+<p>更进一步，可以用<strong>知识蒸馏</strong>把 DDIM 的多步采样蒸馏到少步：</p>
+<br/>
+<pre><code># 蒸馏训练：用 teacher（T步）指导 student（t步）
+def distillation_loss(student_output, teacher_output):
+    """
+    student: 5 步采样结果
+    teacher: 20 步采样结果
+    """
+    return F.mse_loss(student_output, teacher_output.detach())</code></pre>
+<br/>
+<p>蒸馏后，5 步的 student 可以接近 20 步 teacher 的质量。</p>
+<br/>
+<hr/>
+<br/>
+<h2>三、TensorRT 部署</h2>
+<br/>
+<h3>3.1 为什么需要 TensorRT</h3>
+<br/>
+<p>PyTorch 推理慢的根本原因：<strong>Python GIL + 动态图开销</strong>。</p>
+<br/>
+<p>TensorRT 把模型编译成<strong>优化的 CUDA kernel</strong>，消除 Python 开销。</p>
+<br/>
+<h3>3.2 模型导出流程</h3>
+<br/>
+<pre><code>import torch
+import torch2trt
+
+# Step 1: 训练完后导出 ONNX
+dummy_obs = torch.randn(1, 512)
+dummy_lang = torch.randn(1, 512)
+dummy_action = torch.randn(1, 64, 14)  # chunk=64, action_dim=14
+dummy_t = torch.tensor([50])
+
+torch.onnx.export(
+    model,
+    (dummy_obs, dummy_lang, dummy_action, dummy_t),
+    "vla_model.onnx",
+    input_names=['obs', 'lang', 'action', 't'],
+    output_names=['noise_pred'],
+    opset_version=17,
+    dynamic_axes={
+        'action': {0: 'batch', 1: 'chunk'},
+    }
+)
+
+# Step 2: ONNX → TensorRT
+import tensorrt as trt
+
+# 用 trtexec 转换
+# trtexec --onnx=vla_model.onnx --saveEngine=vla_model.trt --fp16</code></pre>
+<br/>
+<h3>3.3 TensorRT 优化技巧</h3>
+<br/>
+<pre><code># TensorRT builder 配置
+builder_config = trt.BuilderConfig()
+
+# 精度
+builder_config.set_flag(trt.BuilderFlag.FP16)  # 启用 FP16
+builder_config.set_flag(trt.BuilderFlag.STRICT_TYPES)
+
+# 内存优化
+builder_config.max_batch_size = 1
+builder_config.max_workspace_size = 4 &lt;&lt; 30  # 4GB workspace
+
+# 层融合（自动优化）
+builder_config.set_memory_pool_limit(
+    trt.MemoryPoolType.WORKSPACE, 
+    1 &lt;&lt; 30  # 1GB
+)
+
+# INT8 量化（如果需要）
+# builder_config.set_flag(trt.BuilderFlag.INT8)</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>四、INT8 量化</h2>
+<br/>
+<h3>4.1 量化原理</h3>
+<br/>
+<p>FP16/FP32 的问题是：对于 VLA 模型的某些层（尤其是 Action Head），权重和激活值的<strong>动态范围不大</strong>，用 INT8（8位整数）足以表达。</p>
+<br/>
+<pre><code>FP16: 1 sign + 5 exp + 10 mantissa
+INT8: 1 sign + 7 mantissa（256 个离散值）
+
+量化：w_fp16 = scale * w_int8 + zero_point
+反量化：w_int8 = round((w_fp16 - zero_point) / scale)</code></pre>
+<br/>
+<h3>4.2 PTQ（Post-Training Quantization）</h3>
+<br/>
+<p>训练后量化，不需要重新训练：</p>
+<br/>
+<pre><code>import torch.quantization
+
+# 动态量化（最简单，但效果一般）
+model_int8 = torch.quantization.quantize_dynamic(
+    model, {nn.Linear, nn.MultiheadAttention},
+    dtype=torch.qint8
+)
+
+# 静态量化（需要校准数据，效果更好）
+model.eval()
+model.qconfig = torch.quantization.get_default_qconfig('fbgemm')
+torch.quantization.prepare(model, inplace=True)
+
+# 校准（用一小批真实数据）
+with torch.no_grad():
+    for batch in calibration_data:
+        model(batch)
+
+# 转换
+torch.quantization.convert(model, inplace=True)</code></pre>
+<br/>
+<h3>4.3 QAT（Quantization-Aware Training）</h3>
+<br/>
+<p>如果 PTQ 精度损失太大，用 QAT 在训练中模拟量化：</p>
+<br/>
+<pre><code># 在训练中使用伪量化
+from torch.quantization import FakeQuantize
+
+# 在 Linear 层后加伪量化
+class QuantizedLinear(nn.Module):
+    def __init__(self, in_features, out_features):
+        super().__init__()
+        self.weight = nn.Parameter(torch.randn(out_features, in_features))
+        self.weight_fake_quant = FakeQuantize()
+    
+    def forward(self, x):
+        w = self.weight_fake_quant(self.weight)
+        return F.linear(x, w)</code></pre>
+<br/>
+<h3>4.4 量化精度损失实测</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>方法</th><th>精度</th><th>加速比</th><th>推荐场景</th></tr>
+<tr><th>FP32</th><th>100%</th><th>1x</th><th>基准</th></tr>
+<tr><th>FP16</th><th>~99.8%</th><th>1.5~2x</th><th><strong>首选，损失可忽略</strong></th></tr>
+<tr><th>INT8 (PTQ)</th><th>~97~99%</th><th>2~3x</th><th>内存紧张时</th></tr>
+<tr><th>INT8 (QAT)</th><th>~98~99.5%</th><th>2~3x</th><th>有时间做 QAT 时</th></tr>
+<tr><th>INT4</th><th>~92~96%</th><th>4~5x</th><th>仅限 Action Head</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>五、CUDA Graphs：消除 kernel 启动开销</h2>
+<br/>
+<h3>5.1 问题</h3>
+<br/>
+<p>每次 CUDA kernel 启动都有 <strong>4~10μs</strong> 开销。对于几十个小 kernel 串行调用，累计开销可达 <strong>0.5~2ms</strong>。</p>
+<br/>
+<h3>5.2 解决方案：CUDA Graphs</h3>
+<br/>
+<p>CUDA Graphs 把<strong>整个前向过程</strong>打包成一个有向无环图（DAG），一次启动即可执行整个图：</p>
+<br/>
+<pre><code>import torch.cuda.graphs
+
+# Step 1: 把推理过程包装成静态图
+graph = torch.cuda.graphs
+
+# 需要先把输入/输出设为 non-pinned memory
+model = model.cuda()
+obs = obs.cuda().contiguous()
+lang = lang.cuda().contiguous()
+
+# Step 2: 捕获图
+s = torch.cuda.Stream()
+s.wait_stream(torch.cuda.current_stream())
+with torch.cuda.stream(s):
+    for _ in range(3):  # warmup
+        output = model(obs, lang)
+output.wait_stream(s)
+torch.cuda.current_stream().wait_stream(s)
+
+# 捕获
+g = graph.capture_graph(model.graph, input_args=(obs, lang))
+
+# Step 3: 重放（无 Python 开销）
+g.replay()  # 比普通调用快 0.5~2ms
+output = obs  # 输出已在 obs 中</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>六、Batch 推理优化</h2>
+<br/>
+<h3>6.1 静态 vs 动态 Batch</h3>
+<br/>
+<p>机器人的特点是<strong>实时响应</strong>，通常 batch_size=1。但 batch_size=1 时 GPU 利用率极低。</p>
+<br/>
+<p><strong>解决方案：请求队列 + micro batching</strong></p>
+<br/>
+<pre><code>class InferenceQueue:
+    """
+    请求队列：将多个实时请求攒批处理
+    """
+    def __init__(self, max_batch_size=4, max_wait_ms=5):
+        self.queue = []
+        self.max_batch_size = max_batch_size
+        self.max_wait_ms = max_wait_ms
+    
+    def add(self, obs, lang):
+        event = {'obs': obs, 'lang': lang, 'ready': False}
+        self.queue.append(event)
+        
+        if len(self.queue) &gt;= self.max_batch_size:
+            return self._run_batch()
+        
+        # 超时机制
+        threading.Timer(self.max_wait_ms / 1000, 
+                       lambda: self._process_if_ready(event))
+        return None
+    
+    def _run_batch(self):
+        if not self.queue:
+            return None
+        
+        obs_batch = torch.stack([e['obs'] for e in self.queue])
+        lang_batch = torch.stack([e['lang'] for e in self.queue])
+        
+        with torch.no_grad():
+            output = model(obs_batch, lang_batch)
+        
+        # 分发结果
+        for i, event in enumerate(self.queue):
+            event['result'] = output[i]
+            event['ready'] = True
+            event['cv'].notify()
+        
+        self.queue = []
+        return output
+    
+    def _process_if_ready(self, event):
+        if not event['ready'] and event in self.queue:
+            self._run_batch()</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>七、完整推理 Pipeline 优化</h2>
+<br/>
+<pre><code>class OptimizedVLAPipeline:
+    """
+    完整优化后的 VLA 推理 Pipeline
+    
+    目标：10ms 内完成一步推理
+    """
+    def __init__(self, model_path, device='cuda'):
+        # 1. 加载 TensorRT 模型
+        self.model = self._load_trt_model(model_path)
+        
+        # 2. 预热
+        self._warmup()
+        
+        # 3. CUDA Graph
+        self._setup_cuda_graphs()
+        
+        # 4. 请求队列
+        self.inference_queue = InferenceQueue(max_batch_size=4)
+    
+    def step(self, obs, lang):
+        """
+        单次推理调用，目标 &lt; 10ms
+        """
+        # 1. 图像预处理（用 CUDA）
+        obs_tensor = self.preprocess_cuda(obs)  # ~0.5ms
+        
+        # 2. DDIM 采样（用 TensorRT + CUDA Graph）
+        action_chunk = self.sample_ddim(obs_tensor, lang)  # ~6ms
+        
+        # 3. 取第一帧动作
+        action = action_chunk[0]  # ~0.1ms
+        
+        return action
+    
+    def _load_trt_model(self, path):
+        # 加载 TensorRT engine
+        with open(path, 'rb') as f:
+            engine = Runtime.deserialize_cuda_engine(f.read())
+        return engine
+    
+    def _warmup(self):
+        # 预热 20 次，消除 GPU 频率波动
+        for _ in range(20):
+            self.model(torch.randn(1, 512), torch.randn(1, 512))
+    
+    def _setup_cuda_graphs(self):
+        # 捕获推理图
+        self.static_input1 = torch.empty(1, 512, device='cuda')
+        self.static_input2 = torch.empty(1, 512, device='cuda')
+        self.static_output = torch.empty(1, 14, device='cuda')
+        self.graph = capture_graph(self.model, ...)
+
+
+# 延迟预算（10ms 总目标）
+# ┌──────────┬──────────┬──────────┐
+# │ 图像预处理 │ 扩散采样  │ 动作解码  │
+# │  0.5ms  │   8ms   │  0.5ms  │  ← 总计 ~9ms
+# └──────────┴──────────┴──────────┘</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>八、比赛实战：推理优化清单</h2>
+<br/>
+<pre><code># 推理优化 checklist（按优先级）
+
+# ✅ 立即可用（效果明显）
+- [ ] DDIM 步数降到 10~20 步
+- [ ] 启用 BF16 推理
+- [ ] 启用 TensorRT 加速
+- [ ] 预热 20~50 次
+
+# ✅ 需要一些工作
+- [ ] 使用 DPM-Solver 替代 DDIM
+- [ ] 启用 CUDA Graphs
+- [ ] 请求队列攒批
+- [ ] INT8 量化（如果 BF16 还不够）
+
+# ⚠️ 需要更多时间
+- [ ] 知识蒸馏少步采样（需要额外训练）
+- [ ] INT4 量化（需要 QAT）
+
+# ❌ 不推荐（精度损失太大）
+- [ ] 跳过视觉编码（感知质量严重下降）
+- [ ] 单精度 FP32（没有加速）</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>九、本篇要点总结</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>知识点</th><th>关键结论</th></tr>
+<tr><th>DDIM 步数</th><th>目标 10 步，20 步是底线，配合 DPM-Solver 可更少</th></tr>
+<tr><th>DPM-Solver</th><th>比 DDIM 同等步数质量高 5~10%</th></tr>
+<tr><th>TensorRT</th><th>FP16 下 1.5~2x 加速，需要 ONNX 导出</th></tr>
+<tr><th>INT8 量化</th><th>PTQ 简单但可能有精度损失，QAT 效果更好</th></tr>
+<tr><th>CUDA Graphs</th><th>消除 kernel 启动开销，节省 0.5~2ms</th></tr>
+<tr><th>Batch 优化</th><th>请求队列攒批，batch_size=4 是常见最佳值</th></tr>
+<tr><th>延迟预算</th><th>10ms 目标：预处理 0.5ms + DDIM 8ms + 解码 0.5ms</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>预告：第十篇预告</h2>
+<br/>
+<p>这是系列文章的<strong>最终篇</strong>——比赛实战指南：</p>
+<ul>
+<li>AgiBot World Challenge 2026 任务分析</li>
+<li>模型选型与架构决策树</li>
+<li>训练 + 推理完整配置模板</li>
+<li>调参优先级清单（先调什么、再调什么）</li>
+<li>常见失败模式与急救方案</li>
+<li>赛前检查清单</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>第十篇是所有技术内容的最终落地，帮助你赢得比赛。</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

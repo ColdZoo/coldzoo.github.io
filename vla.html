@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VLA 机器人控制 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6;--bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9;--color-text:#1c1c1e;
+      --color-text-secondary:#48484a;--color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .page-wrap{max-width:860px;margin:0 auto;padding:40px 24px 120px;}
+    .page-header{margin-bottom:36px;}
+    .page-header h1{font-size:40px;font-weight:700;letter-spacing:-1px;margin-bottom:10px;}
+    .page-header p{font-size:15px;color:var(--color-text-secondary);line-height:1.6;}
+    .series-banner{background:linear-gradient(135deg,#5b6cf9,#a78bfa,#818cf8);border-radius:20px;padding:24px 28px;margin-bottom:32px;color:#fff;}
+    .series-banner h2{font-size:22px;font-weight:700;margin-bottom:6px;}
+    .series-banner p{font-size:14px;opacity:0.9;}
+    .series-meta{display:flex;gap:16px;margin-top:12px;font-size:13px;opacity:0.85;}
+    .report-list{display:flex;flex-direction:column;gap:12px;}
+    .report-card{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:16px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:20px 24px;text-decoration:none;color:inherit;display:flex;align-items:center;gap:16px;transition:transform 0.15s,box-shadow 0.15s;}
+    .report-card:hover{transform:translateX(4px);box-shadow:0 12px 40px rgba(60,60,100,0.14);}
+    .report-card .card-left{flex:1;}
+    .card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+    .tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;border:1px solid transparent;}
+    .tag-diffusion{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-vla{background:rgba(16,185,129,0.1);color:#059669;border-color:rgba(16,185,129,0.2);}
+    .tag-loss{background:rgba(239,68,68,0.1);color:#dc2626;border-color:rgba(239,68,68,0.2);}
+    .tag-semantic{background:rgba(139,92,246,0.1);color:#7c3aed;border-color:rgba(139,92,246,0.2);}
+    .tag-temporal{background:rgba(245,158,11,0.1);color:#b45309;border-color:rgba(245,158,11,0.2);}
+    .tag-cfg{background:rgba(236,72,153,0.1);color:#db2777;border-color:rgba(236,72,153,0.2);}
+    .tag-inference{background:rgba(59,130,246,0.1);color:#2563eb;border-color:rgba(59,130,246,0.2);}
+    .tag-training{background:rgba(34,197,94,0.1);color:#16a34a;border-color:rgba(34,197,94,0.2);}
+    .tag-multimodal{background:rgba(249,115,22,0.1);color:#ea580c;border-color:rgba(249,115,22,0.2);}
+    .tag-competition{background:rgba(234,179,8,0.1);color:#ca8a04;border-color:rgba(234,179,8,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .card-num{font-size:28px;font-weight:800;background:linear-gradient(135deg,#5b6cf9,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;min-width:48px;text-align:center;}
+    .card-title{font-size:16px;font-weight:700;margin-bottom:4px;color:var(--color-text);}
+    .card-excerpt{font-size:13px;color:var(--color-text-muted);line-height:1.5;}
+    .card-arrow{font-size:18px;color:var(--color-primary);opacity:0.5;transition:opacity 0.15s;}
+    .report-card:hover .card-arrow{opacity:1;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="index.html" class="logo"> 蔡政</a>
+  <a href="index.html" class="menu-item">← 返回主页</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="page-wrap">
+  <div class="page-header">
+    <h1>🤖 VLA 机器人控制系列</h1>
+    <p>扩散模型 × 视觉-语言-动作（VLA）架构在机器人控制中的原理、优化与实战</p>
+  </div>
+  <div class="series-banner">
+    <h2>📚 完整系列 · 共 10 篇</h2>
+    <p>从扩散策略数学基础到 AgiBot World Challenge 2026 比赛实战，深度覆盖 GO-1、ACoT-VLA、π0、GR00T-N1 等前沿模型</p>
+    <div class="series-meta">
+      <span>🎯 核心模型：ACoT-VLA / GO-1 / π0 / GR00T-N1</span>
+      <span>📐 关键优化：L1 Loss · CFG · Action Chunking · Latent Diffusion</span>
+    </div>
+  </div>
+  <div class="report-list" id="report-list">
+    <a href="vla-articles/article-01-扩散策略数学基础与2025前沿改进.html" class="report-card">
+      <div class="card-num">01</div>
+      <div class="card-left">
+        <div class="card-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-cfg">CFG</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+        <div class="card-title">扩散策略数学基础与2025前沿改进</div>
+        <div class="card-excerpt">> 面向读者：有一定深度学习基础的机器人研究者和比赛选手……</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="vla-articles/article-02-VLA架构全景图-从MLP到ACoT语义.html" class="report-card">
+      <div class="card-num">02</div>
+      <div class="card-left">
+        <div class="card-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+        <div class="card-title">VLA架构全景图 从MLP到ACoT语义链式推理</div>
+        <div class="card-excerpt">> 面向读者：希望深入理解主流 VLA 模型内部机制的比赛选手……</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="vla-articles/article-03-L1-Loss与动作空间损失函数设计.html" class="report-card">
+      <div class="card-num">03</div>
+      <div class="card-left">
+        <div class="card-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+        <div class="card-title">L1 Loss与动作空间损失函数设计</div>
+        <div class="card-excerpt">> 面向读者：需要深入理解扩散训练损失函数设计的比赛选手和研究人员……</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="vla-articles/article-04-中间语义层与Latent-Diffusi.html" class="report-card">
+      <div class="card-num">04</div>
+      <div class="card-left">
+        <div class="card-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-cfg">CFG</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-competition">比赛实战</span></div>
+        <div class="card-title">中间语义层与Latent Diffusion深层次设计</div>
+        <div class="card-excerpt">> 面向读者：希望深入理解为什么需要中间语义层、以及如何设计语义层的比赛选手……</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="vla-articles/article-05-Classifier-Free-Guid.html" class="report-card">
+      <div class="card-num">05</div>
+      <div class="card-left">
+        <div class="card-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-cfg">CFG</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-competition">比赛实战</span></div>
+        <div class="card-title">Classifier Free Guidance与条件引导技术深度剖析</div>
+        <div class="card-excerpt">> 面向读者：希望深入理解和调优 CFG 参数的比赛选手……</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="vla-articles/article-06-Action-Chunking与时序建模.html" class="report-card">
+      <div class="card-num">06</div>
+      <div class="card-left">
+        <div class="card-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-cfg">CFG</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+        <div class="card-title">Action Chunking与时序建模</div>
+        <div class="card-excerpt">> 面向读者：需要解决长时序动作生成问题的比赛选手……</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="vla-articles/article-07-大规模训练策略-分布式-混合精度-课程学.html" class="report-card">
+      <div class="card-num">07</div>
+      <div class="card-left">
+        <div class="card-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+        <div class="card-title">大规模训练策略 分布式 混合精度 课程学习</div>
+        <div class="card-excerpt">> 面向读者：有充足算力，希望训练超大规模 VLA 模型的比赛选手……</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="vla-articles/article-08-多模态融合-视觉编码器与3D表征.html" class="report-card">
+      <div class="card-num">08</div>
+      <div class="card-left">
+        <div class="card-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+        <div class="card-title">多模态融合 视觉编码器与3D表征</div>
+        <div class="card-excerpt">> 面向读者：需要优化视觉感知模块、提升跨场景泛化能力的比赛选手……</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="vla-articles/article-09-推理优化-DDIM加速-量化-实时部署.html" class="report-card">
+      <div class="card-num">09</div>
+      <div class="card-left">
+        <div class="card-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+        <div class="card-title">推理优化 DDIM加速 量化 实时部署</div>
+        <div class="card-excerpt">> 面向读者：需要将模型部署到机器人上、追求实时控制（< 20ms 延迟）的比赛选手……</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="vla-articles/article-10-比赛实战指南-任务分析-模型选型-调参清.html" class="report-card">
+      <div class="card-num">10</div>
+      <div class="card-left">
+        <div class="card-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-cfg">CFG</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+        <div class="card-title">比赛实战指南 任务分析 模型选型 调参清单</div>
+        <div class="card-excerpt">> 面向读者：参加 AgiBot World Challenge 2026 R2A 的选手……</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+  </div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

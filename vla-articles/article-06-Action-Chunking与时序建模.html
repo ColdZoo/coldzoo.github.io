@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Action Chunking与时序建模 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:800px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:800px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-diffusion{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-vla{background:rgba(16,185,129,0.1);color:#059669;border-color:rgba(16,185,129,0.2);}
+    .tag-loss{background:rgba(239,68,68,0.1);color:#dc2626;border-color:rgba(239,68,68,0.2);}
+    .tag-semantic{background:rgba(139,92,246,0.1);color:#7c3aed;border-color:rgba(139,92,246,0.2);}
+    .tag-temporal{background:rgba(245,158,11,0.1);color:#b45309;border-color:rgba(245,158,11,0.2);}
+    .tag-cfg{background:rgba(236,72,153,0.1);color:#db2777;border-color:rgba(236,72,153,0.2);}
+    .tag-inference{background:rgba(59,130,246,0.1);color:#2563eb;border-color:rgba(59,130,246,0.2);}
+    .tag-training{background:rgba(34,197,94,0.1);color:#16a34a;border-color:rgba(34,197,94,0.2);}
+    .tag-multimodal{background:rgba(249,115,22,0.1);color:#ea580c;border-color:rgba(249,115,22,0.2);}
+    .tag-competition{background:rgba(234,179,8,0.1);color:#ca8a04;border-color:rgba(234,179,8,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-series{display:inline-block;margin-bottom:16px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#5b6cf9,#a78bfa);color:#fff;}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="vla.html" class="menu-item">← VLA 文章</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="vla.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-series">第 06 篇 · 共 10 篇</div>
+    <div class="article-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-cfg">CFG</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+    <h1 class="article-title">Action Chunking与时序建模</h1>
+    <div class="article-meta">📅 2026-04-02 &nbsp;·&nbsp; VLA 机器人控制系列文章</div>
+  </div>
+  <div class="article-body"><h1>系列文章六：Action Chunking 与时序建模——如何生成连贯动作序列</h1>
+<br/>
+<p>> 作者：WorkBuddy 研究团队</p>
+<p>> 日期：2026-04-02</p>
+<p>> 预计阅读时间：50 分钟</p>
+<p>> 面向读者：需要解决长时序动作生成问题的比赛选手</p>
+<br/>
+<hr/>
+<br/>
+<h2>一、为什么需要 Action Chunking？</h2>
+<br/>
+<h3>1.1 自回归模型的误差累积问题</h3>
+<br/>
+<p>传统的单步预测策略（每步预测一个动作）有一个根本缺陷：<strong>误差累积</strong>。</p>
+<br/>
+<p>假设机器人有 1% 的概率在单步预测中出错：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>预测步数</th><th>累积正确率</th></tr>
+<tr><th>1 步</th><th>99.0%</th></tr>
+<tr><th>10 步</th><th>90.4%</th></tr>
+<tr><th>50 步</th><th>60.5%</th></tr>
+<tr><th>100 步</th><th>36.6%</th></tr>
+</table></div>
+<br/>
+<p>到了 100 步，误差已经累积到不可接受的程度。</p>
+<br/>
+<h3>1.2 Action Chunking 的核心思想</h3>
+<br/>
+<p>一次预测 <strong>$K$ 步动作</strong>，而非单步动作：</p>
+<br/>
+<pre><code>自回归（单步）：a₁ → a₂ → a₃ → ... （误差累积）
+Action Chunking：[a₁, a₂, ..., a_K] ← 一次预测！（chunk 内无累积误差）</code></pre>
+<br/>
+<p>在 chunk 内部，所有动作是一次性生成的，不存在步步预测的误差传播问题。</p>
+<br/>
+<h3>1.3 Chunk 内动作一致性的数学保证</h3>
+<br/>
+<p>Action Chunking 的 chunk 内部动作一致性来源于扩散模型本身的<strong>联合分布建模</strong>：</p>
+<br/>
+<p>$$\text{一次预测 } [a_1, a_2, ..., a_K] \sim p_\theta([a_1, ..., a_K] | o)$$</p>
+<br/>
+<p>这等价于直接建模<strong>整条轨迹的联合分布</strong>，而非自回归分解：</p>
+<br/>
+<p>$$p(a_1, ..., a_K | o) = p(a_1 | o) \cdot p(a_2 | o, a_1) \cdot p(a_3 | o, a_1, a_2) \cdots$$</p>
+<br/>
+<p>自回归分解的问题是：<strong>越到后面的动作，条件越多，信息衰减越严重</strong>。</p>
+<br/>
+<hr/>
+<br/>
+<h2>二、Chunk Size 的选择</h2>
+<br/>
+<h3>2.1 常见 Chunk Size 对比</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>Chunk Size</th><th>步数（@10Hz）</th><th>适用场景</th><th>优缺点</th></tr>
+<tr><th>K = 8</th><th>0.8 秒</th><th>极短任务、精细操作</th><th>计算量低，规划视野短</th></tr>
+<tr><th>K = 16</th><th>1.6 秒</th><th>单步操作（抓取、放置）</th><th><strong>通用推荐起始值</strong></th></tr>
+<tr><th>K = 32</th><th>3.2 秒</th><th>短时序任务</th><th>平衡视野和计算</th></tr>
+<tr><th>K = 64</th><th>6.4 秒</th><th>中等时序任务</th><th>视野好，计算量适中</th></tr>
+<tr><th>K = 128</th><th>12.8 秒</th><th>长时序任务</th><th>视野极好，训练困难</th></tr>
+<tr><th>K = 256+</th><th>25+ 秒</th><th>复杂长任务</th><th>仅适用于 π0.5 等大模型</th></tr>
+</table></div>
+<br/>
+<h3>2.2 Chunk Size 与任务长度的关系</h3>
+<br/>
+<p><strong>经验法则</strong>：Chunk Size 应该至少覆盖任务的 <strong>70% 动作时长</strong>。</p>
+<br/>
+<pre><code>任务：把杯子从 A 点放到 B 点
+预估动作时长：约 3 秒（30 步 @10Hz）
+建议 Chunk Size：32~64（1.5x~2x 覆盖）</code></pre>
+<br/>
+<h3>2.3 Chunk Size 与训练稳定性</h3>
+<br/>
+<p><strong>大 Chunk 的训练挑战</strong>：</p>
+<br/>
+<li><strong>高维输出空间</strong>：K=64, action_dim=14 → 输出 64×14=896 维</li>
+<li><strong>内存消耗</strong>：chunk 越大，中间激活值越大，GPU 显存压力越大</li>
+<li><strong>训练不稳定</strong>：chunk 内多模态分布更难建模</li>
+<br/>
+<p>缓解方案：使用 <strong>Gradient Checkpointing</strong>（激活重计算，用时间换显存）</p>
+<br/>
+<pre><code>from torch.utils.checkpoint import checkpoint_sequential
+
+class ChunkDiffusionModel(nn.Module):
+    def __init__(self, chunk_size=64, action_dim=14):
+        super().__init__()
+        self.chunk_size = chunk_size
+        self.dit = checkpoint_sequential(
+            DitBlocks(num_layers=12),
+            segments=4,  # 分成4段，每段单独算梯度，节省显存
+            input
+        )</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>三、Observation Chunking：历史观测的利用</h2>
+<br/>
+<h3>3.1 观测历史的必要性</h3>
+<br/>
+<p>机器人的当前决策依赖于<strong>历史上下文</strong>：</p>
+<ul>
+<li>物体在运动中（需要知道过去位置才能预测未来）</li>
+<li>上一帧夹爪是否合上（影响下一步抓取决策）</li>
+<li>关节是否有碰撞趋势（需要速度信息才能判断）</li>
+</ul>
+<br/>
+<p>没有历史观测的模型是<strong>短视的</strong>，无法处理动态场景。</p>
+<br/>
+<h3>3.2 Observation Chunk 的实现</h3>
+<br/>
+<pre><code>class ObservationHistoryEncoder(nn.Module):
+    """
+    观测历史编码器：将最近 K 帧观测编码为上下文向量
+    """
+    def __init__(self, obs_dim=128, hidden=512, history_len=8):
+        super().__init__()
+        self.history_len = history_len
+        
+        self.frame_encoder = nn.Sequential(
+            nn.Linear(obs_dim, hidden),
+            nn.GELU(),
+            nn.Linear(hidden, hidden)
+        )
+        
+        # 时序聚合用 Transformer，而非 RNN
+        self.temporal_aggregator = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(
+                d_model=hidden, nhead=8,
+                dim_feedforward=hidden * 4,
+                batch_first=True
+            ),
+            num_layers=4
+        )
+        
+        self.pos_enc = PositionalEncoding(hidden)
+    
+    def forward(self, obs_history):
+        """
+        Args:
+            obs_history: [batch, history_len, obs_dim]（最近 history_len 帧）
+        """
+        x = self.frame_encoder(obs_history)
+        x = x + self.pos_enc(x)
+        temporal_context = self.temporal_aggregator(x)
+        current_obs = temporal_context[:, -1, :]  # 用最后一帧作为当前上下文
+        return current_obs</code></pre>
+<br/>
+<h3>3.3 观测 Chunk 与动作 Chunk 的时序对齐</h3>
+<br/>
+<pre><code>观测历史：最近 1.6 秒（16 步 @10Hz）
+    ↓
+当前决策时刻
+    ↓
+动作 Chunk：未来 3.2 秒（32 步 @10Hz）</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>四、DiT vs U-Net：为什么 Transformer 更适合时序建模</h2>
+<br/>
+<h3>4.1 U-Net 在时序建模上的局限</h3>
+<br/>
+<p>U-Net 的核心是<strong>卷积 + Skip Connection</strong>，擅长建模<strong>空间层次结构</strong>（图像局部→全局），但对<strong>时序依赖</strong>建模能力弱——某一步动作只能看到附近的动作，视野受限。</p>
+<br/>
+<h3>4.2 DiT 的时序优势</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>维度</th><th>U-Net</th><th>DiT</th></tr>
+<tr><th>时序依赖范围</th><th>局部（逐层扩大）</th><th>全局（一步到位）</th></tr>
+<tr><th>Chunk Size</th><th>K ≤ 32（否则不稳定）</th><th>K ≥ 64（天然支持长 chunk）</th></tr>
+<tr><th>动作序列一致性</th><th>弱（逐帧独立注入噪声）</th><th>强（所有动作 token 联合去噪）</th></tr>
+<tr><th>与 VLM 架构融合</th><th>需要 adapter</th><th>直接拼接/共享 embedding</th></tr>
+</table></div>
+<br/>
+<pre><code>class ActionDiT(nn.Module):
+    """
+    用于机器人动作的 DiT（Diffusion Transformer）
+    """
+    def __init__(self, action_dim=14, chunk_size=64,
+                 model_dim=768, num_heads=12, num_layers=12):
+        super().__init__()
+        self.action_embed = nn.Linear(action_dim, model_dim)
+        self.t_embed = TimestepEmbedder(model_dim)
+        self.cond_proj = nn.Linear(2048, model_dim)  # VLM 特征
+        
+        self.blocks = nn.ModuleList([
+            DiTBlock(model_dim=model_dim, num_heads=num_heads)
+            for _ in range(num_layers)
+        ])
+        
+        self.norm_final = nn.LayerNorm(model_dim)
+        self.head = nn.Linear(model_dim, action_dim)
+    
+    def forward(self, noisy_action_chunk, obs_cond, lang_cond, t):
+        B, K, D = noisy_action_chunk.shape
+        x = self.action_embed(noisy_action_chunk)
+        x = x + self.t_embed(t).unsqueeze(1)
+        cond_emb = self.cond_proj(torch.cat([obs_cond, lang_cond], dim=-1))
+        for block in self.blocks:
+            x = block(x, cond_emb)
+        return self.head(self.norm_final(x))</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>五、时序平滑与动作去噪技巧</h2>
+<br/>
+<h3>5.1 Temporal Ensemble（时序集成）</h3>
+<br/>
+<p>每次推理时生成 <strong>$N$ 个候选 chunk</strong>，然后加权平均：</p>
+<br/>
+<pre><code>@torch.no_grad()
+def temporal_ensemble_sample(model, obs, lang, num_candidates=4):
+    candidates = []
+    for i in range(num_candidates):
+        torch.manual_seed(42 + i)
+        action_chunk = cfg_sample(model, obs, lang, w=1.0)
+        candidates.append(action_chunk)
+    
+    candidates = torch.stack(candidates)
+    # 中间动作权重更高（两端受边界噪声影响更大）
+    weights = torch.linspace(0.5, 1.0, candidates.shape[2], device=candidates.device)
+    weights = weights / weights.sum()
+    
+    smooth_chunk = (candidates * weights[None, None, :, None]).sum(dim=2)
+    return smooth_chunk</code></pre>
+<br/>
+<h3>5.2 EMA（指数移动平均）</h3>
+<br/>
+<p>训练时用 EMA 权重更新，推理时用 EMA 模型，几乎无额外计算成本：</p>
+<br/>
+<pre><code>class EMA:
+    def __init__(self, model, decay=0.9999):
+        self.model = model
+        self.decay = decay
+        self.shadow = {name: p.data.clone()
+                       for name, p in model.named_parameters() if p.requires_grad}
+    
+    def update(self):
+        for name, param in self.model.named_parameters():
+            if param.requires_grad:
+                self.shadow[name] = (1 - self.decay) * param.data + \
+                                    self.decay * self.shadow[name]
+    
+    def apply_shadow(self):
+        """推理时用 EMA 权重"""
+        for name, param in self.model.named_parameters():
+            if param.requires_grad:
+                param.data = self.shadow[name]</code></pre>
+<br/>
+<h3>5.3 Savitzky-Golay 滤波</h3>
+<br/>
+<pre><code>from scipy.signal import savgol_filter
+
+def smooth_action_sequence(action_seq, window_length=5, polyorder=2):
+    """Savitzky-Golay 滤波：去除高频抖动"""
+    # action_seq: [batch, chunk, action_dim]
+    smoothed = np.zeros_like(action_seq)
+    for b in range(action_seq.shape[0]):
+        for d in range(action_seq.shape[2]):
+            if action_seq.shape[1] &gt;= window_length:
+                smoothed[b, :, d] = savgol_filter(
+                    action_seq[b, :, d],
+                    window_length=window_length,
+                    polyorder=polyorder
+                )
+    return torch.from_numpy(smoothed).float()</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>六、比赛实战建议</h2>
+<br/>
+<h3>6.1 Chunk Size 选择路线图</h3>
+<br/>
+<pre><code>任务时长 ≤ 1.6 秒        → action_chunk = 16
+1.6 秒 &lt; 任务时长 ≤ 3.2 秒 → action_chunk = 32
+3.2 秒 &lt; 任务时长 ≤ 6.4 秒 → action_chunk = 64（推荐 DiT）
+任务时长 &gt; 6.4 秒        → action_chunk = 128 + ACT/MST</code></pre>
+<br/>
+<h3>6.2 长时序任务专项建议</h3>
+<br/>
+<p>以下情况说明你需要长 Chunk / 强时序建模：</p>
+<ul>
+<li>[ ] 单次任务超过 3 秒（> 30 步 @ 10Hz）</li>
+<li>[ ] 任务有明显的子目标序列（A→B→C→D）</li>
+<li>[ ] 早期决策会影响后期（"先开盖再抓取"）</li>
+<li>[ ] 观测有延迟（相机延迟、控制延迟）</li>
+</ul>
+<br/>
+<h3>6.3 推荐配置</h3>
+<br/>
+<pre><code># 长时序任务推荐配置
+config = {
+    'action_chunk_size': 64,        # 6.4 秒视野
+    'observation_history': 16,       # 1.6 秒历史
+    'dit_layers': 16,               # 比短任务多
+    'dit_hidden': 1024,              # 比短任务大
+    'use_temporal_ensemble': True,
+    'num_candidates': 4,
+    'use_ema': True,
+    'ema_decay': 0.9999,
+}</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>七、本篇要点总结</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>知识点</th><th>关键结论</th></tr>
+<tr><th>Action Chunking 优势</th><th>消除自回归误差累积，一次生成多条连贯动作</th></tr>
+<tr><th>Chunk Size 选择</th><th>16~64 通用，K ≥ 64 时建议用 DiT 替代 U-Net</th></tr>
+<tr><th>Observation Chunk</th><th>历史帧数 = chunk 内早期步数，保持时序对齐</th></tr>
+<tr><th>DiT vs U-Net</th><th>DiT 全局感受野，时序建模能力强，适合大 chunk</th></tr>
+<tr><th>Temporal Ensemble</th><th>多个候选 chunk 平均，可减少 10~20% 动作抖动</th></tr>
+<tr><th>EMA</th><th>推理用 EMA 模型，几乎无额外计算，显著平滑</th></tr>
+<tr><th>Savitzky-Golay</th><th>事后滤波，适合需要亚毫秒级平滑的精细操作</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>预告：第七篇预告</h2>
+<br/>
+<p>下一篇文章我们将深入研究 <strong>大规模训练策略</strong>：</p>
+<ul>
+<li>分布式训练：DeepSpeed ZeRO-3 vs FSDP 的选择与配置</li>
+<li>混合精度训练：FP8/BF16 的选择与梯度缩放</li>
+<li>梯度累积：如何在有限显存下训练大批量</li>
+<li>课程学习（Curriculum Learning）：机器人数据的课程设计</li>
+<li>预训练-微调策略：先学语义还是先学动作</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>第七篇是"幕后"文章——让你的模型训练得更快、更好，是比赛的关键基础设施。</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

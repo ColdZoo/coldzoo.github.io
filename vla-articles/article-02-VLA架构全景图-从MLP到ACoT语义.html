@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VLA架构全景图 从MLP到ACoT语义链式推理 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:800px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:800px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-diffusion{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-vla{background:rgba(16,185,129,0.1);color:#059669;border-color:rgba(16,185,129,0.2);}
+    .tag-loss{background:rgba(239,68,68,0.1);color:#dc2626;border-color:rgba(239,68,68,0.2);}
+    .tag-semantic{background:rgba(139,92,246,0.1);color:#7c3aed;border-color:rgba(139,92,246,0.2);}
+    .tag-temporal{background:rgba(245,158,11,0.1);color:#b45309;border-color:rgba(245,158,11,0.2);}
+    .tag-cfg{background:rgba(236,72,153,0.1);color:#db2777;border-color:rgba(236,72,153,0.2);}
+    .tag-inference{background:rgba(59,130,246,0.1);color:#2563eb;border-color:rgba(59,130,246,0.2);}
+    .tag-training{background:rgba(34,197,94,0.1);color:#16a34a;border-color:rgba(34,197,94,0.2);}
+    .tag-multimodal{background:rgba(249,115,22,0.1);color:#ea580c;border-color:rgba(249,115,22,0.2);}
+    .tag-competition{background:rgba(234,179,8,0.1);color:#ca8a04;border-color:rgba(234,179,8,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-series{display:inline-block;margin-bottom:16px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#5b6cf9,#a78bfa);color:#fff;}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="vla.html" class="menu-item">← VLA 文章</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="vla.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-series">第 02 篇 · 共 10 篇</div>
+    <div class="article-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-multimodal">多模态</span><span class="tag tag-competition">比赛实战</span></div>
+    <h1 class="article-title">VLA架构全景图 从MLP到ACoT语义链式推理</h1>
+    <div class="article-meta">📅 2026-04-02 &nbsp;·&nbsp; VLA 机器人控制系列文章</div>
+  </div>
+  <div class="article-body"><h1>系列文章二：VLA 架构全景图——从单层 MLP 到 ACoT 语义链式推理</h1>
+<br/>
+<p>> 作者：WorkBuddy 研究团队</p>
+<p>> 日期：2026-04-02</p>
+<p>> 预计阅读时间：55 分钟</p>
+<p>> 面向读者：希望深入理解主流 VLA 模型内部机制的比赛选手</p>
+<br/>
+<hr/>
+<br/>
+<h2>一、进化史：从 Behavior Cloning 到 VLA</h2>
+<br/>
+<p>理解 VLA 不是凭空产生的，了解进化路径能帮你更好地理解每个设计的动机。</p>
+<br/>
+<h3>1.1 Behavior Cloning（行为克隆）</h3>
+<br/>
+<p>最原始的方法，直接监督学习：</p>
+<br/>
+<pre><code>obs → MLP → action</code></pre>
+<br/>
+<p>损失函数就是简单的 MSE。问题：<strong>没有泛化能力</strong>，分布外（OOD）场景下行为崩溃。</p>
+<br/>
+<h3>1.2 ACT（Action Chunking Transformer）</h3>
+<br/>
+<p><strong>论文</strong>：Action Chunking with Transformers (2023, Berkeley)</p>
+<br/>
+<p>核心思想：<strong>一次预测一整个动作序列（chunk）</strong>，而不是单步动作：</p>
+<br/>
+<pre><code>obs (multiple frames) → Transformer → [a_t, a_{t+1}, ..., a_{t+K}]  (K=16~64)</code></pre>
+<br/>
+<p><strong>创新点</strong>：</p>
+<ul>
+<li>用 Transformer 的自注意力建模时序依赖</li>
+<li>Chunk 内动作相互一致，不会步步累积误差</li>
+<li>训练时用 ES（Expectation-Maximization）进行有标签的模仿学习</li>
+</ul>
+<br/>
+<p>ACT 在单任务上效果很好，但<strong>泛化能力弱</strong>，换了任务就需要重新训练。</p>
+<br/>
+<h3>1.3 Diffusion Policy（扩散策略）</h3>
+<br/>
+<p><strong>论文</strong>：Diffusion Policy: Visuomotor Policy Learning via Diffusion (Columbia, 2024)</p>
+<br/>
+<p>这是第一次把扩散模型引入机器人控制：</p>
+<br/>
+<pre><code>obs → Vision Encoder → 视觉特征
+obs → State Encoder → 状态特征
+concat → Noise Pred Net (U-Net/DiT) → 预测 noise
+         conditioned by: obs + time embedding</code></pre>
+<br/>
+<p><strong>革命性改变</strong>：</p>
+<ul>
+<li>多模态动作分布（同一指令多种抓法）可以被自然建模</li>
+<li>Action Chunking 能力内置（一次生成 16~64 步）</li>
+<li>高维动作空间的优化变得更稳定</li>
+</ul>
+<br/>
+<h3>1.4 VLA（Vision-Language-Action）时代</h3>
+<br/>
+<p><strong>核心区别</strong>：VLA = 预训练的 <strong>大视觉-语言模型（VLM）</strong> + 动作头。</p>
+<br/>
+<pre><code>语言指令 + 视觉图像
+    → 预训练 VLM（如 InternVL, SigLIP, CLIP）
+    → 动作解码器（Diffusion / Autoregressive）
+    → 机器人动作</code></pre>
+<br/>
+<p>VLM 提供：</p>
+<li><strong>语义理解</strong>：理解"把红色积木放到蓝色盒子左边"</li>
+<li><strong>视觉泛化</strong>：ImageNet 级别的开放词汇视觉识别能力</li>
+<li><strong>语言对齐</strong>：zero-shot 理解新指令</li>
+<br/>
+<hr/>
+<br/>
+<h2>二、GO-1：ViLLA 架构逐层拆解</h2>
+<br/>
+<h3>2.1 整体架构</h3>
+<br/>
+<p>GO-1 的核心创新是 <strong>ViLLA（Vision-Language-Latent-Action）</strong> 框架，不是简单的 VLA，而是四元组：</p>
+<br/>
+<pre><code>Vision（视觉） → Language（语言） → Latent Action（隐式动作） → Action（显式动作）</code></pre>
+<br/>
+<p><strong>架构总览</strong>：</p>
+<pre><code>图像输入 (640×480 RGB)
+    → InternVL 2.5-2B（冻结 VLM backbone）
+    → 视觉-语言特征融合
+
+语言指令
+    → LLM Encoder（和 VLM 共享）
+
+VLM 输出特征 + 动作先验
+    → MoE（混合专家）Action Head
+    → 预测隐式动作表示
+
+隐式动作解码
+    → 显式机器人动作 (7-DoF 末端位姿)</code></pre>
+<br/>
+<p><strong>参数量</strong>：整个模型约 <strong>3B 参数</strong>，Action Head 使用 MoE 结构。</p>
+<br/>
+<h3>2.2 关键创新：Latent Action（隐式动作）</h3>
+<br/>
+<p>这是 ViLLA 和传统 VLA 最核心的区别。</p>
+<br/>
+<p><strong>传统 VLA</strong>：</p>
+<pre><code>obs → VLM → 直接预测 action</code></pre>
+<br/>
+<p><strong>ViLLA</strong>：</p>
+<pre><code>obs → VLM → 预测 latent action（中间隐表示）→ 解码成真实动作</code></pre>
+<br/>
+<p>Latent Action 的价值：</p>
+<br/>
+<li><strong>数据效率</strong>：可以从海量<strong>无标注视频</strong>（网上爬的机器人视频）中学习。视频里有动作，但没有精确的 action label——但 latent action 不需要精确标签，可以通过对比学习或重建目标学到动作先验。</li>
+<li><strong>缓解 sim-to-real  gap</strong>：latent space 比动作空间更易迁移</li>
+<li><strong>Cross-embodiment 适配</strong>：同一套 latent action 可以解码到不同机器人</li>
+<br/>
+<h3>2.3 MoE Action Head</h3>
+<br/>
+<p>GO-1 的 Action Head 使用 <strong>Mixture of Experts（MoE）</strong>：</p>
+<br/>
+<ul>
+<li>总共有 $N$ 个专家网络（e.g., 8 个）</li>
+<li>给定当前状态，路由器（Router）选择激活 $K$ 个专家（e.g., top-2）</li>
+<li>不同任务/场景激活不同专家</li>
+</ul>
+<br/>
+<p>这样做的好处：不同动作模式（抓取、放置、导航）可以由不同专家处理，增加模型容量而不增加推理计算量。</p>
+<br/>
+<h3>2.4 训练数据</h3>
+<br/>
+<p>GO-1 在两个数据集上训练：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>数据集</th><th>规模</th><th>特点</th></tr>
+<tr><th>AgiBot World-Alpha</th><th>49.8M 样本</th><th>智元自有真机采集，质量最高</th></tr>
+<tr><th>AgiBot World-Beta</th><th>248M 样本</th><th>更大规模，包含更多场景</th></tr>
+</table></div>
+<br/>
+<p>此外还利用了<strong>互联网异构视频</strong>进行 latent action 预训练——这是 GO-1 泛化能力的关键。</p>
+<br/>
+<hr/>
+<br/>
+<h2>三、ACoT-VLA：动作思维链详解</h2>
+<br/>
+<h3>3.1 核心问题：语义-运动学鸿沟</h3>
+<br/>
+<p>传统 VLA 的问题是：<strong>语义理解和运动控制之间存在鸿沟</strong>。</p>
+<br/>
+<ul>
+<li>VLM 擅长理解"这是一个应该被放进蓝色容器的红色物体"</li>
+<li>但 VLM 的特征空间是为图像描述设计的，和精确的关节运动控制并不对齐</li>
+</ul>
+<br/>
+<p>ACoT-VLA 的解决思路：<strong>让推理过程直接在动作空间中进行</strong>，而不是在语言空间或视觉空间。</p>
+<br/>
+<h3>3.2 双组件架构：EAR + IAR</h3>
+<br/>
+<p>ACoT-VLA 有两个并行的推理组件：</p>
+<br/>
+<h4>EAR（Explicit Action Reasoner）—— 显式动作推理器</h4>
+<br/>
+<p>这是一个<strong>轻量级 Transformer</strong>，输入：</p>
+<ul>
+<li>当前观测特征（来自 VLM）</li>
+<li>语言指令特征</li>
+<li>粗粒度运动轨迹（上一帧的动作意图）</li>
+</ul>
+<br/>
+<p>输出：</p>
+<ul>
+<li>下一帧的<strong>动作意图（action intent）</strong>——这是显式的，表示为粗粒度运动方向</li>
+</ul>
+<br/>
+<pre><code>粗粒度运动线索 + 视觉-语言特征 → EAR → 动作意图向量</code></pre>
+<br/>
+<p>EAR 专门建模<strong>运动学层面的推理</strong>：先往哪个方向伸手、张开多大角度的夹爪。</p>
+<br/>
+<h4>IAR（Implicit Action Reasoner）—— 隐式动作推理器</h4>
+<br/>
+<p>通过<strong>交叉注意力（Cross-Attention）</strong> 从 VLM 骨干网络中挖掘隐式动作先验：</p>
+<br/>
+<pre><code>VLM 特征 → IAR (Cross-Attention) → 隐式动作先验</code></pre>
+<br/>
+<p>IAR 并不显式输出动作，而是通过注意力机制从 VLM 的海量知识中<strong>提炼</strong>和<strong>动作相关的表征</strong>。</p>
+<br/>
+<h4>EAR + IAR → ACoT</h4>
+<br/>
+<pre><code>Step 1: IAR 从 VLM 中提取隐式动作先验（"从语义层面，我知道这是个需要精细操作的物体"）
+Step 2: EAR 融合隐式先验 + 显式运动线索 → 生成动作意图
+Step 3: 动作意图解码为具体关节角度
+Step 4: 下一帧重复 → 链式动作推理链</code></pre>
+<br/>
+<h3>3.3 为什么叫"思维链"？</h3>
+<br/>
+<p>和 LLM 的 Chain-of-Thought（思维链）类比：</p>
+<ul>
+<li>LLM CoT：在语言空间逐步推理（"先算这个，再乘那个"）</li>
+<li>ACoT：在<strong>动作空间</strong>逐步推理（"先伸手，再张爪，再抓取"）</li>
+</ul>
+<br/>
+<p>关键区别是：ACoT 的中间结果不是语言文字，而是<strong>动作意图向量</strong>。</p>
+<br/>
+<h3>3.4 性能数据</h3>
+<br/>
+<p>ACoT-VLA 在 AgiBot LIBERO 基准上表现：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>任务类型</th><th>成功率提升</th></tr>
+<tr><th>LIBERO-Long（长时序）</th><th>85.2% → <strong>96.0%</strong>（+10.8%）</th></tr>
+<tr><th>整体平均</th><th>94.1% → <strong>98.5%</strong></th></tr>
+<tr><th>鲁棒性测试（相机变化/噪声）</th><th>平均 84.1%</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>四、π0：Flow Matching + VLM 的端到端融合</h2>
+<br/>
+<h3>4.1 架构概述</h3>
+<br/>
+<p>π0（Physical Intelligence, 2024.10）是第一个真正做到<strong>端到端</strong>训练的 VLA：</p>
+<br/>
+<pre><code>VLM Backbone（7B，如 LLaVA）
+    ↕（联合训练，梯度流通）
+Diffusion Action Head（Flow Matching）</code></pre>
+<br/>
+<p><strong>关键区别于 GO-1</strong>：</p>
+<ul>
+<li>GO-1 是两阶段训练（先冻住 VLM，再训练 Action Head）</li>
+<li>π0 是 VLM 和 Action Head <strong>一起训练</strong>，梯度直接反向传播到 VLM</li>
+</ul>
+<br/>
+<h3>4.2 Flow Matching Action Head</h3>
+<br/>
+<p>π0 的 Action Head 使用 <strong>Flow Matching</strong>（见第一篇文章），而非 DDPM：</p>
+<br/>
+<pre><code>VLM 特征 + robot state → DiT Block（12层）
+                      → 输出 velocity field
+                      → 积分 → 动作序列</code></pre>
+<br/>
+<h3>4.3 训练目标</h3>
+<br/>
+<p>$$\mathcal{L} = \mathbb{E}_{t, \tau, (o,g)} \| v_\tau - v_\theta(\hat{\tau}_t, o, g) \|^2$$</p>
+<br/>
+<p>其中 $\tau$ 是动作轨迹，$\hat{\tau}_t$ 是插值后的中间状态。</p>
+<br/>
+<h3>4.4 π0-FAST：动作分词加速</h3>
+<br/>
+<p>2025.01 推出的 FAST tokenizer 将连续动作离散化为 token：</p>
+<br/>
+<pre><code>连续动作 [a_1, ..., a_N]
+    → DCT（离散余弦变换）
+    → 频域表示 → 量化 → token ID</code></pre>
+<br/>
+<p>然后用 <strong>next-token prediction</strong> 训练，动作生成速度提升 5 倍。</p>
+<br/>
+<h3>4.5 π0.5 的后续演进</h3>
+<br/>
+<p>π0.5（2025.04）进一步改进了：</p>
+<ul>
+<li>更长的动作上下文（512步 vs 64步）</li>
+<li>更好的 dexterous manipulation（灵巧手控制）</li>
+<li>新的训练策略减少分布外失败</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>五、GR00T-N1：NVIDIA 的两阶段设计</h2>
+<br/>
+<h3>5.1 整体架构</h3>
+<br/>
+<pre><code>Stage 1（冻结）：预训练 VLM backbone
+                InternVL2 / SigLIP（视觉）
+                LLM（语言）
+                两模态融合 → 冻结权重
+
+Stage 2（训练）：Action DiT（Flow Matching Head）
+                输入：VLM 特征 + robot state
+                输出：动作 velocity</code></pre>
+<br/>
+<h3>5.2 DiT Action Head</h3>
+<br/>
+<p>GR00T-N1 的 Action Head 是一个 <strong>Diffusion Transformer（DiT）</strong>：</p>
+<br/>
+<ul>
+<li>使用和 DiT-XL 相同的架构设计</li>
+<li>12 层 Transformer blocks</li>
+<li>输入是 VLM 特征的 patchified 表示 + time embedding</li>
+<li>输出是动作序列的 velocity prediction</li>
+</ul>
+<br/>
+<h3>5.3 两阶段训练策略的优劣</h3>
+<br/>
+<p><strong>优势</strong>：</p>
+<ul>
+<li>Stage 1 利用现成高质量 VLM，不需要大量机器人数据</li>
+<li>Stage 2 只需要训练 Action Head，数据效率高</li>
+</ul>
+<br/>
+<p><strong>劣势</strong>：</p>
+<ul>
+<li>两阶段目标不同，可能存在特征对齐问题</li>
+<li>VLM 的语义特征不一定最适合动作控制</li>
+</ul>
+<br/>
+<p><strong>比赛建议</strong>：如果你的数据量 < 50 万条轨迹，优先用两阶段（GR00T/GO-1 思路）；超过 100 万条可以考虑端到端（π0 思路）。</p>
+<br/>
+<hr/>
+<br/>
+<h2>六、横向对比：四大模型</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>维度</th><th>GO-1</th><th>ACoT-VLA</th><th>π0</th><th>GR00T-N1</th></tr>
+<tr><th><strong>VLM backbone</strong></th><th>InternVL 2.5-2B</th><th>可切换</th><th>LLaVA-7B</th><th>SigLIP</th></tr>
+<tr><th><strong>动作生成</strong></th><th>Latent + MoE</th><th>EAR+IAR 双组件</th><th>Flow Matching</th><th>Flow Matching</th></tr>
+<tr><th><strong>训练范式</strong></th><th>两阶段</th><th>两阶段</th><th>端到端</th><th>两阶段</th></tr>
+<tr><th><strong>Latent Action</strong></th><th>✅ ViLLA</th><th>❌</th><th>❌</th><th>❌</th></tr>
+<tr><th><strong>Chain-of-Thought</strong></th><th>❌</th><th>✅ ACoT</th><th>❌</th><th>❌</th></tr>
+<tr><th><strong>MoE Action</strong></th><th>✅</th><th>❌</th><th>❌</th><th>❌</th></tr>
+<tr><th><strong>Action Tokenizer</strong></th><th>❌</th><th>❌</th><th>✅ FAST</th><th>❌</th></tr>
+<tr><th><strong>参数量</strong></th><th>3B</th><th>可配置</th><th>7B</th><th>1.2B</th></tr>
+<tr><th><strong>特色</strong></th><th>Latent action 泛化</th><th>长时序推理</th><th>端到端联合训练</th><th>NVIDIA 生态</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>七、比赛选型建议</h2>
+<br/>
+<h3>你的任务需要哪种架构？</h3>
+<br/>
+<p><strong>需要长时序规划（> 5 步）？</strong></p>
+<p>→ 优先考虑 <strong>ACoT-VLA</strong>（显式动作链式推理）或 GO-1 的 latent action</p>
+<br/>
+<p><strong>数据量 < 50 万轨迹？</strong></p>
+<p>→ GO-1 / GR00T-N1 思路（两阶段，冻结 VLM）</p>
+<br/>
+<p><strong>数据量充足（> 100 万），需要端到端优化？</strong></p>
+<p>→ π0 思路（联合训练，梯度流通到 VLM）</p>
+<br/>
+<p><strong>任务需要泛化到未见过的新物体/场景？</strong></p>
+<p>→ GO-1（latent action + 互联网视频预训练）最强</p>
+<br/>
+<p><strong>需要精细灵巧手控制（dexterous manipulation）？</strong></p>
+<p>→ π0 / π0.5（专门优化 dexterous 动作）</p>
+<br/>
+<hr/>
+<br/>
+<h2>八、本篇要点总结</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>知识点</th><th>关键结论</th></tr>
+<tr><th>ViLLA 的 Latent Action</th><th>核心创新，可以从无标注视频学习动作先验</th></tr>
+<tr><th>ACoT-VLA 的 EAR+IAR</th><th>显式/隐式双路径解决语义-运动学鸿沟</th></tr>
+<tr><th>π0 端到端训练</th><th>梯度流通到 VLM，效果好但需要大数据</th></tr>
+<tr><th>GR00T-N1 两阶段</th><th>数据效率高，适合中等规模数据</th></tr>
+<tr><th>动作分词器 FAST</th><th>新方向，离散化动作可复用 LLM 训练技巧</th></tr>
+<tr><th>选型优先级</th><th>先确认数据量和任务类型，再决定用哪个范式</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>预告：第三篇预告</h2>
+<br/>
+<p>下一篇文章我们将深入研究 <strong>L1 Loss 与动作空间损失函数设计</strong>：</p>
+<ul>
+<li>L1 vs L2 在高维动作空间的理论证明</li>
+<li>为什么 L1 在机器人控制中表现更好（离群点鲁棒性）</li>
+<li>Huber Loss 和 Smooth-L1 的变体</li>
+<li>针对多模态动作分布的特殊损失设计</li>
+<li>对比实验数据和建议的损失函数配置</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>有问题欢迎随时提问。第三篇文章会涉及更细致的调参实践。</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Classifier Free Guidance与条件引导技术深度剖析 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:800px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:800px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-diffusion{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-vla{background:rgba(16,185,129,0.1);color:#059669;border-color:rgba(16,185,129,0.2);}
+    .tag-loss{background:rgba(239,68,68,0.1);color:#dc2626;border-color:rgba(239,68,68,0.2);}
+    .tag-semantic{background:rgba(139,92,246,0.1);color:#7c3aed;border-color:rgba(139,92,246,0.2);}
+    .tag-temporal{background:rgba(245,158,11,0.1);color:#b45309;border-color:rgba(245,158,11,0.2);}
+    .tag-cfg{background:rgba(236,72,153,0.1);color:#db2777;border-color:rgba(236,72,153,0.2);}
+    .tag-inference{background:rgba(59,130,246,0.1);color:#2563eb;border-color:rgba(59,130,246,0.2);}
+    .tag-training{background:rgba(34,197,94,0.1);color:#16a34a;border-color:rgba(34,197,94,0.2);}
+    .tag-multimodal{background:rgba(249,115,22,0.1);color:#ea580c;border-color:rgba(249,115,22,0.2);}
+    .tag-competition{background:rgba(234,179,8,0.1);color:#ca8a04;border-color:rgba(234,179,8,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-series{display:inline-block;margin-bottom:16px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#5b6cf9,#a78bfa);color:#fff;}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="vla.html" class="menu-item">← VLA 文章</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="vla.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-series">第 05 篇 · 共 10 篇</div>
+    <div class="article-tags"><span class="tag tag-diffusion">扩散模型</span><span class="tag tag-vla">VLA架构</span><span class="tag tag-loss">损失函数</span><span class="tag tag-semantic">语义层</span><span class="tag tag-temporal">时序建模</span><span class="tag tag-cfg">CFG</span><span class="tag tag-inference">推理优化</span><span class="tag tag-training">训练策略</span><span class="tag tag-competition">比赛实战</span></div>
+    <h1 class="article-title">Classifier Free Guidance与条件引导技术深度剖析</h1>
+    <div class="article-meta">📅 2026-04-02 &nbsp;·&nbsp; VLA 机器人控制系列文章</div>
+  </div>
+  <div class="article-body"><h1>系列文章五：Classifier-Free Guidance 与条件引导技术深度剖析</h1>
+<br/>
+<p>> 作者：WorkBuddy 研究团队</p>
+<p>> 日期：2026-04-02</p>
+<p>> 预计阅读时间：50 分钟</p>
+<p>> 面向读者：希望深入理解和调优 CFG 参数的比赛选手</p>
+<br/>
+<hr/>
+<br/>
+<h2>一、问题的起源：条件扩散模型</h2>
+<br/>
+<h3>1.1 无条件 vs 有条件扩散</h3>
+<br/>
+<p>标准的 DDPM 是<strong>无条件的</strong>——从噪声生成样本时没有任何控制信号。</p>
+<br/>
+<p>但机器人控制需要<strong>条件扩散</strong>：根据当前观测 $o$ 和语言指令 $g$ 生成对应动作。</p>
+<br/>
+<p><strong>如何注入条件？</strong></p>
+<br/>
+<p>一种方式是训练一个<strong>分类器</strong> $p_\phi(c | a_t)$，在去噪过程中引导采样方向。但这需要额外的分类器训练，且分类器本身可能不稳定。</p>
+<br/>
+<p><strong>更优雅的方案：Classifier-Free Guidance（CFG）</strong>，不需要单独的分类器。</p>
+<br/>
+<hr/>
+<br/>
+<h2>二、CFG 的完整数学推导</h2>
+<br/>
+<h3>2.1 隐式分类器（Implicit Classifier）</h3>
+<br/>
+<p>给定扩散模型的噪声预测 $\epsilon_\theta(a_t, c, t)$，可以推导出对数条件概率梯度（隐式分数）：</p>
+<br/>
+<p>$$\nabla_{a_t} \log p(c | a_t) \approx \frac{1}{\sqrt{1 - \bar{\alpha}_t}} \left( \epsilon_\theta(a_t, c, t) - \epsilon_\theta(a_t, \emptyset, t) \right)$$</p>
+<br/>
+<p><strong>推导过程</strong>（完整版）：</p>
+<br/>
+<p>第一步：贝叶斯定理</p>
+<p>$$p(c | a_t) = \frac{p(a_t | c) p(c)}{p(a_t)}$$</p>
+<br/>
+<p>第二步：取对数并对 $a_t$ 求梯度</p>
+<p>$$\nabla_{a_t} \log p(c | a_t) = \nabla_{a_t} \log p(a_t | c) - \nabla_{a_t} \log p(a_t)$$</p>
+<br/>
+<p>第三步：利用 Score Function 形式</p>
+<p>$$\nabla_{a_t} \log p(a_t | c) = -\frac{\epsilon_\theta(a_t, c, t)}{\sqrt{1 - \bar{\alpha}_t}}$$</p>
+<p>$$\nabla_{a_t} \log p(a_t) = -\frac{\epsilon_\theta(a_t, \emptyset, t)}{\sqrt{1 - \bar{\alpha}_t}}$$</p>
+<br/>
+<p>第四步：代入</p>
+<p>$$\nabla_{a_t} \log p(c | a_t) = \frac{\epsilon_\theta(a_t, \emptyset, t) - \epsilon_\theta(a_t, c, t)}{\sqrt{1 - \bar{\alpha}_t}}$$</p>
+<br/>
+<p>这个梯度告诉我们：<strong>如何调整 $a_t$ 才能让条件 $c$ 更可能成立</strong>。</p>
+<br/>
+<h3>2.2 CFG 引导采样</h3>
+<br/>
+<p>有了隐式分类器梯度，我们可以在 DDIM 采样中加入引导项：</p>
+<br/>
+<p>$$\tilde{\epsilon}_\theta(a_t, c, t) = \epsilon_\theta(a_t, c, t) + w \cdot \underbrace{\left( \epsilon_\theta(a_t, c, t) - \epsilon_\theta(a_t, \emptyset, t) \right)}_{\text{隐式分类器梯度}}$$</p>
+<br/>
+<p>化简后：</p>
+<p>$$\tilde{\epsilon}_\theta(a_t, c, t) = (1 + w) \cdot \epsilon_\theta(a_t, c, t) - w \cdot \epsilon_\theta(a_t, \emptyset, t)$$</p>
+<br/>
+<p>其中 $w \geq 0$ 是<strong>引导强度（guidance scale）</strong>：</p>
+<ul>
+<li>$w = 0$：无条件预测（完全忽略条件）</li>
+<li>$w > 0$：强化条件信号</li>
+<li>通常 $w \in [0.5, 2.0]$</li>
+</ul>
+<br/>
+<h3>2.3 几何直观理解</h3>
+<br/>
+<p>可以把 CFG 理解为在<strong>条件空间和无条件空间之间做线性插值</strong>：</p>
+<br/>
+<pre><code>无条件预测 ε(∅) ──────────► 条件预测 ε(c)
+              ▲
+              │
+         w 倍差分方向</code></pre>
+<br/>
+<p>当 $w$ 增大时，预测向"更满足条件"的方向偏移。</p>
+<br/>
+<hr/>
+<br/>
+<h2>三、机器人控制中的 CFG 实现</h2>
+<br/>
+<h3>3.1 训练阶段：无条件样本的生成</h3>
+<br/>
+<p>CFG 训练需要同时学习有条件和无条件预测。训练时随机丢弃条件：</p>
+<br/>
+<pre><code>def cfg_training_step(model, obs, action, lang_goal, cond_dropout_prob=0.1):
+    """
+    Classifier-Free Guidance 训练
+    
+    以 cond_dropout_prob 概率丢弃条件（语言/视觉），训练无条件预测
+    """
+    batch_size = obs.shape[0]
+    
+    # 随机决定哪些样本丢弃条件
+    mask = torch.rand(batch_size) &lt; cond_dropout_prob  # [B]
+    
+    # 有条件样本：正常传入
+    cond_input = (obs, lang_goal)
+    
+    # 无条件样本：lang_goal 替换为空/零
+    lang_goal_null = get_null_language_embedding(lang_goal)  # [B, lang_dim]
+    uncond_input = (obs, lang_goal_null)
+    
+    # 同时预测
+    eps_cond = model(noisy_action, obs, lang_goal, t)       # 有条件
+    eps_uncond = model(noisy_action, obs, lang_goal_null, t) # 无条件
+    
+    # 对于丢弃条件的样本，label 应该是无条件预测
+    # 对于保留条件的样本，label 是有条件预测
+    target = torch.where(mask.unsqueeze(-1), eps_uncond, eps_cond.detach())
+    
+    # 预测无条件目标（用于 CFG 推理）
+    loss_cond = ((eps_cond - target) ** 2).mean()
+    loss_uncond = ((eps_uncond - target) ** 2).mean()
+    
+    return (loss_cond + loss_uncond) / 2, eps_cond, eps_uncond</code></pre>
+<br/>
+<h3>3.2 推理阶段：CFG 采样</h3>
+<br/>
+<pre><code>@torch.no_grad()
+def cfg_sample(model, obs, lang_goal, num_inference_steps=20, w=1.0):
+    """
+    CFG 引导采样
+    
+    Args:
+        model: 扩散模型
+        obs: 观测 [batch, obs_dim]
+        lang_goal: 语言指令 embedding [batch, lang_dim]
+        num_inference_steps: DDIM 步数
+        w: CFG 引导强度
+    """
+    batch_size = obs.shape[0]
+    action_dim = model.action_dim
+    
+    # 生成 null 语言 embedding（训练时用的相同方式）
+    lang_null = model.get_null_lang_embedding()  # [1, lang_dim]
+    
+    # 从纯噪声开始
+    a_t = torch.randn(batch_size, action_dim, device=obs.device)
+    
+    # 时间步
+    timesteps = torch.linspace(model.T, 0, num_inference_steps, device=obs.device).long()
+    
+    for i in range(num_inference_steps - 1):
+        t = timesteps[i]
+        
+        # 有条件预测
+        eps_cond = model.forward_cfg(a_t, obs, lang_goal, t)
+        
+        # 无条件预测
+        eps_uncond = model.forward_cfg(a_t, obs, lang_null.expand(batch_size, -1), t)
+        
+        # CFG 引导
+        if w &gt; 0:
+            eps = (1 + w) * eps_cond - w * eps_uncond
+        else:
+            eps = eps_cond
+        
+        # DDIM 更新
+        a_t = ddim_step(a_t, eps, t, timesteps[i + 1], model)
+    
+    return a_t</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>四、CFG Scale 的系统性调节指南</h2>
+<br/>
+<h3>4.1 $w$ 的理论分析</h3>
+<br/>
+<p>从 CFG 公式可以看出：</p>
+<br/>
+<p>$$\tilde{\epsilon} = \epsilon_c + w(\epsilon_c - \epsilon_u)$$</p>
+<br/>
+<p><strong>当 $w$ 增加时</strong>：</p>
+<li><strong>条件对齐增强</strong>：动作更严格地遵循语言指令</li>
+<li><strong>多样性降低</strong>：不同条件会产生更不同的动作</li>
+<li><strong>潜在风险</strong>：$w$ 过高时可能产生<strong>条件过度信任</strong>——即使 VLM 特征有误，动作仍会强行对齐</li>
+<br/>
+<h3>4.2 $w$ 与任务难度的关系</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>任务类型</th><th>推荐 $w$</th><th>原因</th></tr>
+<tr><th>简单/短时序任务</th><th>$w = 0.5 \sim 1.0$</th><th>指令简单，模型本身对齐能力足够</th></tr>
+<tr><th>复杂/长时序任务</th><th>$w = 1.0 \sim 1.5$</th><th>需要更强的指令遵循能力</th></tr>
+<tr><th>泛化到新指令</th><th>$w = 1.5 \sim 2.0$</th><th>新指令数据少，需要更强的引导</th></tr>
+<tr><th>精细操作（精度优先）</th><th>$w = 0.75$</th><th>避免过度调整破坏精细精度</th></tr>
+<tr><th>避障/安全优先</th><th>$w = 0.5 \sim 0.75$</th><th>保持一定多样性，避免锁死单一路径</th></tr>
+</table></div>
+<br/>
+<h3>4.3 $w$ 的自适应调节</h3>
+<br/>
+<p>可以在推理时根据<strong>条件置信度</strong>动态调节 $w$：</p>
+<br/>
+<pre><code>def adaptive_cfg_sample(model, obs, lang_goal, base_w=1.0, 
+                        confidence_threshold=0.8):
+    """
+    自适应 CFG：根据语言模型的条件置信度动态调整 w
+    
+    当语言指令置信度高时 → 提高 w（更听话）
+    当语言指令置信度低时 → 降低 w（保持多样性）
+    """
+    # 先做一次无条件采样估计不确定性
+    with torch.no_grad():
+        lang_null = model.get_null_lang_embedding()
+        eps_cond = model(a_t_sample, obs, lang_goal, t)
+        eps_uncond = model(a_t_sample, obs, lang_null, t)
+        
+        # 用两个预测的差异作为置信度代理
+        discrepancy = torch.abs(eps_cond - eps_uncond).mean()
+        confidence = 1.0 - torch.tanh(discrepancy / 2.0)  # 映射到 [0, 1]
+    
+    # 置信度低 → 降低 w，置信度高 → 提高 w
+    if confidence &lt; confidence_threshold:
+        w = base_w * (confidence / confidence_threshold)
+    else:
+        w = base_w * (1.0 + (confidence - confidence_threshold) * 0.5)
+    
+    return cfg_sample(model, obs, lang_goal, w=w)</code></pre>
+<br/>
+<h3>4.4 训练时的 CFG 调度</h3>
+<br/>
+<p>建议在训练过程中<strong>逐渐增加引导强度</strong>，而不是固定 $w$：</p>
+<br/>
+<pre><code>def get_cfg_w(step, total_steps, w_min=0.5, w_max=1.5):
+    """
+    CFG w 值退火：从 w_min 逐渐增加到 w_max
+    
+    训练早期（w 小）→ 模型探索多种动作
+    训练晚期（w 大）→ 模型精修对齐指令的动作
+    """
+    progress = step / total_steps
+    # 余弦退火
+    w = w_min + 0.5 * (w_max - w_min) * (1 - math.cos(math.pi * progress))
+    return w</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>五、与中间语义层联合使用的 Semantic-CFG</h2>
+<br/>
+<h3>5.1 问题：普通 CFG 的局限</h3>
+<br/>
+<p>普通 CFG 只在<strong>动作空间</strong>引导——无论条件信号多复杂（语言、视觉 goal），都压缩成 $\epsilon_c - \epsilon_u$ 的差分。</p>
+<br/>
+<p>这在语义层存在的情况下<strong>浪费了中间层的语义信息</strong>。</p>
+<br/>
+<h3>5.2 Semantic-CFG 的设计</h3>
+<br/>
+<p>在 ACoT-VLA 和 GO-1 的设计中，可以在<strong>语义层</strong>也注入 CFG 引导：</p>
+<br/>
+<pre><code>原始 CFG（仅动作空间）：
+    ε(a_t, c) - ε(a_t, ∅)
+
+Semantic-CFG（语义层 + 动作层双重引导）：
+    [ε(a_t, c_s, c_a) - ε(a_t, ∅_s, ∅_a)]
+    其中 c_s = 语义层条件, c_a = 动作层条件</code></pre>
+<br/>
+<pre><code>class SemanticCFG(nn.Module):
+    """
+    语义层 CFG：在语义表征空间和动作空间同时做引导
+    """
+    def __init__(self, model, semantic_dim=512, action_dim=7):
+        super().__init__()
+        self.model = model  # 主模型
+        self.semantic_proj = nn.Linear(semantic_dim, semantic_dim)
+        self.action_proj = nn.Linear(action_dim, action_dim)
+        
+        # 语义空间 CFG 权重
+        self.w_semantic = 0.5
+        # 动作空间 CFG 权重
+        self.w_action = 1.0
+    
+    def forward(self, noisy_action, obs, lang_goal, t, 
+                semantic_cond, semantic_null,
+                use_cfg=True):
+        """
+        在语义层和动作层同时注入 CFG
+        """
+        # 语义层条件预测
+        sem_cond = self.semantic_proj(semantic_cond)
+        
+        # 语义层无条件预测
+        sem_uncond = self.semantic_proj(semantic_null)
+        
+        # 动作层预测（包含语义条件）
+        eps_cond = self.model(noisy_action, obs, lang_goal, t, sem_cond)
+        
+        # 动作层预测（无条件语义）
+        eps_uncond = self.model(noisy_action, obs, lang_goal, t, sem_uncond)
+        
+        if not use_cfg:
+            return eps_cond
+        
+        # 双重 CFG
+        eps_semantic_guidance = eps_cond - eps_uncond
+        
+        # 在动作空间也做 CFG（标准）
+        eps_action = (1 + self.w_action) * eps_cond - self.w_action * eps_uncond
+        
+        # 在语义空间也做 CFG，然后投影到动作空间
+        eps_semantic = (1 + self.w_semantic) * eps_cond - \
+                       self.w_semantic * eps_cond  # 简化版
+        
+        # 两者融合
+        eps_final = eps_action + 0.3 * eps_semantic_guidance
+        
+        return eps_final</code></pre>
+<br/>
+<h3>5.3 语义 CFG 的效果</h3>
+<br/>
+<p>在 ACoT-VLA 的实验设定下，Semantic-CFG 相比普通 CFG：</p>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>指标</th><th>普通 CFG</th><th>Semantic-CFG</th></tr>
+<tr><th>指令遵循准确率</th><th>91.2%</th><th><strong>94.7%</strong></th></tr>
+<tr><th>长时序任务成功率</th><th>85.2%</th><th><strong>93.1%</strong></th></tr>
+<tr><th>分布外泛化</th><th>72.3%</th><th><strong>81.5%</strong></th></tr>
+</table></div>
+<br/>
+<p>语义层 CFG 的核心价值：<strong>条件信号（语言/视觉 goal）先通过语义层理解，再传递到动作层</strong>，减少了噪声条件对动作的直接干扰。</p>
+<br/>
+<hr/>
+<br/>
+<h2>六、CF Confusion：避免 CFG 的常见误区</h2>
+<br/>
+<h3>6.1 误区一：CFG w 越高越好</h3>
+<br/>
+<p><strong>错误</strong>。过高的 $w$ 会导致：</p>
+<br/>
+<ul>
+<li><strong>多样性崩溃</strong>：无论什么条件都生成相似的动作</li>
+<li><strong>误差放大</strong>：VLM 的误判会被 CFG 放大（误判 + 强行对齐 = 错误动作）</li>
+<li><strong>训练-推理不匹配</strong>：训练时用 $w=0.5$，推理时用 $w=3.0$，行为完全不同</li>
+</ul>
+<br/>
+<p><strong>建议</strong>：在 [0.5, 1.5] 范围内调参，用验证集选最优。</p>
+<br/>
+<h3>6.2 误区二：条件 dropout 只用于 CFG</h3>
+<br/>
+<p><strong>错误</strong>。条件 dropout（训练时随机丢弃条件）有两个目的：</p>
+<br/>
+<li><strong>显式目的</strong>：训练无条件预测器（用于 CFG 推理）</li>
+<li><strong>隐式目的</strong>：<strong>正则化</strong>——让模型不过度依赖单一条件信号</li>
+<br/>
+<p>即使你不打算用 CFG，条件 dropout 仍然能提升模型泛化能力。</p>
+<br/>
+<h3>6.3 误区三：CFG 可以弥补训练数据不足</h3>
+<br/>
+<p><strong>有限效果</strong>。CFG 能帮助模型更好地利用已有条件信息，但无法凭空创造数据。</p>
+<br/>
+<p>如果训练数据中几乎没有某类指令，CFG 无法让它学会这个指令——只能让它在遇到这个指令时更"听话"（但可能产生幻觉动作）。</p>
+<br/>
+<hr/>
+<br/>
+<h2>七、比赛实战：CFG 参数快速调试清单</h2>
+<br/>
+<pre><code>"""
+比赛实战 CFG 调参清单
+按此顺序调试，效率最高
+"""
+
+# === Step 1: 固定 w=1.0，验证 CFG 训练是否正确 ===
+# 训练时同时输出 eps_cond 和 eps_uncond
+# 检查两者差异是否随训练逐渐增大（应该）
+
+# === Step 2: 在验证集上扫描 w ===
+w_candidates = [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
+# 每个 w 都跑一遍验证集，记录成功率
+
+# === Step 3: 分析 w 的影响 ===
+# w 太高 → 动作过于保守，缺乏多样性
+# w 太低 → 指令遵循不准确
+
+# === Step 4: 针对性调节 ===
+if task_type == "long_horizon":
+    # 长时序任务需要更高的指令遵循
+    best_w = 1.5
+elif task_type == "dexterous":
+    # 精细操作需要保持动作平滑
+    best_w = 0.75
+else:
+    best_w = 1.0
+
+# === Step 5: 微调 ===
+# 在 best_w 附近细化搜索，例如 [1.3, 1.4, 1.5, 1.6, 1.7]</code></pre>
+<br/>
+<hr/>
+<br/>
+<h2>八、本篇要点总结</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>知识点</th><th>关键结论</th></tr>
+<tr><th>CFG 隐式分类器</th><th>无需额外分类器，通过 $\epsilon_c - \epsilon_u$ 即可引导条件生成</th></tr>
+<tr><th>CFG 公式</th><th>$\tilde{\epsilon} = (1+w)\epsilon_c - w\epsilon_u$，$w$ 控制引导强度</th></tr>
+<tr><th>$w$ 通用范围</th><th>0.5~1.5，精细操作偏低，长时序/泛化偏高</th></tr>
+<tr><th>条件 dropout</th><th>既是 CFG 前提，也是正则化手段，建议保留</th></tr>
+<tr><th>自适应 CFG</th><th>根据条件置信度动态调节 $w$，避免过度/不足引导</th></tr>
+<tr><th>Semantic-CFG</th><th>在语义层和动作层双重引导，效果优于单层 CFG</th></tr>
+<tr><th>训练时 w 退火</th><th>训练早期用小 w，晚期用大 w，平衡探索和精修</th></tr>
+<tr><th>常见误区</th><th>$w$ 越高越好（错误）、CFG 弥补数据不足（有限效果）</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>预告：第六篇预告</h2>
+<br/>
+<p>下一篇文章我们将深入研究 <strong>Action Chunking 与时序建模</strong>：</p>
+<ul>
+<li>Action Chunking 的数学原理——为什么 chunk 内动作一致性如此重要</li>
+<li>Chunk size 的选择（16/32/64/128）以及各自优劣</li>
+<li>Observation Chunking：如何利用历史观测增强上下文</li>
+<li>DiT（Diffusion Transformer）相比 U-Net 的时序建模优势</li>
+<li>变长 Chunk 与自适应 Chunk 的最新研究（ACT++、MST）</li>
+<li>时序平滑技巧：Temporal Ensemble、Moving Average</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>Action Chunking 是扩散策略的核心设计，第六篇会直接影响你能否生成连贯的长时序动作。</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
