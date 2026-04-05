@@ -4,6 +4,17 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>L1 Loss与动作空间损失函数设计 · 蔡政</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+      },
+      svg: { fontCache: 'global' },
+      startup: { ready: () => MathJax.startup.defaultReady() }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
   <style>
     :root {
       --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);

@@ -167,14 +167,14 @@ ARTICLE_TEMPLATE = '''<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{title} · 蔡政</title>
   <script>
-    window.MathJax = {
-      tex: {
+    window.MathJax = {{
+      tex: {{
         inlineMath: [['$', '$'], ['\\(', '\\)']],
         displayMath: [['$$', '$$'], ['\\[', '\\]']],
-      },
-      svg: { fontCache: 'global' },
-      startup: { ready: () => MathJax.startup.defaultReady() }
-    };
+      }},
+      svg: {{ fontCache: 'global' }},
+      startup: {{ ready: () => MathJax.startup.defaultReady() }}
+    }};
   </script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
   <style>
