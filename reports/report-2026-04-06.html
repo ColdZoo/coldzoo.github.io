@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-04-06 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-04-06</h1>
+    <div class="article-meta">📅 2026-04-06 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>VLDB/SIGMOD 论文追踪报告 - 2026年4月6日</h1>
+<br/>
+<h2>摘要统计</h2>
+<br/>
+<ul>
+<li><strong>报告日期</strong>: 2026-04-06</li>
+<li><strong>追踪主题</strong>: 数据编码/解码 + GPU 加速</li>
+<li><strong>今日新发现</strong>: 4 篇新论文</li>
+<li><strong>知识库状态</strong>: 已追踪 25 篇论文</li>
+<li><strong>备注</strong>: 发现多篇高质量GPU加速和向量搜索相关论文</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>今日搜索概况</h2>
+<br/>
+<h3>搜索渠道</h3>
+<li>✅ VLDB 官方网站 (vldb.org/2026)</li>
+<li>✅ SIGMOD 2026 官方网站 (2026.sigmod.org)</li>
+<li>✅ arXiv cs.DB 预印本</li>
+<li>✅ Web 搜索引擎</li>
+<br/>
+<h3>搜索关键词</h3>
+<ul>
+<li>"data encoding" "data decoding" "compression"</li>
+<li>"GPU acceleration" "GPU database" "GPU query processing"</li>
+<li>"vector search" "similarity search" "ANN"</li>
+<li>"LLM compression" "FineZip"</li>
+</ul>
+<br/>
+<h3>搜索结果</h3>
+<ul>
+<li><strong>VLDB 2026</strong>: 无新论文（会议官网未更新论文列表）</li>
+<li><strong>SIGMOD 2026</strong>: 无新论文列表页面</li>
+<li><strong>arXiv</strong>: 发现 4 篇相关新论文</li>
+<li><strong>总计</strong>: 4 篇新论文</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>今日新发现论文</h2>
+<br/>
+<h3>GPU 加速领域</h3>
+<br/>
+<h4>1. GPU-RMQ: Accelerating Range Minimum Queries on Modern GPUs</h4>
+<ul>
+<li><strong>作者</strong>: Lara Kreis, Justus Henneberg, Valentin Henkys, Felix Schuhknecht, Bertil Schmidt</li>
+<li><strong>来源</strong>: arXiv:2604.01811 (2026年4月3日)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>提出分层并行索引构建方法，大幅降低内存占用并提升构建速度</li>
+<li>设计混合查询处理机制，在GPU上结合光线追踪核心与CUDA核心</li>
+<li>实现大规模并行扫描操作，仅处理层次结构中与查询相关的部分</li>
+<li><strong>性能指标</strong>:</li>
+<li>比LCA方法高 <strong>8倍</strong> 吞吐量</li>
+<li>比RTXRMQ高 <strong>17倍</strong> 吞吐量</li>
+<li>比优化CPU方法高 <strong>4800倍</strong> 吞吐量</li>
+<li>索引构建速度提升 <strong>100倍以上</strong></li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2604.01811</li>
+</ul>
+<br/>
+<h4>2. GPU-Accelerated Algorithms for Graph Vector Search: Taxonomy, Empirical Study, and Research Directions</h4>
+<ul>
+<li><strong>作者</strong>: Yaowen Liu, Xuejia Chen, Anxin Tian, Haoyang Li, Qinbin Li, Xin Zhang, Alexander Zhou, Chen Jason Zhang, Qing Li, Lei Chen</li>
+<li><strong>来源</strong>: arXiv:2602.16719 (2026年2月)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>建立GPU加速图向量搜索算法的详细分类法</li>
+<li>阐明算法任务与GPU硬件执行单元之间的映射关系</li>
+<li>在八个大规模基准数据集上对六个领先算法进行全面评估</li>
+<li>识别距离计算为主要计算瓶颈，CPU-GPU数据传输为延迟主要因素</li>
+<li><strong>性能指标</strong>:</li>
+<li>涵盖六个主流算法在八个大规模数据集上的性能评估</li>
+<li>提供可扩展性、内存使用方面的权衡分析</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2602.16719</li>
+</ul>
+<br/>
+<h4>3. PilotANN: Memory-Bounded GPU Acceleration for Vector Search</h4>
+<ul>
+<li><strong>作者</strong>: Yuntao Gui, Peiqi Yin, Xiao Yan, Chaorui Zhang, Weixi Zhang, James Cheng</li>
+<li><strong>来源</strong>: arXiv:2503.21206 (2025年3月)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>提出混合CPU-GPU架构，结合CPU大内存和GPU高并行计算能力</li>
+<li>三阶段搜索流程：GPU端SVD降维向量快速子图遍历 + CPU端完整向量精细化搜索</li>
+<li>快速入口点选择策略，优化搜索起始点</li>
+<li><strong>性能指标</strong>:</li>
+<li>在1亿规模数据集上实现 <strong>3.9倍到5.4倍</strong> 吞吐量提升</li>
+<li>可处理高达GPU内存 <strong>12倍</strong> 的大规模数据集</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2503.21206</li>
+</ul>
+<br/>
+<h3>数据编码/解码与系统优化领域</h3>
+<br/>
+<h4>4. Making Array-Based Translation Practical for Modern, High-Performance Buffer Management (Calico)</h4>
+<ul>
+<li><strong>作者</strong>: Xinjing Zhou, Jinming Hu, Andrew Pavlo, Michael Stonebraker</li>
+<li><strong>来源</strong>: arXiv:2604.00423 (2026年4月)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>复兴数组式翻译技术，与现代硬件结合实现低开销逻辑页面到物理帧映射</li>
+<li>引入多级翻译与路径缓存，针对大型稀疏页面ID层次结构优化</li>
+<li>孔洞打孔（Hole Punching）技术回收翻译内存</li>
+<li>组预取（Group Prefetch）利用I/O并行性</li>
+<li>已实现为PostgreSQL缓冲管理器的即插即用替代品</li>
+<li><strong>性能指标</strong>:</li>
+<li>PostgreSQL向量搜索：<strong>3.9倍</strong> 内存内加速，<strong>6.5倍</strong> 超内存加速</li>
+<li>扫描密集型查询：速度提升 <strong>最高3倍</strong></li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2604.00423</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>知识库中的代表性论文（回顾）</h2>
+<br/>
+<h3>数据编码/解码领域</h3>
+<br/>
+<h4>FastLanes File Format (VLDB 2025)</h4>
+<ul>
+<li><strong>作者</strong>: Azim Afroozeh, Peter Boncz (CWI Amsterdam)</li>
+<li><strong>核心贡献</strong>: 面向SIMD/GPU原生设计的开源大数据文件格式</li>
+<li><strong>性能指标</strong>:</li>
+<li>比Parquet压缩率高40%</li>
+<li>解码速度 >100亿整数/秒</li>
+<li><strong>链接</strong>: https://www.vldb.org/pvldb/vol18/p4629-afroozeh.pdf</li>
+</ul>
+<br/>
+<h4>ZipFlow (arXiv 2026)</h4>
+<ul>
+<li><strong>作者</strong>: Gwangoo Yeo, Zhiyang Shen, Wei Cui 等 (Microsoft)</li>
+<li><strong>核心贡献</strong>: 编译器驱动的压缩数据移动优化框架</li>
+<li><strong>性能指标</strong>:</li>
+<li>比nvCOMP快2.08倍</li>
+<li>比DuckDB快3.14倍</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2602.08190</li>
+</ul>
+<br/>
+<h4>FineZip: LLM-based Lossless Text Compression</h4>
+<ul>
+<li><strong>作者</strong>: Fazal Mittu, Yihuan Bu, Akshat Gupta 等</li>
+<li><strong>来源</strong>: arXiv:2409.17141 (2024年9月)</li>
+<li><strong>核心贡献</strong>: 基于LLM的实用无损文本压缩系统</li>
+<li><strong>性能指标</strong>:</li>
+<li>比LLMZip快54倍（10MB文本压缩从9.5天降至4小时）</li>
+<li>比传统压缩方法压缩率提升约50%</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2409.17141</li>
+</ul>
+<br/>
+<h3>GPU 加速领域</h3>
+<br/>
+<h4>GPU Acceleration of SQL Analytics on Compressed Data (VLDB 2026)</h4>
+<ul>
+<li><strong>作者</strong>: Jigao Huang, Sebastian Baunsgaard, Maximilian Bandle 等</li>
+<li><strong>核心贡献</strong>: 在压缩数据上直接运行SQL查询，无需解压</li>
+<li><strong>性能指标</strong>: 数量级性能提升</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2506.10092</li>
+</ul>
+<br/>
+<h4>Vortex (VLDB 2025)</h4>
+<ul>
+<li><strong>作者</strong>: Yichao Yuan, Advait Iyer, Lin Ma, Nishil Talati</li>
+<li><strong>核心贡献</strong>: 超GPU内存数据分析框架</li>
+<li><strong>性能指标</strong>:</li>
+<li>比Proteus快5.7倍</li>
+<li>比DuckDB价格性能提升2.5倍</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2502.09541</li>
+</ul>
+<br/>
+<h4>Sirius (arXiv 2025)</h4>
+<ul>
+<li><strong>作者</strong>: Bobbi Yogatama, Yifei Yang, Kevin Kristensen 等 (UW-Madison)</li>
+<li><strong>核心贡献</strong>: GPU原生SQL引擎，DuckDB后端加速</li>
+<li><strong>性能指标</strong>:</li>
+<li>TPC-H成本效益提升8.3倍</li>
+<li>ClickBench成本效益提升7.4倍</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2508.04701</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>趋势观察</h2>
+<br/>
+<h3>近期研究热点</h3>
+<li><strong>GPU向量搜索成为新战场</strong>: 多篇论文聚焦十亿规模向量搜索的GPU加速（PilotANN, GPU-ANNS综述）</li>
+<li><strong>混合CPU-GPU架构兴起</strong>: PilotANN采用混合架构解决单一硬件瓶颈</li>
+<li><strong>光线追踪核心用于数据库</strong>: GPU-RMQ创新性地使用NVIDIA RTX显卡的光线追踪核心加速RMQ查询</li>
+<li><strong>缓冲区管理复兴</strong>: Calico将数组式翻译这一经典技术在现代硬件上重新实现</li>
+<br/>
+<h3>技术发展方向</h3>
+<ul>
+<li><strong>从单机GPU向异构计算扩展</strong>（CPU-GPU混合架构）</li>
+<li><strong>向量数据库GPU加速持续火热</strong>（多篇高质量论文）</li>
+<li><strong>专用硬件核心的创新应用</strong>（光线追踪核心用于数据库查询）</li>
+<li><strong>经典技术的现代复兴</strong>（数组式翻译、缓冲区管理优化）</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>知识库位置</h2>
+<br/>
+<ul>
+<li><strong>知识库</strong>: <code>/Users/adam/WorkBuddy/Claw/db_research_knowledge/</code></li>
+<li><strong>历史报告</strong>: <code>/Users/adam/WorkBuddy/Claw/db_research_reports/</code></li>
+<li><strong>已追踪论文</strong>: 25 篇</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>报告由自动化任务生成 - 每日 09:00 执行</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
