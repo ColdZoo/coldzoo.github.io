@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-04-07 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-04-07</h1>
+    <div class="article-meta">📅 2026-04-07 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>数据库研究论文日报 - 2026年4月7日</h1>
+<br/>
+<h2>摘要统计</h2>
+<br/>
+<ul>
+<li><strong>报告日期</strong>: 2026年4月7日</li>
+<li><strong>新增论文</strong>: 8篇</li>
+<li><strong>累计追踪论文</strong>: 33篇</li>
+</ul>
+<br/>
+<h3>分类统计</h3>
+<div class="table-wrap"><table>
+<tr><th>类别</th><th>新增论文数</th></tr>
+<tr><th>数据编码/解码与压缩</th><th>4篇</th></tr>
+<tr><th>GPU加速与计算</th><th>4篇</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>一、数据编码/解码与压缩</h2>
+<br/>
+<h3>1. DFloat11: 无损LLM压缩实现高效GPU推理</h3>
+<ul>
+<li><strong>标题</strong>: 70% Size, 100% Accuracy: Lossless LLM Compression for Efficient GPU Inference via Dynamic-Length Float (DFloat11)</li>
+<li><strong>作者</strong>: Tianyi Zhang, Mohsen Hariri, Shaochen Zhong, Vipin Chaudhary, Yang Sui, Xia Hu, Anshumali Shrivastava</li>
+<li><strong>会议/期刊</strong>: NeurIPS 2025</li>
+<li><strong>链接</strong>: <a href="https://arxiv.org/abs/2504.11651" target="_blank">arXiv:2504.11651</a></li>
+</ul>
+<br/>
+<p><strong>摘要</strong>: 大型AI模型规模快速增长，给资源受限硬件上的高效部署带来挑战。本文提出动态长度浮点数（DFloat11），一种无损压缩框架，可将LLM规模减少30%，同时保持与原始模型比特级完全相同的输出。DFloat11利用LLM中BFloat16权重表示的低熵特性，通过熵编码根据权重频率分配动态长度编码。</p>
+<br/>
+<p><strong>关键贡献</strong>:</p>
+<ul>
+<li>提出基于熵编码的无损压缩格式，实现约30%模型大小缩减</li>
+<li>开发高效GPU解压内核，支持在线解压且不影响推理延迟</li>
+<li>设计紧凑分层查找表（LUT）适配GPU SRAM</li>
+<li>实现比特级无损压缩，保证输出与原始模型完全相同</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>模型大小缩减: 约30%</li>
+<li>吞吐量提升: 相比部分模型卸载至CPU方案，token生成吞吐量提高<strong>2.3-46.2倍</strong></li>
+<li>生成长度提升: 在固定GPU内存下，支持<strong>5.7-14.9倍</strong>于未压缩模型的生成序列长度</li>
+<li>可在配备8×80GB GPU的单节点上无损推理Llama 3.1 405B（810GB模型）</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>2. FastLanes: 面向SIMD/GPU的数据并行文件格式</h3>
+<ul>
+<li><strong>标题</strong>: The FastLanes File Format</li>
+<li><strong>作者</strong>: Azim Afroozeh, Peter Boncz (CWI)</li>
+<li><strong>会议/期刊</strong>: VLDB 2025</li>
+<li><strong>链接</strong>: <a href="https://www.vldb.org/pvldb/vol18/p4629-afroozeh.pdf" target="_blank">PDF</a></li>
+</ul>
+<br/>
+<p><strong>摘要</strong>: FastLanes是一种新型开源大数据文件格式，专为现代数据并行执行（SIMD或GPU）设计。它演进自Parquet等现有格式，旨在更好地支持AI管道。设计用于细粒度访问，级别是小批量数据而非大型行组，以限制解压缩内存占用。</p>
+<br/>
+<p><strong>关键贡献</strong>:</p>
+<ul>
+<li>摒弃通用压缩方法，采用完全支持数据并行的轻量级编码</li>
+<li>通过灵活的表达式编码机制级联应用多种编码，提升压缩率</li>
+<li>支持多列压缩（MCC），利用列间相关性提升压缩效率</li>
+<li>提供灵活的部分解压缩支持，方便查询引擎直接在压缩数据上执行操作</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>压缩率优于Parquet</li>
+<li>解压缩速度显著快于现有技术</li>
+<li>细粒度批处理设计将解压缩数据控制在CPU和GPU缓存范围内</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>3. Serf: 流式误差有界浮点数压缩</h3>
+<ul>
+<li><strong>标题</strong>: Serf: Streaming Error-Bounded Floating-Point Compression</li>
+<li><strong>作者</strong>: Ruiyuan Li, Zechao Chen, Ruyun Lu, XIAOLONG XU, guangchao yang, Chao Chen, Jie Bao, Yu Zheng</li>
+<li><strong>会议/期刊</strong>: SIGMOD 2025</li>
+</ul>
+<br/>
+<p><strong>摘要</strong>: 专注于流式误差有界浮点数压缩，提升数据存储和传输效率。适用于科学计算、物联网传感器数据等场景。</p>
+<br/>
+<hr/>
+<br/>
+<h3>4. Camel: 浮点时间序列高效压缩</h3>
+<ul>
+<li><strong>标题</strong>: Camel: Efficient Compression of Floating-Point Time Series</li>
+<li><strong>作者</strong>: Yuanyuan Yao, Lu Chen, Ziquan Fang, Yunjun Gao, Christian S. Jensen, Tianyi Li</li>
+<li><strong>会议/期刊</strong>: SIGMOD 2025</li>
+</ul>
+<br/>
+<p><strong>摘要</strong>: 针对时间序列浮点数的高效压缩算法，兼顾压缩比和查询速度。适用于时序数据库和监控数据存储场景。</p>
+<br/>
+<hr/>
+<br/>
+<h2>二、GPU加速与计算</h2>
+<br/>
+<h3>1. GPU-RMQ: 现代GPU上的范围最小值查询加速</h3>
+<ul>
+<li><strong>标题</strong>: GPU-RMQ: Accelerating Range Minimum Queries on Modern GPUs</li>
+<li><strong>作者</strong>: Lara Kreis, Justus Henneberg, Valentin Henkys, Felix Schuhknecht, Bertil Schmidt</li>
+<li><strong>会议/期刊</strong>: arXiv 2026</li>
+<li><strong>链接</strong>: <a href="https://arxiv.org/abs/2604.01811" target="_blank">arXiv:2604.01811</a></li>
+</ul>
+<br/>
+<p><strong>摘要</strong>: 范围最小值查询（RMQ）在字符串处理和数据库应用中频繁使用（如生物序列分析、文档检索）。现有方法存在内存开销大、索引构建时间长、查询吞吐量低等问题。本文提出GPU-RMQ，采用分层方法构建范围最小值摘要的层次结构，查询时仅处理相关部分。</p>
+<br/>
+<p><strong>关键贡献</strong>:</p>
+<ul>
+<li>分层方法构建多层次范围最小值摘要，降低内存占用</li>
+<li>混合设计结合光线追踪核心（RT核心）和CUDA核心</li>
+<li>高并行索引构建，大幅缩短构建时间</li>
+<li>优化的并行扫描，查询时仅扫描相关层次部分</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>内存占用显著低于现有方法，可处理更大数组（≥2^29）</li>
+<li>查询吞吐量比LCA高约<strong>8倍</strong></li>
+<li>查询吞吐量比RTXRMQ高约<strong>17倍</strong></li>
+<li>查询吞吐量比优化CPU方法高约<strong>4800倍</strong></li>
+<li>索引构建速度比现有方法快最多<strong>100倍</strong></li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>2. PilotANN: 内存受限的GPU向量搜索加速</h3>
+<ul>
+<li><strong>标题</strong>: PilotANN: Memory-Bounded GPU Acceleration for Vector Search</li>
+<li><strong>作者</strong>: Yuntao Gui, Peiqi Yin, Xiao Yan, Chaorui Zhang, Weixi Zhang, James Cheng</li>
+<li><strong>会议/期刊</strong>: arXiv 2025</li>
+<li><strong>链接</strong>: <a href="https://arxiv.org/abs/2503.21206" target="_blank">arXiv:2503.21206</a></li>
+</ul>
+<br/>
+<p><strong>摘要</strong>: 近似最近邻搜索（ANNS）是深度学习应用的基础。现有CPU方案难以满足计算需求，而纯GPU方案面临内存限制。PilotANN是一个混合CPU-GPU系统，将图遍历分解为三阶段：GPU加速子图遍历、CPU精细化处理、精确搜索。</p>
+<br/>
+<p><strong>关键贡献</strong>:</p>
+<ul>
+<li>混合CPU-GPU系统架构，协同利用CPU大内存和GPU高并行计算</li>
+<li>三阶段搜索流程：SVD降维向量GPU子图遍历 + 完整向量CPU精细化</li>
+<li>快速入口点选择技术，优化搜索起点并最大化GPU利用率</li>
+<li>可处理远超单个GPU内存容量的大规模向量数据集</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>在1亿规模数据集上，吞吐量提升<strong>3.9-5.4倍</strong></li>
+<li>可处理数据量达到<strong>GPU内存容量12倍</strong>的大规模数据集</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>3. GPU-ANNS综述：图向量搜索算法分类与实验研究</h3>
+<ul>
+<li><strong>标题</strong>: GPU-Accelerated Algorithms for Graph Vector Search: Taxonomy, Empirical Study, and Research Directions</li>
+<li><strong>作者</strong>: Yaowen Liu, Xuejia Chen, Anxin Tian, Haoyang Li, Qinbin Li, Xin Zhang, Alexander Zhou, Chen Jason Zhang, Qing Li, Lei Chen</li>
+<li><strong>会议/期刊</strong>: arXiv 2026</li>
+<li><strong>链接</strong>: <a href="https://arxiv.org/abs/2602.16719" target="_blank">arXiv:2602.16719</a></li>
+</ul>
+<br/>
+<p><strong>摘要</strong>: 本文对GPU加速的基于图的向量搜索算法进行全面综述和实验研究。建立了详细的GPU优化策略分类体系，阐明了算法任务与GPU硬件执行单元之间的映射关系。在八个大规模基准数据集上对六种领先算法进行评估。</p>
+<br/>
+<p><strong>关键贡献</strong>:</p>
+<ul>
+<li>系统综述与分类：提出GPU优化策略详细分类体系</li>
+<li>硬件-算法映射分析：明确算法任务与GPU执行单元的映射关系</li>
+<li>大规模实验评估：在八个数据集上对六种主流算法进行端到端评估</li>
+<li>瓶颈识别：距离计算是主要计算瓶颈，CPU-GPU数据传输是延迟主因</li>
+</ul>
+<br/>
+<p><strong>主要发现</strong>:</p>
+<ul>
+<li>距离计算是主要计算瓶颈</li>
+<li>主机-设备数据传输是影响大规模查询延迟的关键因素</li>
+<li>不同算法在索引构建速度、查询效率、内存开销之间存在显著权衡</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>4. GPU SQL压缩数据分析加速</h3>
+<ul>
+<li><strong>标题</strong>: GPU Acceleration of SQL Analytics on Compressed Data</li>
+<li><strong>作者</strong>: Zezhou Huang, Krystian Sakowski, Hans Lehnert, Wei Cui, Carlo Curino, Matteo Interlandi, Marius Dumitru, Rathijat Sen</li>
+<li><strong>会议/期刊</strong>: arXiv 2025</li>
+<li><strong>链接</strong>: <a href="https://arxiv.org/abs/2506.10092" target="_blank">arXiv:2506.10092</a></li>
+</ul>
+<br/>
+<p><strong>摘要</strong>: GPU内存容量有限，难以直接处理大规模数据集。本文提出直接在压缩数据上执行SQL查询的新方法，避免昂贵的解压缩开销。支持RLE、索引编码、位宽缩减、字典编码等轻量级压缩方案。</p>
+<br/>
+<p><strong>关键贡献</strong>:</p>
+<ul>
+<li>直接在压缩数据上执行查询的计算原语</li>
+<li>多RLE列的无解压操作能力</li>
+<li>异构列编码处理（不同列使用不同编码方案）</li>
+<li>基于PyTorch张量操作的设备可移植性</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>与先进商用纯CPU分析系统相比，实现<strong>数量级（一个数量级）</strong>的加速</li>
+<li>可在未经压缩时无法放入GPU内存的生产数据集上执行查询</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>三、其他相关论文</h2>
+<br/>
+<h3>SIGMOD 2025 相关论文</h3>
+<br/>
+<p><strong>GOLAP: GPU-in-Data-Path架构实现高速OLAP</strong></p>
+<ul>
+<li>作者: Nils Boeschen, Tobias Ziegler, Carsten Binnig</li>
+<li>将GPU嵌入数据处理路径，实现高速OLAP查询</li>
+</ul>
+<br/>
+<p><strong>GPU上的连接与分组聚合高效处理</strong></p>
+<ul>
+<li>作者: Bowen Wu, Dimitrios Koutsoukos, Gustavo Alonso</li>
+<li>利用GPU并行计算优化连接操作和分组聚合</li>
+</ul>
+<br/>
+<p><strong>Nested Parquet Is Flat</strong>: 嵌套Parquet数据的动态键生成与连接扫描优化</p>
+<ul>
+<li>作者: Alice Rey, Maximilian Rieger, Thomas Neumann</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>四、研究趋势分析</h2>
+<br/>
+<h3>主要趋势</h3>
+<br/>
+<li><strong>混合CPU-GPU架构成为主流</strong>: PilotANN、GPU-RMQ等工作均采用混合架构，充分利用CPU大内存和GPU高并行计算能力</li>
+<br/>
+<li><strong>直接在压缩数据上计算</strong>: GPU Acceleration of SQL Analytics on Compressed Data和FastLanes均支持直接在压缩数据上执行操作，避免解压缩开销</li>
+<br/>
+<li><strong>向量搜索GPU加速持续热门</strong>: GPU-ANNS综述显示该领域活跃，距离计算和CPU-GPU数据传输是主要优化方向</li>
+<br/>
+<li><strong>LLM模型压缩与GPU推理结合</strong>: DFloat11展示了无损压缩与高效GPU解压内核的结合，可显著降低大模型部署成本</li>
+<br/>
+<li><strong>光线追踪核心用于数据库操作</strong>: GPU-RMQ创新性地使用RT核心加速范围最小值查询</li>
+<br/>
+<hr/>
+<br/>
+<h2>五、值得关注的高影响力论文</h2>
+<br/>
+<h3>🌟 强烈推荐</h3>
+<br/>
+<li><strong>DFloat11 (NeurIPS 2025)</strong>: 无损LLM压缩实现30%大小缩减，同时保持100%准确率，吞吐量提升2.3-46.2倍</li>
+<br/>
+<li><strong>GPU-RMQ (arXiv 2026)</strong>: 利用光线追踪核心加速范围最小值查询，相比CPU提升4800倍，索引构建快100倍</li>
+<br/>
+<li><strong>FastLanes (VLDB 2025)</strong>: 面向SIMD/GPU设计的新型文件格式，压缩率优于Parquet，解压缩速度显著提升</li>
+<br/>
+<li><strong>PilotANN (arXiv 2025)</strong>: 混合CPU-GPU向量搜索系统，可处理12倍于GPU内存的数据集，吞吐量提升3.9-5.4倍</li>
+<br/>
+<hr/>
+<br/>
+<p><em>报告生成时间: 2026-04-07 09:00</em></p>
+<p><em>追踪关键词: data encoding, data decoding, GPU acceleration, GPU database, GPU query processing, LLM data compression, vector search</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
