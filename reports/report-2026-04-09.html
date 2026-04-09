@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-04-09 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-04-09</h1>
+    <div class="article-meta">📅 2026-04-09 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>Database Research Paper Report - April 9, 2026</h1>
+<br/>
+<p><strong>Report Date</strong>: 2026-04-09  </p>
+<p><strong>Total Papers Found</strong>: 10  </p>
+<p><strong>New Papers Since Last Report</strong>: 8  </p>
+<br/>
+<hr/>
+<br/>
+<h2>Summary Statistics</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>Category</th><th>Count</th></tr>
+<tr><th>GPU Acceleration</th><th>5</th></tr>
+<tr><th>Data Encoding/Decoding & Compression</th><th>3</th></tr>
+<tr><th>Query Optimization</th><th>2</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🔥 Highlighted Papers</h2>
+<br/>
+<h3>1. GPU-RMQ: Accelerating Range Minimum Queries on Modern GPUs</h3>
+<ul>
+<li><strong>Authors</strong>: Lara Kreis, Justus Henneberg, Valentin Henkys, Felix Schuhknecht, Bertil Schmidt</li>
+<li><strong>Source</strong>: arXiv:2604.01811, April 2, 2026</li>
+<li><strong>Category</strong>: GPU Acceleration</li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>Proposes GPU-RMQ using a hierarchical approach with parallel index construction</li>
+<li>Hybrid design combining ray tracing cores with CUDA cores for query processing</li>
+<li>Optimized parallel scan operations processing only relevant parts of the hierarchy</li>
+</ul>
+<br/>
+<p><strong>Performance Improvements</strong>:</p>
+<ul>
+<li><strong>8x</strong> faster than LCA (GPU)</li>
+<li><strong>17x</strong> faster than RTXRMQ (GPU)</li>
+<li><strong>4800x</strong> faster than optimized CPU methods</li>
+<li>Index construction up to <strong>2 orders of magnitude</strong> faster</li>
+<li>Handles arrays ≥2^29 elements without exceeding RTX 4090 memory</li>
+</ul>
+<br/>
+<p><strong>Link</strong>: https://arxiv.org/abs/2604.01811</p>
+<br/>
+<hr/>
+<br/>
+<h3>2. ZipServ: Fast and Memory-Efficient LLM Inference with Hardware-Aware Lossless Compression</h3>
+<ul>
+<li><strong>Authors</strong>: Ruibo Fan, Xiangrui Yu, Xinglin Pan, Zeyu Li, Weile Luo, Qiang Wang, Wei Wang, Xiaowen Chu</li>
+<li><strong>Source</strong>: arXiv:2603.17435, March 18, 2026 (ASPLOS'26 Accepted)</li>
+<li><strong>Category</strong>: Data Encoding/Decoding, GPU Acceleration</li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>Tensor-Core-Aware Triple Bitmap Encoding (TCA-TBE) - fixed-length format for parallel decoding</li>
+<li>ZipGEMM kernel fusing decompression with GEMM operations</li>
+<li>"Load compressed, compute decompressed" design eliminating intermediate buffers</li>
+</ul>
+<br/>
+<p><strong>Performance Improvements</strong>:</p>
+<ul>
+<li>Model size reduction up to <strong>30%</strong></li>
+<li>Kernel-level speedup up to <strong>2.21x</strong> vs NVIDIA cuBLAS</li>
+<li>End-to-end inference speedup <strong>1.22x</strong> vs vLLM</li>
+<li>First lossless compression system for LLM inference on GPU providing both storage savings and speedup</li>
+</ul>
+<br/>
+<p><strong>Link</strong>: https://arxiv.org/abs/2603.17435</p>
+<br/>
+<hr/>
+<br/>
+<h3>3. GPU Acceleration of SQL Analytics on Compressed Data</h3>
+<ul>
+<li><strong>Authors</strong>: Zezhou Huang, Krystian Sakowski, Hans Lehnert, Wei Cui, Carlo Curino, Matteo Interlandi, Marius Dumitru, Rathijit Sen</li>
+<li><strong>Source</strong>: arXiv:2506.10092, June 2025 (revised September 2025)</li>
+<li><strong>Category</strong>: GPU Acceleration, Data Encoding/Decoding</li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>Direct SQL query execution on lightweight compressed data (RLE, index encoding, bit-width reductions, dictionary encoding)</li>
+<li>Multi-RLE column processing without decompression</li>
+<li>Heterogeneous column encoding support</li>
+<li>Cross-device portability using PyTorch tensor operations</li>
+</ul>
+<br/>
+<p><strong>Performance Improvements</strong>:</p>
+<ul>
+<li><strong>Order of magnitude (10x+)</strong> speedup over commercial CPU analytics systems</li>
+<li>Works on production datasets exceeding GPU HBM capacity</li>
+<li>Complements existing partitioning and multi-GPU approaches</li>
+</ul>
+<br/>
+<p><strong>Link</strong>: https://arxiv.org/abs/2506.10092</p>
+<br/>
+<hr/>
+<br/>
+<h2>📊 GPU Acceleration Papers</h2>
+<br/>
+<h3>4. Efficient Path Query Processing in Relational Database Systems</h3>
+<ul>
+<li><strong>Authors</strong>: Diego Rivera Correa, Mirek Riedewald</li>
+<li><strong>Source</strong>: arXiv:2604.02553, April 2, 2026</li>
+<li><strong>Category</strong>: Query Optimization</li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>ReCAP abstraction for early filtering in path queries</li>
+<li>Simplifies implementation for any derivable early filtering constraint</li>
+<li>Works with standard relational DBMS (demonstrated on DuckDB)</li>
+</ul>
+<br/>
+<p><strong>Performance Improvements</strong>:</p>
+<ul>
+<li>Up to <strong>400,000x</strong> faster than state-of-the-art graph DBMS and relational DBMS</li>
+<li>Effective for queries combining label regular expressions with vertex/edge property constraints</li>
+</ul>
+<br/>
+<p><strong>Link</strong>: https://arxiv.org/abs/2604.02553</p>
+<br/>
+<hr/>
+<br/>
+<h3>5. Unified and Efficient Approach for Multi-Vector Similarity Search</h3>
+<ul>
+<li><strong>Authors</strong>: Binhan Yang, Yuxiang Zeng, Hengxin Zhang, Zhuanglin Zheng, Yunzhen Chi, Yongxin Tong, Ke Xu</li>
+<li><strong>Source</strong>: arXiv:2604.02815, April 3, 2026</li>
+<li><strong>Category</strong>: GPU Acceleration (applicable)</li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>MV-HNSW: First native hierarchical graph index for multi-vector data</li>
+<li>Novel edge weight function satisfying symmetry, cardinality robustness, and query consistency</li>
+<li>Accelerated multi-vector similarity computation algorithm</li>
+<li>Enhanced search strategy discovering topologically disconnected but relevant candidates</li>
+</ul>
+<br/>
+<p><strong>Performance Improvements</strong>:</p>
+<ul>
+<li>Search latency reduced up to <strong>14.0x</strong> vs existing methods</li>
+<li>Maintains <strong>>90% recall</strong> on 7 real-world datasets</li>
+</ul>
+<br/>
+<p><strong>Link</strong>: https://arxiv.org/abs/2604.02815</p>
+<br/>
+<hr/>
+<br/>
+<h3>6. Distance Comparison Operations Are Not Silver Bullets in Vector Similarity Search</h3>
+<ul>
+<li><strong>Authors</strong>: Zhuanglin Zheng, Yuxiang Zeng, Chenchen Liu, Yunzhen Chi, Binhan Yang, Yongxin Tong</li>
+<li><strong>Source</strong>: arXiv:2604.02801, April 3, 2026 (ICDE 2026)</li>
+<li><strong>Category</strong>: GPU Acceleration (benchmark study)</li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>Comprehensive benchmark of 8 DCO algorithms on 10 datasets (up to 100M vectors, 12,288 dimensions)</li>
+<li>Tested on CPU (with/without SIMD) and GPU</li>
+<li>Reveals limitations: high dimensionality sensitivity, out-of-distribution query degradation, hardware instability</li>
+</ul>
+<br/>
+<p><strong>Key Findings</strong>:</p>
+<ul>
+<li>DCO methods can accelerate index construction and data updates (often overlooked benefit)</li>
+<li>Current DCO algorithms <strong>not ready for production deployment</strong> due to unstable performance</li>
+<li>Sometimes slower than full-dimension scan</li>
+</ul>
+<br/>
+<p><strong>Link</strong>: https://arxiv.org/abs/2604.02801</p>
+<br/>
+<hr/>
+<br/>
+<h2>🗜️ Data Encoding/Decoding & Compression Papers</h2>
+<br/>
+<h3>7. Making Array-Based Translation Practical for Modern, High-Performance Buffer Management</h3>
+<ul>
+<li><strong>Authors</strong>: Xinjing Zhou, Jinming Hu, Andrew Pavlo, Michael Stonebraker</li>
+<li><strong>Source</strong>: arXiv:2604.00423, April 1, 2026</li>
+<li><strong>Category</strong>: Buffer Management (applicable to GPU workloads)</li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>Calico: Practical DBMS-controlled buffer pool using array-based translation</li>
+<li>Decouples logical translation from OS page tables</li>
+<li>Multi-level translation with path caching, hole punching for cold memory reclamation, group prefetching</li>
+<li>Drop-in replacement for PostgreSQL buffer manager with pgvector integration</li>
+</ul>
+<br/>
+<p><strong>Performance Improvements</strong>:</p>
+<ul>
+<li>Vector search: <strong>3.9x</strong> in-memory speedup, <strong>6.5x</strong> out-of-memory speedup for PostgreSQL</li>
+<li>Scan-intensive queries: up to <strong>3x</strong> speedup</li>
+<li>Compatible with huge pages and fine-grained page management</li>
+</ul>
+<br/>
+<p><strong>Link</strong>: https://arxiv.org/abs/2604.00423</p>
+<br/>
+<hr/>
+<br/>
+<h3>8. Optimizing Relational Queries over Array-Valued Data in Columnar Systems</h3>
+<ul>
+<li><strong>Authors</strong>: Maroua Zeblah, Etienne Couritas, Sarah Chlyah, Pierre Genevès, Nils Gesbert, Nabil Layaïda</li>
+<li><strong>Source</strong>: arXiv:2604.01967, April 2, 2026</li>
+<li><strong>Category</strong>: Data Encoding, Query Optimization</li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>A3D-RA: Extended relational algebra supporting array-valued attributes</li>
+<li>Comprehensive framework for algebraic reasoning and optimization</li>
+<li>Equivalence-preserving transformation rules capturing pairwise interactions between relational and array operators</li>
+<li>Polynomial-time plan enumeration strategy with optimality guarantees for non-join operations</li>
+</ul>
+<br/>
+<p><strong>Performance Improvements</strong>:</p>
+<ul>
+<li>Consistent performance improvements across three high-performance engines on real workloads</li>
+<li>Modular, backend-agnostic design deployable as optimization layer on existing systems</li>
+</ul>
+<br/>
+<p><strong>Link</strong>: https://arxiv.org/abs/2604.01967</p>
+<br/>
+<hr/>
+<br/>
+<h2>📈 Query Optimization Papers</h2>
+<br/>
+<h3>9. Cardinality Estimation for High Dimensional Similarity Queries with Adaptive Bucket Probing</h3>
+<ul>
+<li><strong>Authors</strong>: Zhonghan Chen, Qintian Guo, Ruiyuan Zhang, Xiaofang Zhou</li>
+<li><strong>Source</strong>: arXiv:2604.04603, April 6, 2026</li>
+<li><strong>Category</strong>: Query Optimization, GPU Acceleration (applicable)</li>
+</ul>
+<br/>
+<p><strong>Key Contributions</strong>:</p>
+<ul>
+<li>Lightweight LSH-based framework for cardinality estimation in high-dimensional similarity search</li>
+<li>Adaptive multi-probe LSH exploring neighboring buckets based on distance thresholds</li>
+<li>Progressive sampling to reduce distance computations</li>
+<li>Asymmetric distance computation using product quantization for acceleration</li>
+<li>Update algorithms for large-scale dynamic data</li>
+</ul>
+<br/>
+<p><strong>Performance Improvements</strong>:</p>
+<ul>
+<li>Accurate cardinality estimation with satisfactory online efficiency</li>
+<li>Applicable to high-dimensional similarity search in production environments</li>
+</ul>
+<br/>
+<p><strong>Link</strong>: https://arxiv.org/abs/2604.04603</p>
+<br/>
+<hr/>
+<br/>
+<h2>📚 Full Paper List</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>#</th><th>Title</th><th>Authors</th><th>Category</th><th>arXiv ID</th><th>Date</th></tr>
+<tr><th>1</th><th>GPU-RMQ: Accelerating Range Minimum Queries on Modern GPUs</th><th>Kreis et al.</th><th>GPU Acceleration</th><th>2604.01811</th><th>2026-04-02</th></tr>
+<tr><th>2</th><th>ZipServ: Fast and Memory-Efficient LLM Inference with Hardware-Aware Lossless Compression</th><th>Fan et al.</th><th>Encoding + GPU</th><th>2603.17435</th><th>2026-03-18</th></tr>
+<tr><th>3</th><th>GPU Acceleration of SQL Analytics on Compressed Data</th><th>Huang et al.</th><th>GPU + Encoding</th><th>2506.10092</th><th>2025-06-11</th></tr>
+<tr><th>4</th><th>Efficient Path Query Processing in Relational Database Systems</th><th>Rivera Correa, Riedewald</th><th>Query Optimization</th><th>2604.02553</th><th>2026-04-02</th></tr>
+<tr><th>5</th><th>Unified and Efficient Approach for Multi-Vector Similarity Search</th><th>Yang et al.</th><th>GPU Acceleration</th><th>2604.02815</th><th>2026-04-03</th></tr>
+<tr><th>6</th><th>Distance Comparison Operations Are Not Silver Bullets in Vector Similarity Search</th><th>Zheng et al.</th><th>Benchmark Study</th><th>2604.02801</th><th>2026-04-03</th></tr>
+<tr><th>7</th><th>Making Array-Based Translation Practical for Buffer Management</th><th>Zhou et al.</th><th>Buffer Management</th><th>2604.00423</th><th>2026-04-01</th></tr>
+<tr><th>8</th><th>Optimizing Relational Queries over Array-Valued Data</th><th>Zeblah et al.</th><th>Data Encoding</th><th>2604.01967</th><th>2026-04-02</th></tr>
+<tr><th>9</th><th>Cardinality Estimation for High Dimensional Similarity Queries</th><th>Chen et al.</th><th>Query Optimization</th><th>2604.04603</th><th>2026-04-06</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🔍 Trends Observed</h2>
+<br/>
+<li><strong>Hybrid CPU-GPU Architectures</strong>: Increasing focus on combining ray tracing cores with CUDA cores for database operations</li>
+<li><strong>Direct Query on Compressed Data</strong>: Growing trend of executing queries directly on compressed data without decompression</li>
+<li><strong>Multi-Vector Search</strong>: Native support for multi-vector similarity search becoming a hot topic</li>
+<li><strong>Hardware-Aware Compression</strong>: Co-designing compression schemes with GPU hardware (Tensor Cores, SIMT architecture)</li>
+<li><strong>Production-Ready Challenges</strong>: Gap between research prototypes and production deployment remains significant</li>
+<br/>
+<hr/>
+<br/>
+<h2>📌 Notes</h2>
+<br/>
+<ul>
+<li>VLDB 2026 and SIGMOD 2026 websites have no new paper listings yet</li>
+<li>arXiv cs.DB remains the primary source for recent preprints</li>
+<li>CIDR 2026 papers are becoming available</li>
+<li>ICDE 2026 accepted papers are appearing on arXiv</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>Report generated automatically by Database Research Paper Tracker</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
