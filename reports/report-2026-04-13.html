@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-04-13 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-04-13</h1>
+    <div class="article-meta">📅 2026-04-13 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>VLDB/SIGMOD Research Paper Daily Report</h1>
+<br/>
+<p><strong>Date:</strong> 2026-04-13  </p>
+<p><strong>Report #:</strong> 4 (since 2026-04-10)</p>
+<br/>
+<hr/>
+<br/>
+<h2>Summary Statistics</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>Category</th><th>Papers Found</th><th>New Since Last Report</th></tr>
+<tr><th>Data Encoding/Decoding</th><th>3</th><th>2</th></tr>
+<tr><th>GPU Acceleration</th><th>6</th><th>4</th></tr>
+<tr><th><strong>Total</strong></th><th><strong>9</strong></th><th><strong>6</strong></th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>Data Encoding & Decoding</h2>
+<br/>
+<h3>1. FineZip: Pushing the Limits of Large Language Models for Practical Lossless Text Compression</h3>
+<ul>
+<li><strong>Authors:</strong> Fazal Mittu, Yihuan Bu, Akshat Gupta, et al. (UC Berkeley)</li>
+<li><strong>Venue:</strong> arXiv 2024</li>
+<li><strong>Link:</strong> https://arxiv.org/abs/2409.17141</li>
+</ul>
+<br/>
+<p><strong>Abstract:</strong>  </p>
+<p>FineZip presents a novel LLM-based text compression system that combines online memorization and dynamic context to reduce compression time. It achieves a <strong>54x speedup</strong> over prior LLMZip system (from 9.5 days to 4 hours for 10MB text) while maintaining ~50% better compression ratios than traditional algorithms like gzip and zstd.</p>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Online memorization mechanism leveraging LLM's contextual learning</li>
+<li>Dynamic context management for improved efficiency</li>
+<li>Uses Llama3-8B as the base model</li>
+<li><strong>Compression improvement:</strong> ~50% over traditional algorithms</li>
+<li><strong>Speed improvement:</strong> 54x over LLMZip</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>2. GPU Acceleration of SQL Analytics on Compressed Data</h3>
+<ul>
+<li><strong>Authors:</strong> Zezhou Huang, Krystian Sakowski, Hans Lehnert, et al.</li>
+<li><strong>Venue:</strong> arXiv 2025 (PVLDB submission)</li>
+<li><strong>Link:</strong> https://arxiv.org/abs/2506.10092</li>
+</ul>
+<br/>
+<p><strong>Abstract:</strong>  </p>
+<p>This work proposes methods for running SQL queries directly on compressed GPU data using lightweight encoding schemes (RLE, index encoding, dictionary encoding, bit-width reduction). The approach enables processing datasets larger than GPU memory without full decompression overhead.</p>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Direct query processing on compressed data without decompression</li>
+<li>Support for heterogeneous column encodings</li>
+<li>PyTorch tensor operations for cross-device portability</li>
+<li><strong>Performance:</strong> Order-of-magnitude speedup over CPU commercial systems</li>
+<li><strong>Compression schemes:</strong> RLE, index encoding, dictionary encoding, bit-width reduction</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>3. The FastLanes File Format (VLDB 2025)</h3>
+<ul>
+<li><strong>Authors:</strong> Azim Afroozeh, Peter Boncz (CWI)</li>
+<li><strong>Venue:</strong> VLDB 2025 / PVLDB Vol 18</li>
+<li><strong>Link:</strong> https://www.vldb.org/pvldb/vol18/p4629-afroozeh.pdf</li>
+</ul>
+<br/>
+<p><strong>Abstract:</strong>  </p>
+<p>FastLanes is a new open-source big data file format designed for modern data-parallel execution (SIMD or GPU). It improves compression ratio over Parquet while strongly accelerating decompression, providing a win-win over state-of-the-art formats.</p>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Designed for SIMD/GPU data-parallel execution</li>
+<li>Better compression ratio than Parquet</li>
+<li>Faster decompression speed</li>
+<li>Open-source format for big data</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>GPU Acceleration & Computation</h2>
+<br/>
+<h3>1. Theseus: A Distributed and Scalable GPU-Accelerated Query Processing Platform</h3>
+<ul>
+<li><strong>Authors:</strong> Felipe Aramburú, William Malpica, et al. (21 authors)</li>
+<li><strong>Venue:</strong> arXiv 2025</li>
+<li><strong>Link:</strong> https://arxiv.org/abs/2508.05029</li>
+</ul>
+<br/>
+<p><strong>Abstract:</strong>  </p>
+<p>Theseus is a production-ready enterprise distributed accelerator-native query engine that balances data movement, memory utilization, and compute tasks. It uses specialized asynchronous control mechanisms coupled with hardware resources for network communication, data preloading, and GPU compute.</p>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Accelerator-native distributed query engine</li>
+<li>Asynchronous control for data movement and GPU compute</li>
+<li>Page-locked host memory allocation to reduce fragmentation</li>
+<li><strong>Performance:</strong> 4x faster than Databricks Photon at same cost</li>
+<li><strong>Scale:</strong> Handles 100TB (TPC-H/TPC-DS SF100k) with just 2 DGX A100 nodes</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>2. Vortex: Overcoming Memory Capacity Limitations in GPU-Accelerated Analytics</h3>
+<ul>
+<li><strong>Authors:</strong> Yichao Yuan, Advait Iyer, Lin Ma, Nishil Talati</li>
+<li><strong>Venue:</strong> VLDB 2025</li>
+<li><strong>Link:</strong> https://arxiv.org/abs/2502.09541</li>
+</ul>
+<br/>
+<p><strong>Abstract:</strong>  </p>
+<p>Vortex addresses GPU memory limitations for large-scale analytics by optimizing IO primitives to leverage all available PCIe links in multi-GPU systems. It routes data through other GPUs to target GPUs for IO-intensive tasks, especially beneficial when other GPUs run compute-intensive AI workloads.</p>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Optimized IO primitives utilizing all PCIe links</li>
+<li>Novel programming model separating GPU kernel dev from IO scheduling</li>
+<li>GPU zero-copy memory access for lazy materialization</li>
+<li><strong>Performance:</strong> 5.7x faster than Proteus baseline, 2.5x better price-performance than DuckDB</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>3. Rethinking Analytical Processing in the GPU Era (Sirius)</h3>
+<ul>
+<li><strong>Authors:</strong> Bobbi Yogatama, Yifei Yang, et al. (12 authors)</li>
+<li><strong>Venue:</strong> arXiv 2025</li>
+<li><strong>Link:</strong> https://arxiv.org/abs/2508.04701</li>
+</ul>
+<br/>
+<p><strong>Abstract:</strong>  </p>
+<p>Sirius is an open-source GPU-native SQL engine prototype providing plug-and-play acceleration for data systems. It treats GPU as the primary engine using libcudf for high-performance relational operators, integrating via standard Substrait query representation.</p>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>GPU-native SQL engine with Substrait integration</li>
+<li>Plug-and-play acceleration for existing databases</li>
+<li>Uses libcudf for relational operators</li>
+<li><strong>Performance:</strong> 8.3x cost efficiency vs DuckDB on TPC-H</li>
+<li><strong>Performance:</strong> 7.4x on ClickBench, 12.5x with Apache Doris</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>4. CIDER: Boosting Memory-Disaggregated Key-Value Stores</h3>
+<ul>
+<li><strong>Authors:</strong> Yuxuan Du, Xuchuan Luo, Xin Wang, et al.</li>
+<li><strong>Venue:</strong> VLDB 2026 (Accepted)</li>
+<li><strong>Link:</strong> https://arxiv.org/abs/2604.03007</li>
+</ul>
+<br/>
+<p><strong>Abstract:</strong>  </p>
+<p>CIDER addresses I/O redundancy in memory-disaggregated KV stores caused by optimistic synchronization. It proposes pessimistic synchronization with global write-combining and contention-aware schemes to reduce cross-node redundant I/O.</p>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Pessimistic synchronization for memory-disaggregated architectures</li>
+<li>Global write-combining to reduce cross-node I/O</li>
+<li>Contention-aware synchronization for low-contention scenarios</li>
+<li><strong>Performance:</strong> Up to 6.6x throughput improvement on YCSB</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>5. SonicDB S6: A Storage-Efficient Verkle Trie for Blockchains</h3>
+<ul>
+<li><strong>Authors:</strong> Luigi Crisci, Lorenz Schuler, Herbert Jordan, Bernhard Scholz</li>
+<li><strong>Venue:</strong> arXiv 2026</li>
+<li><strong>Link:</strong> https://arxiv.org/abs/2604.06579</li>
+</ul>
+<br/>
+<p><strong>Abstract:</strong>  </p>
+<p>SonicDB S6 introduces a storage-efficient Verkle trie design for high-throughput blockchains, achieving 78-98% live storage reduction using occupancy-aware node specializations.</p>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Storage-efficient Verkle trie implementation</li>
+<li>Occupancy-aware node specializations</li>
+<li><strong>Performance:</strong> 78-98% live storage reduction</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>6. Scaling GPU-Accelerated Databases Beyond GPU Memory Size</h3>
+<ul>
+<li><strong>Authors:</strong> (PVLDB Vol 18)</li>
+<li><strong>Venue:</strong> PVLDB Vol 18, 2025</li>
+<li><strong>Link:</strong> https://www.vldb.org/pvldb/vol18/p4518-li.pdf</li>
+</ul>
+<br/>
+<p><strong>Abstract:</strong>  </p>
+<p>This paper proposes techniques for cost-effective GPU acceleration of analytical databases in single-node settings, enabling a single GPU to efficiently process datasets beyond its memory capacity.</p>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Hybrid CPU-GPU query execution</li>
+<li>Cost-effective GPU acceleration techniques</li>
+<li>Single-node scaling beyond GPU memory limits</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>Key Trends & Observations</h2>
+<br/>
+<li><strong>GPU-Native Database Architectures</strong>: Multiple papers (Theseus, Sirius, Vortex) focus on building GPU-native query engines rather than simply accelerating existing CPU-based systems.</li>
+<br/>
+<li><strong>Compression + GPU</strong>: Strong trend toward processing compressed data directly on GPUs to overcome memory capacity limitations (GPU Acceleration of SQL Analytics on Compressed Data, FastLanes).</li>
+<br/>
+<li><strong>Memory Disaggregation</strong>: CIDER addresses the growing interest in memory-disaggregated architectures for cloud-native databases.</li>
+<br/>
+<li><strong>LLM for Data Compression</strong>: FineZip demonstrates practical LLM-based compression with significant speedups over prior approaches.</li>
+<br/>
+<li><strong>Production Readiness</strong>: Papers like Theseus emphasize enterprise-grade, production-ready solutions with extensive benchmarks against commercial systems.</li>
+<br/>
+<hr/>
+<br/>
+<h2>Most Interesting Papers</h2>
+<br/>
+<h3>🏆 Top Pick: Theseus</h3>
+<p>The most impressive paper this week is <strong>Theseus</strong> - a production-ready distributed GPU query engine that achieves 4x better price-performance than Databricks Photon and can handle 100TB workloads with just 2 DGX A100 nodes. This represents a significant milestone in GPU database practicality.</p>
+<br/>
+<h3>🥈 Runner Up: GPU Acceleration of SQL Analytics on Compressed Data</h3>
+<p>This paper addresses a critical GPU limitation (memory capacity) by enabling direct query processing on compressed data, achieving order-of-magnitude speedups over CPU systems.</p>
+<br/>
+<h3>🥉 Notable: CIDER</h3>
+<p>Accepted to VLDB'26, CIDER's approach to memory-disaggregated KV stores with pessimistic synchronization offers a 6.6x throughput improvement - significant for cloud-native database architectures.</p>
+<br/>
+<hr/>
+<br/>
+<h2>Links & Resources</h2>
+<br/>
+<ul>
+<li><strong>VLDB Website:</strong> https://vldb.org</li>
+<li><strong>SIGMOD Website:</strong> https://sigmod.org</li>
+<li><strong>PVLDB Current Volume:</strong> https://vldb.org/pvldb/vol19-volume-info</li>
+<li><strong>arXiv cs.DB:</strong> https://arxiv.org/list/cs.DB/recent</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>Report generated automatically by Database Research Paper Tracker</em>  </p>
+<p><em>Next report: 2026-04-14 09:00</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
