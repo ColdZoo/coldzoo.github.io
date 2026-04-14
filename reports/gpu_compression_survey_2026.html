@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gpu Compression Survey 2026 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">Gpu Compression Survey 2026</h1>
+    <div class="article-meta">📅 2026-04-14 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>GPU 加速数据压缩技术综述：最新进展与趋势</h1>
+<br/>
+<p>> 本文系统梳理 2024-2026 年间 GPU 在数据压缩领域的核心突破，重点关注数据库、分析系统和通用压缩场景下的技术创新。</p>
+<br/>
+<hr/>
+<br/>
+<h2>一、背景与动机</h2>
+<br/>
+<h3>1.1 为什么需要 GPU 压缩？</h3>
+<br/>
+<p>现代数据分析面临的核心矛盾是：<strong>数据增长速度远超内存容量扩展速度</strong>。以 GPU 加速数据库为例，虽然 GPU 提供了巨大的计算并行性和高带宽内存（HBM），但其容量通常远小于 CPU 主内存。这导致：</p>
+<br/>
+<ul>
+<li>频繁的数据传输（CPU ↔ GPU）成为瓶颈</li>
+<li>昂贵的 PCIe 带宽无法充分利用 GPU 算力</li>
+<li>大规模数据集无法完整装入 GPU 内存</li>
+</ul>
+<br/>
+<p><strong>压缩是破局的关键</strong>——通过减少数据体积，可以：</p>
+<li>降低 I/O 传输开销</li>
+<li>在有限 GPU 内存中容纳更多数据</li>
+<li>实现"计算换存储"的性价比优势</li>
+<br/>
+<h3>1.2 传统压缩 vs GPU 压缩</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>维度</th><th>CPU 压缩</th><th>GPU 压缩</th></tr>
+<tr><th>并行度</th><th>有限（多线程）</th><th>海量（数千 CUDA core）</th></tr>
+<tr><th>吞吐量</th><th>~GB/s</th><th>~10-100 GB/s</th></tr>
+<tr><th>延迟</th><th>较低</th><th>较高（需数据传输）</th></tr>
+<tr><th>适用场景</th><th>通用</th><th>大规模批处理、分析查询</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>二、技术方向一：直接在压缩数据上查询</h2>
+<br/>
+<h3>2.1 核心思想</h3>
+<br/>
+<p>传统流程：<strong>压缩数据 → 传输到 GPU → 解压 → 执行查询</strong></p>
+<br/>
+<p>新一代方案：<strong>压缩数据 → 传输到 GPU → 直接在压缩形式上执行查询</strong></p>
+<br/>
+<p>这种方法避免了昂贵的解压开销，特别适合：</p>
+<ul>
+<li>列式存储（分析型查询通常只访问部分列）</li>
+<li>轻量级编码方案</li>
+<li>扫描密集型工作负载</li>
+</ul>
+<br/>
+<h3>2.2 代表性工作：GPU Acceleration of SQL Analytics on Compressed Data</h3>
+<br/>
+<p><strong>作者/机构</strong>: Zezhou Huang 等 (Microsoft Research)  </p>
+<p><strong>发表</strong>: arXiv 2025, PVLDB 投稿</p>
+<br/>
+<p><strong>技术方案</strong>:</p>
+<p>该工作提出了一套在压缩数据上直接运行查询的 GPU 算法，支持的编码方案包括：</p>
+<ul>
+<li><strong>Run-Length Encoding (RLE)</strong>: 对连续重复值进行游程编码</li>
+<li><strong>Index Encoding</strong>: 稀疏数据的索引编码</li>
+<li><strong>Dictionary Encoding</strong>: 字典编码（常见于字符串列）</li>
+<li><strong>Bit-width Reduction</strong>: 整数位宽缩减</li>
+</ul>
+<br/>
+<p><strong>关键创新</strong>:</p>
+<li><strong>跨 RLE 列的操作</strong>: 无需解压即可在多个 RLE 编码列上进行计算</li>
+<li><strong>异构列编码处理</strong>: 同一查询可混合处理不同编码方式的列</li>
+<li><strong>PyTorch 张量操作</strong>: 利用 PyTorch 实现跨设备（CPU/GPU）的可移植性</li>
+<br/>
+<p><strong>性能表现</strong>:</p>
+<ul>
+<li>在无法放入 GPU 内存的生产数据集上，相比最先进的纯 CPU 商业分析系统实现<strong>数量级加速</strong></li>
+<li>与横向扩展或回退机制（spill-to-disk）正交互补</li>
+</ul>
+<br/>
+<p><strong>实践意义</strong>: 这项工作为 GPU 在更广泛场景中的应用铺平了道路——即使数据集远超 GPU 内存容量，仍能获得显著加速。</p>
+<br/>
+<hr/>
+<br/>
+<h2>三、技术方向二：面向 GPU 优化的压缩格式</h2>
+<br/>
+<h3>3.1 FastLanes: 为 SIMD/GPU 而生的文件格式</h3>
+<br/>
+<p><strong>作者/机构</strong>: Azim Afroozeh, Peter Boncz (CWI, 荷兰国家数学与计算机科学研究院)  </p>
+<p><strong>发表</strong>: VLDB 2025, PVLDB Vol 18</p>
+<br/>
+<p><strong>设计哲学</strong>:</p>
+<p>FastLanes 是一个开源大数据文件格式，专为现代数据并行执行（SIMD 或 GPU）设计。它针对现有格式（Parquet、ORC）的局限性进行了重新思考：</p>
+<br/>
+<p><strong>核心特性</strong>:</p>
+<li><strong>向量化解码</strong>: 解码算法针对 SIMD 指令集（AVX-512）和 GPU 架构优化</li>
+<li><strong>级联压缩</strong>: 支持多种轻量级编码的级联组合</li>
+<li><strong>解压速度优先</strong>: 相比压缩比，更关注解码吞吐量（分析场景读多写少）</li>
+<br/>
+<p><strong>性能对比</strong>:</p>
+<div class="table-wrap"><table>
+<tr><th>指标</th><th>FastLanes</th><th>Parquet</th><th>提升</th></tr>
+<tr><th>压缩比</th><th>相当</th><th>基准</th><th>-</th></tr>
+<tr><th>解压速度</th><th>显著更快</th><th>基准</th><th><strong>数量级</strong></th></tr>
+<tr><th>GPU 友好性</th><th>原生支持</th><th>有限</th><th>架构级优势</th></tr>
+</table></div>
+<br/>
+<p><strong>项目地址</strong>: https://fastlanes.io</p>
+<br/>
+<h3>3.2 技术细节：FastLanes Compression Layout</h3>
+<br/>
+<p>FastLanes 的另一篇论文（PVLDB Vol 16）详细阐述了其压缩布局设计：</p>
+<ul>
+<li><strong>解压缩速度</strong>: 超过 1000 亿整数/秒（单线程）</li>
+<li><strong>编码灵活性</strong>: 支持 10+ 种轻量级编码算法</li>
+<li><strong>开源生态</strong>: 提供 Rust 实现，便于集成</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>四、技术方向三：GPU 内存限制的突破</h2>
+<br/>
+<h3>4.1 问题本质</h3>
+<br/>
+<p>GPU HBM（高带宽内存）虽然带宽极高，但容量通常只有 40GB-80GB（A100/H100）。对于 TB 级数据分析，传统方案面临：</p>
+<ul>
+<li>频繁的数据换入换出（CPU↔GPU）</li>
+<li>PCIe 带宽成为瓶颈（~32 GB/s vs HBM 的 2 TB/s）</li>
+<li>计算资源因等待数据而空闲</li>
+</ul>
+<br/>
+<h3>4.2 代表性工作：Vortex</h3>
+<br/>
+<p><strong>作者/机构</strong>: Yichao Yuan, Advait Iyer, Lin Ma, Nishil Talati  </p>
+<p><strong>发表</strong>: VLDB 2025</p>
+<br/>
+<p><strong>核心思想</strong>:</p>
+<p>Vortex 是一个专为超出 GPU 内存容量的数据分析设计的 GPU 加速框架。其关键技术是：</p>
+<br/>
+<p><strong>优化 IO 原语</strong>:</p>
+<ul>
+<li>利用多 GPU 系统中<strong>所有可用的 PCIe 链路</strong></li>
+<li>通过其他 GPU 将数据路由到目标 GPU</li>
+<li>当其他 GPU 运行计算密集型 AI 任务时（IO 资源未充分利用），此方法特别有效</li>
+</ul>
+<br/>
+<p><strong>编程模型创新</strong>:</p>
+<ul>
+<li>将 GPU kernel 开发与 IO 调度分离</li>
+<li>减轻程序员负担，实现 GPU 代码复用</li>
+<li>基于 GPU zero-copy 内存访问的延迟物化技术</li>
+</ul>
+<br/>
+<p><strong>性能表现</strong>:</p>
+<ul>
+<li>相比最先进的 GPU 基线 Proteus: <strong>5.7 倍加速</strong></li>
+<li>相比 CPU 基线 DuckDB: <strong>2.5 倍性价比提升</strong></li>
+<li><strong>关键优势</strong>: 无需在 GPU 内存中缓存任何数据即可达到上述性能</li>
+</ul>
+<br/>
+<h3>4.3 相关技术：Scale Beyond GPU Memory</h3>
+<br/>
+<p>另一篇 PVLDB Vol 18 的论文（作者 Li 等）提出了单节点场景下的成本效益 GPU 加速技术：</p>
+<ul>
+<li>混合 CPU-GPU 查询执行</li>
+<li>使单 GPU 能够高效处理远超其内存容量的数据</li>
+<li>适用于分析型数据库系统</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>五、技术方向四：LLM 驱动的智能压缩</h2>
+<br/>
+<h3>5.1 FineZip: 大语言模型用于无损文本压缩</h3>
+<br/>
+<p><strong>作者/机构</strong>: Fazal Mittu 等 (UC Berkeley)  </p>
+<p><strong>发表</strong>: arXiv 2024</p>
+<br/>
+<p><strong>核心观察</strong>:</p>
+<p>语言建模目标与压缩存在深层联系，但现代 LLM 尚未被应用于实际文本压缩系统。问题在于速度——LLMZip（使用 Llama3-8B）压缩 10MB 文本需要 9.5 天。</p>
+<br/>
+<p><strong>FineZip 方案</strong>:</p>
+<ul>
+<li><strong>在线记忆机制</strong>: 利用 LLM 的上下文学习能力动态优化压缩</li>
+<li><strong>动态上下文管理</strong>: 智能调整上下文窗口以提高效率</li>
+<li><strong>性能</strong>: 将压缩时间从 9.5 天缩短至 4 小时（<strong>54 倍加速</strong>）</li>
+</ul>
+<br/>
+<p><strong>压缩效果</strong>:</p>
+<ul>
+<li>相比传统算法（gzip、zstd）: 压缩比提升约 <strong>50%</strong></li>
+<li>相比 LLMZip: 速度提升 <strong>54 倍</strong>，压缩性能相当</li>
+</ul>
+<br/>
+<p><strong>局限与展望</strong>:</p>
+<ul>
+<li>4 小时压缩 10MB 对于生产环境的海量数据仍不够快</li>
+<li>论文称其为"迈向实用化的第一步"</li>
+<li>未来方向：模型量化、蒸馏、专用硬件加速</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>六、系统级突破：GPU 原生数据库</h2>
+<br/>
+<h3>6.1 Theseus: 企业级分布式 GPU 查询引擎</h3>
+<br/>
+<p><strong>作者/机构</strong>: Felipe Aramburú 等 (21 位作者，来自 BlazingSQL/HeavyAI 等)  </p>
+<p><strong>发表</strong>: arXiv 2025</p>
+<br/>
+<p><strong>定位</strong>:</p>
+<p>生产就绪的企业级分布式加速器原生查询引擎，平衡数据移动、内存利用率和计算任务。</p>
+<br/>
+<p><strong>技术亮点</strong>:</p>
+<li><strong>异步控制机制</strong>: 与硬件资源紧密耦合，处理网络通信、数据预加载、数据溢出和 GPU 计算</li>
+<li><strong>内存子系统</strong>: 固定大小的页锁定（page-locked）主机内存分配，提高吞吐量并减少碎片</li>
+<li><strong>企业级扩展性</strong>: 支持 100TB 级数据分析（TPC-H/TPC-DS SF100k），仅需 2 台 DGX A100 640GB 节点</li>
+<br/>
+<p><strong>性能基准</strong>:</p>
+<ul>
+<li>对比: Databricks Photon</li>
+<li>测试: TPC-H（比例因子 1k-30k）</li>
+<li>结果: <strong>同成本下 4 倍性能提升</strong></li>
+</ul>
+<br/>
+<p><strong>意义</strong>:</p>
+<p>这是目前报道的性能最强的 GPU 查询引擎之一，标志着 GPU 数据库从研究原型走向生产系统。</p>
+<br/>
+<h3>6.2 Sirius: 开源 GPU 原生 SQL 引擎</h3>
+<br/>
+<p><strong>作者/机构</strong>: Bobbi Yogatama 等（包括 Wes McKinney，Pandas 创始人）  </p>
+<p><strong>发表</strong>: arXiv 2025</p>
+<br/>
+<p><strong>架构特点</strong>:</p>
+<ul>
+<li>将 GPU 视为<strong>主要引擎</strong>（而非加速器）</li>
+<li>基于 libcudf 实现高性能关系运算符</li>
+<li>通过标准 Substrait 查询表示实现即插即用加速</li>
+</ul>
+<br/>
+<p><strong>集成能力</strong>:</p>
+<ul>
+<li>可集成到 DuckDB（单机）</li>
+<li>可集成到 Apache Doris（分布式）</li>
+<li>无需改变用户界面即可替换 CPU 引擎</li>
+</ul>
+<br/>
+<p><strong>性能表现</strong>:</p>
+<div class="table-wrap"><table>
+<tr><th>场景</th><th>对比基准</th><th>提升</th></tr>
+<tr><th>TPC-H</th><th>DuckDB</th><th><strong>8.3 倍</strong> 成本效率</th></tr>
+<tr><th>ClickBench</th><th>DuckDB</th><th><strong>7.4 倍</strong> 成本效率</th></tr>
+<tr><th>分布式查询</th><th>Apache Doris</th><th><strong>12.5 倍</strong> 加速</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>七、性能对比总结</h2>
+<br/>
+<h3>7.1 各方案性能一览</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>工作</th><th>场景</th><th>基准</th><th>性能提升</th><th>关键指标</th></tr>
+<tr><th>GPU on Compressed Data</th><th>分析查询</th><th>CPU 商业系统</th><th>数量级</th><th>直接压缩查询</th></tr>
+<tr><th>FastLanes</th><th>文件格式</th><th>Parquet</th><th>解压速度数量级</th><th>1000亿整数/秒</th></tr>
+<tr><th>Vortex</th><th>超内存分析</th><th>Proteus</th><th>5.7 倍</th><th>无需 GPU 缓存</th></tr>
+<tr><th>Vortex</th><th>超内存分析</th><th>DuckDB</th><th>2.5 倍性价比</th><th>成本效益</th></tr>
+<tr><th>FineZip</th><th>文本压缩</th><th>gzip/zstd</th><th>50% 压缩比</th><th>54 倍速度提升</th></tr>
+<tr><th>FineZip</th><th>文本压缩</th><th>LLMZip</th><th>54 倍速度</th><th>保持压缩比</th></tr>
+<tr><th>Theseus</th><th>分布式分析</th><th>Databricks Photon</th><th>4 倍</th><th>同成本</th></tr>
+<tr><th>Theseus</th><th>大规模分析</th><th>-</th><th>100TB / 2节点</th><th>扩展能力</th></tr>
+<tr><th>Sirius</th><th>TPC-H</th><th>DuckDB</th><th>8.3 倍</th><th>成本效率</th></tr>
+<tr><th>Sirius</th><th>ClickBench</th><th>DuckDB</th><th>7.4 倍</th><th>成本效率</th></tr>
+</table></div>
+<br/>
+<h3>7.2 选择指南</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>你的需求</th><th>推荐方案</th></tr>
+<tr><th>在压缩数据上直接跑 SQL</th><th>GPU Acceleration of SQL Analytics</th></tr>
+<tr><th>构建新的列式存储格式</th><th>FastLanes</th></tr>
+<tr><th>处理远超 GPU 内存的数据集</th><th>Vortex, Theseus</th></tr>
+<tr><th>最大化文本压缩比</th><th>FineZip</th></tr>
+<tr><th>即插即用 GPU 加速现有系统</th><th>Sirius</th></tr>
+<tr><th>企业级分布式 GPU 查询</th><th>Theseus</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>八、未来趋势与开放问题</h2>
+<br/>
+<h3>8.1 技术趋势</h3>
+<br/>
+<p><strong>1. GPU 原生架构成为主流</strong></p>
+<ul>
+<li>从"CPU 为主、GPU 加速"转向"GPU 为主、CPU 辅助"</li>
+<li>查询计划、优化器、执行引擎全部面向 GPU 设计</li>
+</ul>
+<br/>
+<p><strong>2. 压缩与计算的深度融合</strong></p>
+<ul>
+<li>不再区分"压缩层"和"计算层"</li>
+<li>算子直接操作压缩表示，解压仅在必要时发生</li>
+</ul>
+<br/>
+<p><strong>3. 异构内存管理</strong></p>
+<ul>
+<li>CPU 内存、GPU HBM、NVMe SSD 统一编址和管理</li>
+<li>智能数据放置策略（数据热度感知）</li>
+</ul>
+<br/>
+<p><strong>4. AI 驱动的自适应压缩</strong></p>
+<ul>
+<li>根据数据特征自动选择最优编码方案</li>
+<li>基于 ML 的压缩比/速度权衡决策</li>
+</ul>
+<br/>
+<h3>8.2 开放问题</h3>
+<br/>
+<p><strong>1. 延迟敏感场景</strong></p>
+<ul>
+<li>当前 GPU 压缩主要面向吞吐优化</li>
+<li>如何降低端到端延迟（包括数据传输时间）？</li>
+</ul>
+<br/>
+<p><strong>2. 写密集型工作负载</strong></p>
+<ul>
+<li>分析场景读多写少，压缩收益明显</li>
+<li>OLTP 等写密集型场景如何应用 GPU 压缩？</li>
+</ul>
+<br/>
+<p><strong>3. 通用性与专用性权衡</strong></p>
+<ul>
+<li>FastLanes 等专用格式性能优异</li>
+<li>如何与现有生态（Parquet、Arrow）兼容？</li>
+</ul>
+<br/>
+<p><strong>4. LLM 压缩的实用化</strong></p>
+<ul>
+<li>FineZip 展示了潜力，但速度仍需提升 2-3 个数量级</li>
+<li>专用硬件（TPU、NPU）可能是解决之道</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>九、结论</h2>
+<br/>
+<p>GPU 加速数据压缩正处于快速发展期，2024-2026 年间涌现的技术突破表明：</p>
+<br/>
+<li><strong>技术成熟度提升</strong>: 从研究原型（Proteus）到生产系统（Theseus、Sirius）</li>
+<li><strong>应用场景扩展</strong>: 从"GPU 内存内数据"到"远超 GPU 内存的大规模数据"</li>
+<li><strong>压缩理念革新</strong>: 从"先解压再计算"到"直接计算压缩数据"</li>
+<li><strong>AI 融合加速</strong>: LLM 为压缩比带来新突破，尽管实用化仍需时间</li>
+<br/>
+<p>对于从业者的建议：</p>
+<ul>
+<li><strong>短期</strong>: 评估 FastLanes 等新型格式，或尝试 Vortex/Sirius 处理超内存数据</li>
+<li><strong>中期</strong>: 关注 GPU 原生数据库的成熟，考虑架构迁移</li>
+<li><strong>长期</strong>: 跟踪 LLM 压缩和专用硬件的发展，准备迎接新一代存储范式</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>参考文献</h2>
+<br/>
+<li>Huang Z, et al. "GPU Acceleration of SQL Analytics on Compressed Data." arXiv:2506.10092, 2025.</li>
+<li>Afroozeh A, Boncz P. "The FastLanes File Format." PVLDB 18(13), 2025.</li>
+<li>Yuan Y, et al. "Vortex: Overcoming Memory Capacity Limitations in GPU-Accelerated Large-Scale Data Analytics." VLDB 2025.</li>
+<li>Mittu F, et al. "FineZip: Pushing the Limits of Large Language Models for Practical Lossless Text Compression." arXiv:2409.17141, 2024.</li>
+<li>Aramburú F, et al. "Theseus: A Distributed and Scalable GPU-Accelerated Query Processing Platform." arXiv:2508.05029, 2025.</li>
+<li>Yogatama B, et al. "Rethinking Analytical Processing in the GPU Era." arXiv:2508.04701, 2025.</li>
+<li>Li, et al. "Scaling GPU-Accelerated Databases Beyond GPU Memory Size." PVLDB 18(11), 2025.</li>
+<br/>
+<hr/>
+<br/>
+<p><em>本文综述基于 2026 年 4 月的最新研究进展整理</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
