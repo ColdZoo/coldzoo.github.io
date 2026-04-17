@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-04-17 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-04-17</h1>
+    <div class="article-meta">📅 2026-04-17 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>Database Research Paper Report - 2026-04-17</h1>
+<br/>
+<p><strong>Report Date:</strong> April 17, 2026  </p>
+<p><strong>Focus Areas:</strong> Data Encoding/Decoding, GPU Acceleration & Computation</p>
+<br/>
+<hr/>
+<br/>
+<h2>Summary Statistics</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>Category</th><th>New Papers</th><th>Total Papers Tracked</th></tr>
+<tr><th>GPU Acceleration</th><th>3</th><th>18</th></tr>
+<tr><th>Data Encoding/Decoding</th><th>2</th><th>8</th></tr>
+<tr><th>Compression</th><th>2</th><th>12</th></tr>
+<tr><th>Vector Search / ANNS</th><th>4</th><th>42</th></tr>
+<tr><th><strong>Total</strong></th><th><strong>11</strong></th><th><strong>80</strong></th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>GPU Acceleration Papers</h2>
+<br/>
+<h3>1. gMatch: Fine-Grained and Hardware-Efficient Subgraph Matching on GPUs</h3>
+<ul>
+<li><strong>Authors:</strong> Weitian Chen, Shixuan Sun, Cheng Chen, Yongmin Hu, Yingqian Hu, Minyi Guo</li>
+<li><strong>Venue:</strong> arXiv (submitted to SIGMOD/VLDB)</li>
+<li><strong>Link:</strong> https://arxiv.org/abs/2604.10601</li>
+</ul>
+<br/>
+<p><strong>Abstract:</strong> Subgraph matching is a core operation in graph analytics supporting applications from social network analysis to bioinformatics. Recent GPU-based methods leverage parallelism but suffer from coarse-grained execution models with high memory overhead and poor thread utilization. This paper proposes gMatch, a hardware-efficient subgraph matching method on GPUs.</p>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Introduces <strong>fine-grained execution model</strong> reducing memory consumption and enabling flexible task scheduling among threads</li>
+<li>Designs <strong>warp-level batch exploration</strong> and <strong>lightweight load balancing</strong> for improved execution efficiency and scalability</li>
+<li>Outperforms state-of-the-art methods (STMatch, T-DFS, EGSM) in both performance and scalability</li>
+<li>Scales to larger queries and datasets where existing methods degrade or fail</li>
+</ul>
+<br/>
+<p><strong>Performance Improvements:</strong></p>
+<ul>
+<li>Superior performance vs. STMatch, T-DFS, and EGSM</li>
+<li>Better scalability compared to BEEP and G²Miner on large datasets</li>
+<li>17 pages, 17 figures, 2,336 KB</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>2. FlashANNS: GPU-Driven Asynchronous I/O Pipelining for Billion-Scale Similarity Search</h3>
+<ul>
+<li><strong>Authors:</strong> Yang Xiao, Mo Sun, Ziyu Song, Bing Tian, Jie Sun, Jie Zhang, Zeke Wang, Zonghui Wang, Wenzhi Chen, Fei Wu (Zhejiang University)</li>
+<li><strong>Venue:</strong> SIGMOD 2026</li>
+</ul>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>GPU-driven asynchronous I/O pipelining to eliminate storage-compute bottlenecks</li>
+<li>Designed for billion-scale similarity search workloads</li>
+<li>Addresses memory capacity limitations through innovative I/O optimization</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>3. L3: A GPU-Native Co-Designed Data Format for Learned Lossless Lightweight Compression</h3>
+<ul>
+<li><strong>Authors:</strong> Youyang Xia, Feng Zhang, Junda Pan, Jiawei Guan, Xiaoyong Du (RUC), Yihao Liu, Huanchen Zhang (Tsinghua)</li>
+<li><strong>Venue:</strong> SIGMOD 2026</li>
+</ul>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>GPU-native learned lossless compression format</li>
+<li>Co-designed for GPU architectures</li>
+<li>Combines compression with GPU acceleration</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>Data Encoding/Decoding Papers</h2>
+<br/>
+<h3>4. CoDec: Prefix-Shared Decoding Kernel for LLMs</h3>
+<ul>
+<li><strong>Authors:</strong> Zhibin Wang, Rui Ning, Chao Fang, Zhonghui Zhang, Xi Lin, Shaobo Ma, Mo Zhou, Xue Li (Alibaba), Zhongfeng Wang, Chengying Huan, Rong Gu, Kun Yang, Guihai Chen, Sheng Zhong, Chen Tian (Nanjing University)</li>
+<li><strong>Venue:</strong> SIGMOD 2026</li>
+</ul>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Prefix-shared decoding kernel for Large Language Models</li>
+<li>Optimized for efficient text generation decoding</li>
+<li>Database system integration for LLM serving</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>5. FLEA: Frequency-based Lossless Encoding Algorithm for Periodic Time Series</h3>
+<ul>
+<li><strong>Authors:</strong> Tianrui Xia, Jinzhao Xiao, Shaoxu Song (Tsinghua University)</li>
+<li><strong>Venue:</strong> SIGMOD 2026</li>
+</ul>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Frequency-based lossless encoding specifically for periodic time series data</li>
+<li>Optimized compression ratio for time series workloads</li>
+<li>Integration with Apache IoTDB ecosystem</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>Compression Papers</h2>
+<br/>
+<h3>6. Kangaroo: Efficient Lossless Floating-Point Compression via Dynamic Reference Selection</h3>
+<ul>
+<li><strong>Authors:</strong> Shuo Li, Xiaochun Yang, Bin Wang, Lingdu Kong (NEU), Chunhui Shen, Xiang Wang, Feibo Li (Alibaba), Yutong Han (Dalian Minzu)</li>
+<li><strong>Venue:</strong> SIGMOD 2026</li>
+</ul>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Dynamic reference selection for floating-point compression</li>
+<li>Lossless compression preserving full precision</li>
+<li>Efficient for scientific computing and ML workloads</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>7. Improving LZ4 for Effective Compression and Efficient Query</h3>
+<ul>
+<li><strong>Authors:</strong> Zhiheng Liu, Shaoxu Song (Tsinghua University)</li>
+<li><strong>Venue:</strong> SIGMOD 2026</li>
+</ul>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Enhanced LZ4 compression algorithm for database queries</li>
+<li>Balances compression ratio with query processing efficiency</li>
+<li>Direct query execution on compressed data</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>Vector Search / ANNS Papers</h2>
+<br/>
+<h3>8. CMANNS: GPU-Accelerated Graph Index Construction for ANNS via Compute-Memory Disaggregation</h3>
+<ul>
+<li><strong>Authors:</strong> Chengying Huan, Renjie Yao, Rong Gu, Lizhen Chen, Zhibin Wang, Shaonan Ma (Nanjing), Zhengyi Yang (UNSW), Mingxing Zhang (Tsinghua), Fang Xi (AISoft), Guihai Chen, Chen Tian (Nanjing)</li>
+<li><strong>Venue:</strong> SIGMOD 2026</li>
+</ul>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>GPU-accelerated graph index construction for Approximate Nearest Neighbor Search</li>
+<li>Compute-memory disaggregation architecture</li>
+<li>Scalable to large-scale vector datasets</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>9. GEM: A Native Graph-based Index for Multi-Vector Retrieval</h3>
+<ul>
+<li><strong>Authors:</strong> Yao Tian, Zhoujin Tian, Xi Zhao, Ruiyuan Zhang, Xiaofang Zhou (HKUST)</li>
+<li><strong>Venue:</strong> SIGMOD 2026</li>
+</ul>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Native graph-based index structure</li>
+<li>Multi-vector retrieval support</li>
+<li>Optimized for high-dimensional vector spaces</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>10. FGIM: a Fast Graph-based Indexes Merging Framework for Approximate Nearest Neighbor Search</h3>
+<ul>
+<li><strong>Authors:</strong> Zekai Wu (ECNU), Jiabao Jin, Xiaoyao Zhong, Zhitao Shen (Ant), Peng Cheng, Jingkuan Song, Heng Tao Shen (Tongji), Lei Chen (HKUST), Yongxin Tong (Beihang), Xuemin Lin (SJTU)</li>
+<li><strong>Venue:</strong> SIGMOD 2026</li>
+</ul>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Fast graph-based index merging framework</li>
+<li>Optimized for dynamic vector database updates</li>
+<li>Supports approximate nearest neighbor search at scale</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>11. TaCo: Data-adaptive and Query-aware Subspace Collision for High-dimensional ANN Search</h3>
+<ul>
+<li><strong>Authors:</strong> Jiuqi Wei, Quanqing Xu, Chuanhui Yang (Oceanbase/Ant), Zhenyu Liao (HUST), Ruoyu Han (ICT/CAS), Themis Palpanas (Paris Cité)</li>
+<li><strong>Venue:</strong> SIGMOD 2026</li>
+</ul>
+<br/>
+<p><strong>Key Contributions:</strong></p>
+<ul>
+<li>Data-adaptive subspace collision technique</li>
+<li>Query-aware optimization for ANN search</li>
+<li>High-dimensional vector search acceleration</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>Notable Preprints on arXiv</h2>
+<br/>
+<h3>Additional GPU/Compression Papers from arXiv cs.DB (Apr 10-16, 2026)</h3>
+<br/>
+<p><strong>CLAD: Efficient Log Anomaly Detection Directly on Compressed Representations</strong></p>
+<ul>
+<li><strong>Authors:</strong> Benzhao Tang, Shiyu Yang</li>
+<li><strong>arXiv:</strong> 2604.13024</li>
+<li><strong>Note:</strong> Anomaly detection on compressed data without decompression</li>
+</ul>
+<br/>
+<p><strong>OffloadFS: Leveraging Disaggregated Storage for Computation Offloading</strong></p>
+<ul>
+<li><strong>Authors:</strong> Sungho Moon, Daegyu Han, Hera Koo, Sangeun Chae, Duck-Ho Bae, Euiseong Seo, Beomseok Nam</li>
+<li><strong>arXiv:</strong> 2604.13743</li>
+<li><strong>Note:</strong> Storage-compute disaggregation for database workloads</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>Research Trend Analysis</h2>
+<br/>
+<h3>Emerging Themes</h3>
+<br/>
+<li><strong>GPU-Native Architectures</strong>: Strong trend toward GPU-native database systems (L3, FlashANNS, gMatch)</li>
+<li><strong>Vector Search Dominance</strong>: SIGMOD 2026 has 40+ papers on vector search and ANNS</li>
+<li><strong>Compression + GPU Combination</strong>: Learned compression co-designed for GPU (L3)</li>
+<li><strong>Compute-Memory Disaggregation</strong>: FlashANNS and CMANNS address memory capacity limitations</li>
+<li><strong>LLM Integration</strong>: Database systems increasingly integrated with LLMs (CoDec)</li>
+<br/>
+<h3>Performance Benchmarks Summary</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>System/Approach</th><th>Key Metric</th><th>Improvement</th></tr>
+<tr><th>gMatch</th><th>Subgraph matching speed</th><th>Outperforms STMatch, T-DFS, EGSM</th></tr>
+<tr><th>FlashANNS</th><th>Billion-scale search</th><th>GPU-driven async I/O</th></tr>
+<tr><th>L3</th><th>GPU compression</th><th>Native co-designed format</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>Previous Report Highlights (2026-04-14)</h2>
+<br/>
+<ul>
+<li><strong>29 papers</strong> found with 29 new (SIGMOD 2026 full list released)</li>
+<li><strong>18 GPU/compression</strong> related papers identified</li>
+<li>Key papers: FlashANNS, L3, CMANNS, VecFlow-Chamfer, Kangaroo, LICO</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>Links & Resources</h2>
+<br/>
+<ul>
+<li><strong>VLDB 2025 Proceedings:</strong> https://vldb.org/2025/?papers-research</li>
+<li><strong>SIGMOD 2026 Papers:</strong> https://2026.sigmod.org/sigmod_papers.shtml</li>
+<li><strong>arXiv cs.DB:</strong> https://arxiv.org/list/cs.DB/recent</li>
+<li><strong>FineZip Paper:</strong> https://arxiv.org/abs/2409.17141</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>Report generated automatically by Database Research Paper Tracker</em>  </p>
+<p><em>Next scheduled update: 2026-04-18 09:00</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
