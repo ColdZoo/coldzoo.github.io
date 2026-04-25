@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-04-25 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-04-25</h1>
+    <div class="article-meta">📅 2026-04-25 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>数据库研究论文追踪报告</h1>
+<br/>
+<p><strong>报告日期</strong>: 2026年4月25日  </p>
+<p><strong>追踪领域</strong>: 数据编码/解码、GPU加速与计算  </p>
+<p><strong>来源</strong>: VLDB、SIGMOD、arXiv cs.DB</p>
+<br/>
+<hr/>
+<br/>
+<h2>📊 执行摘要</h2>
+<br/>
+<p>本次追踪发现 <strong>43篇</strong> arXiv cs.DB 最新论文（2026年4月20-24日），其中筛选出 <strong>15篇</strong> 高度相关论文。同时收集到 <strong>SIGMOD 2026</strong> 接收论文中 <strong>43篇</strong> 相关研究（GPU加速11篇，数据编码/解码12篇，压缩6篇，查询处理27篇）。</p>
+<br/>
+<h3>关键发现</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>指标</th><th>数值</th></tr>
+<tr><th>新发现 arXiv 论文</th><th>15 篇</th></tr>
+<tr><th>SIGMOD 2026 相关论文</th><th>43 篇</th></tr>
+<tr><th>GPU加速方向</th><th>11 篇 SIGMOD + 6 篇 arXiv</th></tr>
+<tr><th>数据编码/压缩方向</th><th>12 篇 SIGMOD + 4 篇 arXiv</th></tr>
+<tr><th>最高性能提升</th><th><strong>240倍</strong> 吞吐量提升 (GRAB-ANNS)</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🔥 本周亮点论文</h2>
+<br/>
+<h3>1. GRAB-ANNS: GPU原生混合搜索框架</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.16402</li>
+<li><strong>作者</strong>: Xinkui Zhao 等 (浙江大学)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>基于桶的内存布局实现合并内存访问</li>
+<li>混合图拓扑（稠密桶内边 + 稀疏桶间边）</li>
+<li><strong>性能提升</strong>: 比CPU系统提升 <strong>240.1倍</strong> 吞吐量，<strong>12.6倍</strong> 索引构建速度</li>
+<li><strong>相关领域</strong>: GPU加速、向量搜索、混合查询</li>
+</ul>
+<br/>
+<h3>2. FliX: 翻转索引范式</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.16725</li>
+<li><strong>作者</strong>: Rosina Kharal 等</li>
+<li><strong>核心贡献</strong>:</li>
+<li>颠覆传统"操作找数据"模式，采用"数据找操作"</li>
+<li>消除索引层维护开销</li>
+<li><strong>性能提升</strong>: 查询延迟降低 <strong>6.5倍</strong> (vs GPU B+树)</li>
+<li><strong>相关领域</strong>: GPU索引、动态数据结构</li>
+</ul>
+<br/>
+<h3>3. Garfield: 多属性范围过滤ANN搜索GPU框架</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.20121</li>
+<li><strong>作者</strong>: Zhonggen Li, Yunjun Gao 等 (浙江大学)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>GMG轻量级索引结构，线性存储开销</li>
+<li>聚类引导查询排序策略</li>
+<li><strong>性能提升</strong>: 索引大小减少 <strong>4.4倍</strong>，吞吐量提升 <strong>119.8倍</strong></li>
+<li><strong>相关领域</strong>: GPU加速、向量搜索、范围过滤</li>
+</ul>
+<br/>
+<h3>4. SAGE: Token高效的选择性注意力提取</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.15583</li>
+<li><strong>作者</strong>: Xinzhi Wang, Samuel Madden, Chunwei Liu 等</li>
+<li><strong>核心贡献</strong>:</li>
+<li>无需训练的上下文缩减框架</li>
+<li>差分注意力策略隔离相关证据</li>
+<li><strong>性能提升</strong>: <strong>90% Token缩减</strong> 同时保持准确率</li>
+<li><strong>相关领域</strong>: LLM效率、数据压缩、上下文优化</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>📚 GPU 加速方向论文</h2>
+<br/>
+<h3>arXiv 最新论文 (2026年4月)</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>作者</th><th>核心创新</th><th>性能提升</th></tr>
+<tr><th><strong>Garfield</strong> - GPU加速多属性范围过滤ANN搜索</th><th>Li, Gao 等 (浙江大学)</th><th>GMG索引 + 聚类引导排序</th><th>119.8倍吞吐量，4.4倍索引缩减</th></tr>
+<tr><th><strong>SRDatalog</strong> - 最坏情况最优Datalog GPU扩展</th><th>Sun, Kumar 等</th><th>首个WCOJ-based GPU Datalog引擎</th><th>21-47倍加速</th></tr>
+<tr><th><strong>3DPipe</strong> - 多面体空间连接GPU框架</th><th>Yuan, Yan 等</th><th>流水线执行 + 多级剪枝</th><th>9.0倍加速 (vs TDBase)</th></tr>
+<tr><th><strong>FliX</strong> - 翻转索引范式</th><th>Kharal, Brown 等</th><th>计算到桶映射，无索引层</th><th>6.5倍延迟降低</th></tr>
+<tr><th><strong>GRAB-ANNS</strong> - GPU原生混合搜索</th><th>Zhao, Deng 等 (浙江大学)</th><th>桶式内存布局 + 混合图拓扑</th><th><strong>240.1倍</strong> 吞吐量提升</th></tr>
+</table></div>
+<br/>
+<h3>SIGMOD 2026 接收论文 (印度班加罗尔)</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文标题</th><th>作者</th><th>关键词</th></tr>
+<tr><th>CMANNS: GPU-Accelerated Graph Index Construction for ANNS</th><th>Chengying Huan 等</th><th>GPU图索引、ANN搜索</th></tr>
+<tr><th>Bound-Tightened Densest Subgraph Discovery on GPU</th><th>Wajid Manzoor 等</th><th>GPU图算法、子图发现</th></tr>
+<tr><th>Geld: Load-balanced D-Core Decomposition for Consumer GPUs</th><th>Cheng Huang 等</th><th>GPU负载均衡、D-Core分解</th></tr>
+<tr><th>cuRPQ: GPU-Based Framework for Regular Path Queries</th><th>Sungwoo Park 等</th><th>GPU路径查询、正则表达式</th></tr>
+<tr><th>FastGNAS: Graph Neural Architecture Search on Multi-GPUs</th><th>Zhen Song 等</th><th>GPU图神经网络、架构搜索</th></tr>
+<tr><th>GraphRTX: Scalable Graph Analytics</th><th>Alexander Baumstark 等</th><th>GPU图分析</th></tr>
+<tr><th><strong>FlashANNS</strong>: GPU-Driven Async I/O for Billion-Scale Search</th><th>Yang Xiao 等</th><th><strong>GPU异步I/O、十亿级搜索</strong></th></tr>
+<tr><th><strong>VecFlow-Chamfer</strong>: GPU Multi-Vector Search on Superchips</th><th>Chenghao Mo 等</th><th><strong>GPU向量搜索、Superchip</strong></th></tr>
+<tr><th>Scalable Graph Indexing using GPUs for ANNS</th><th>Zhonggen Li 等</th><th>GPU图索引、ANN</th></tr>
+<tr><th>Billion-Scale Vector Search with Single GPU</th><th>Haodi Jiang 等</th><th>单GPU十亿级向量搜索</th></tr>
+<tr><th>Fast Optimal Group Steiner Tree using GPUs</th><th>Jiayu Li 等</th><th>GPU Steiner树、图算法</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>📚 数据编码/解码与压缩方向论文</h2>
+<br/>
+<h3>arXiv 最新论文 (2026年4月)</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>作者</th><th>核心创新</th><th>相关领域</th></tr>
+<tr><th><strong>RaBitQ/TurboQuant 再审视</strong></th><th>Gao, Wong 等</th><th>量化方法对称比较</th><th>向量量化压缩</th></tr>
+<tr><th><strong>Universal Tabular Embeddings</strong></th><th>Vogel, Srinivas 等</th><th>跨数据任务的表格嵌入基准</th><th>表格数据编码</th></tr>
+<tr><th><strong>Self-Aware Vector Embeddings</strong></th><th>Naizhong Xu</th><th>神经科学启发的RAG框架</th><th>向量嵌入优化</th></tr>
+<tr><th><strong>LIVE</strong>: 可学习单调顶点嵌入</th><th>Ye, Yu 等</th><th>高效子图匹配</th><th>图数据嵌入</th></tr>
+</table></div>
+<br/>
+<h3>SIGMOD 2026 接收论文</h3>
+<br/>
+<h4>数据编码/解码</h4>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文标题</th><th>作者</th><th>关键词</th></tr>
+<tr><th><strong>CoDec</strong>: Prefix-Shared Decoding Kernel for LLMs</th><th>Zhibin Wang 等</th><th><strong>LLM解码优化、前缀共享</strong></th></tr>
+<tr><th>EncoderForge: SQL Generation for ML Encoders</th><th>Qingfeng Pan 等</th><th>ML编码器、SQL生成</th></tr>
+<tr><th><strong>FLEA</strong>: Frequency-based Lossless Encoding for Time Series</th><th>Tianrui Xia 等</th><th><strong>时序数据无损编码</strong></th></tr>
+<tr><th><strong>Kangaroo</strong>: Floating-Point Compression via Dynamic Reference</th><th>Shuo Li 等</th><th><strong>浮点压缩、动态参考</strong></th></tr>
+<tr><th><strong>L3</strong>: GPU-Native Learned Lossless Lightweight Compression</th><th>Youyang Xia 等</th><th><strong>GPU原生学习压缩</strong></th></tr>
+<tr><th><strong>LICO</strong>: SIMD-Aware Learned Inverted Index Compression</th><th>Xianyu Zhu 等</th><th><strong>SIMD感知学习压缩</strong></th></tr>
+<tr><th>Meep Hashing: Minimal Perfect Hashing</th><th>Shouqian Shi 等</th><th>最小完美哈希</th></tr>
+<tr><th>Aeris Filter: Adaptive Range Filter</th><th>Yuvaraj Chesetti 等</th><th>自适应范围过滤器</th></tr>
+<tr><th>Breadcrumb Filters: Fast Fully Featured Filters</th><th>Andrew Krapivin 等</th><th>快速布隆过滤器</th></tr>
+<tr><th>Hourglass: Adaptive Range Filter with Hybrid Encoding</th><th>Feifan Liu 等</th><th>混合编码范围过滤</th></tr>
+<tr><th><strong>F3</strong>: Open-Source Data File Format for the Future</th><th>Xinyu Zeng 等</th><th><strong>开源数据格式</strong></th></tr>
+<tr><th>HotPrefix: KV Cache Scheduling for LLM Inference</th><th>Yuhang Li 等</th><th>LLM推理缓存调度</th></tr>
+</table></div>
+<br/>
+<h4>压缩技术</h4>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文标题</th><th>作者</th><th>关键词</th></tr>
+<tr><th>DimWeaver: Dimensional Weaved Trajectory Compression</th><th>Xenophon Kitsios 等</th><th>轨迹压缩</th></tr>
+<tr><th>Improving LZ4 for Compression and Query</th><th>Zhiheng Liu 等</th><th>LZ4优化</th></tr>
+<tr><th>Succinct Structure Representations for Query Optimization</th><th>Zhekai Jiang 等</th><th>简洁结构表示</th></tr>
+<tr><th>SplineSketch: Accurate Quantiles with Error Guarantees</th><th>Aleksander Lukasiewicz 等</th><th>分位数草图</th></tr>
+<tr><th><strong>SAQ</strong>: Vector Quantization via Code Adjustment</th><th>Hui Li 等</th><th><strong>向量量化优化</strong></th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>📚 查询处理方向精选</h2>
+<br/>
+<h3>SIGMOD 2026 相关论文</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文标题</th><th>作者</th><th>关键词</th></tr>
+<tr><th>100x Cost Reduction: AI Query Approximation with Proxy Models</th><th>Yeounoh Chung 等</th><th>AI查询近似、代理模型</th></tr>
+<tr><th>Factorized and Vectorized Execution for Analytical Queries</th><th>Sunny Yasser 等</th><th>因子化执行、向量化</th></tr>
+<tr><th>NeurSO: Neural Optimizer for Subgraph Queries</th><th>Linglin Yang 等</th><th>神经查询优化、子图查询</th></tr>
+<tr><th>Reward-SQL: Text-to-SQL via Stepwise Reasoning</th><th>Yuxin Zhang 等</th><th>Text-to-SQL、推理增强</th></tr>
+<tr><th>GenRewrite: Query Rewriting via LLMs</th><th>Jie Liu 等</th><th>LLM查询重写</th></tr>
+<tr><th>Can LLMs Be Query Optimizer?</th><th>Jie Tan 等</th><th>LLM查询优化</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🔗 重要链接</h2>
+<br/>
+<h3>会议与期刊</h3>
+<ul>
+<li><strong>VLDB 2026</strong>: https://vldb.org/2026/ (波士顿)</li>
+<li><strong>SIGMOD 2026</strong>: https://2026.sigmod.org/ (印度班加罗尔)</li>
+<li><strong>PVLDB Volume 19</strong>: https://vldb.org/pvldb/vol19-volume-info</li>
+</ul>
+<br/>
+<h3>本周论文 arXiv 链接</h3>
+<ul>
+<li>Garfield (RFANNS): https://arxiv.org/abs/2604.20121</li>
+<li>SRDatalog: https://arxiv.org/abs/2604.20073</li>
+<li>3DPipe: https://arxiv.org/abs/2604.19982</li>
+<li>FliX: https://arxiv.org/abs/2604.16725</li>
+<li>GRAB-ANNS: https://arxiv.org/abs/2604.16402</li>
+<li>SAGE: https://arxiv.org/abs/2604.15583</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>📈 趋势分析</h2>
+<br/>
+<h3>GPU 加速数据库成为主流</h3>
+<ul>
+<li><strong>十亿级向量搜索</strong> 成为标准配置（FlashANNS, VecFlow-Chamfer, Billion-Scale VSS）</li>
+<li><strong>GPU原生架构</strong> 取代简单的CPU算法移植（FliX翻转索引范式、GRAB-ANNS桶式布局）</li>
+<li><strong>异步I/O流水线</strong> 解决存储-计算瓶颈（FlashANNS）</li>
+</ul>
+<br/>
+<h3>学习压缩与硬件协同设计</h3>
+<ul>
+<li><strong>L3</strong>: GPU原生学习无损压缩（GPU-Native Learned Compression）</li>
+<li><strong>LICO</strong>: SIMD感知学习倒排索引压缩</li>
+<li><strong>CoDec</strong>: LLM前缀共享解码内核</li>
+</ul>
+<br/>
+<h3>LLM与数据库融合</h3>
+<ul>
+<li><strong>LLM for Query Optimization</strong>: 多篇论文探索LLM作为查询优化器</li>
+<li><strong>Text-to-SQL增强</strong>: Reward-SQL、SchemaRAG等工作提升NL2SQL能力</li>
+<li><strong>Token效率</strong>: SAGE实现90%上下文压缩</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>🎯 FineZip 相关论文关注</h2>
+<br/>
+<p>与 FineZip (LLM文本压缩) 方向相关的本周发现：</p>
+<br/>
+<li><strong>SAGE</strong> (arXiv:2604.15583): Token高效的选择性提取，90%压缩率</li>
+<li><strong>CoDec</strong> (SIGMOD 2026): LLM前缀共享解码内核</li>
+<li><strong>HotPrefix</strong> (SIGMOD 2026): LLM推理中的KV缓存调度</li>
+<li><strong>Stream2LLM</strong> (arXiv:2604.16386): LLM上下文流式处理</li>
+<br/>
+<hr/>
+<br/>
+<p><em>报告生成时间: 2026-04-25 09:00</em>  </p>
+<p><em>下次追踪: 2026-04-26 09:00</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
