@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-04-27 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-04-27</h1>
+    <div class="article-meta">📅 2026-04-27 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>数据库研究论文追踪报告 - 2026年4月27日</h1>
+<br/>
+<h2>每日摘要</h2>
+<br/>
+<p><strong>报告日期</strong>: 2026年4月27日  </p>
+<p><strong>数据来源</strong>: SIGMOD 2026, arXiv cs.DB, VLDB 2026  </p>
+<p><strong>相关论文统计</strong>:</p>
+<ul>
+<li>GPU加速方向: 18篇</li>
+<li>数据编码/压缩方向: 12篇</li>
+<li>共计: 30篇相关论文</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>一、GPU加速方向 (GPU Acceleration)</h2>
+<br/>
+<h3>1.1 向量搜索与ANN加速</h3>
+<br/>
+<h4><strong>FlashANNS: GPU-Driven Asynchronous I/O Pipelining for Eliminating Storage-Compute Bottlenecks in Billion-Scale Similarity Search</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 3)</li>
+<li><strong>作者</strong>: Yang Xiao, Mo Sun, Ziyu Song, Bing Tian, Jie Sun, Jie Zhang, Zeke Wang, Zonghui Wang, Wenzhi Chen, Fei Wu (Zhejiang University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>提出GPU异步I/O流水线架构，解决存储-计算瓶颈</li>
+<li>支持十亿级相似性搜索</li>
+<li>消除GPU内存限制对大规模向量搜索的制约</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>CMANNS: GPU-Accelerated Graph Index Construction for ANNS via Compute-Memory Disaggregation</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 4)</li>
+<li><strong>作者</strong>: Chengying Huan, Renjie Yao, Rong Gu, Lizhen Chen, Zhengyi Yang, Shaonan Ma, Zhibin Wang, Mingxing Zhang, Fang Xi, Guihai Chen, Chen Tian (Nanjing University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>计算-内存分离架构下的GPU加速图索引构建</li>
+<li>针对近似最近邻搜索(ANNS)优化</li>
+<li>突破传统GPU内存限制</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>VecFlow-Chamfer: A GPU-based Data Management System for High-Performance Multi-Vector Search on Superchips</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 3)</li>
+<li><strong>作者</strong>: Chenghao Mo (UIUC), Ben Karsin (Nvidia), Philip Adams (Microsoft), Minjia Zhang (UIUC)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>面向Superchip架构的GPU多向量搜索系统</li>
+<li>支持过滤搜索(filtered search)的高性能实现</li>
+<li>针对现代GPU架构深度优化</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>Scalable Graph Indexing using GPUs for Approximate Nearest Neighbor Search</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 2)</li>
+<li><strong>作者</strong>: Zhonggen Li, Xiangyu Ke, Yifan Zhu, Bocheng Yu, Baihua Zheng, Yunjun Gao (Zhejiang University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>可扩展的GPU图索引框架</li>
+<li>针对ANN搜索的图索引优化</li>
+<li>支持大规模向量数据集</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>High-Throughput, Cost-Effective Billion-Scale Vector Search with a Single GPU</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 2)</li>
+<li><strong>作者</strong>: Haodi Jiang, Hao Guo, Minhui Xie, Jiwu Shu, Youyou Lu (Tsinghua University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>单GPU实现十亿级向量搜索</li>
+<li>高吞吐量与成本效益并重</li>
+<li>突破GPU显存限制的新方法</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h3>1.2 GPU查询处理与图计算</h3>
+<br/>
+<h4><strong>cuRPQ: A High-Performance GPU-Based Framework for Processing Regular and Conjunctive Regular Path Queries</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 4)</li>
+<li><strong>作者</strong>: Sungwoo Park, Seohyeon Kim, Min-Soo Kim (KAIST)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>GPU上的正则路径查询处理框架</li>
+<li>支持正则和连接正则路径查询</li>
+<li>高性能图遍历算法</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>Bound-Tightened Densest Subgraph Discovery on GPU</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 4)</li>
+<li><strong>作者</strong>: Wajid Manzoor, Ke Fan, Chaudhary Muhammad Shaheer Yasir, Guimu Guo (Rowan University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>GPU加速的最密子图发现算法</li>
+<li>边界收紧优化技术</li>
+<li>大规模图数据高效处理</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>Fast Optimal Group Steiner Tree Search using GPUs</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 2)</li>
+<li><strong>作者</strong>: Jiayu Li, Yahui Sun, Bojing Ma, Libang Chen, Mengxi Hu, Feng Zhang, Rong-Hua Li (Renmin University of China)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>GPU加速的Group Steiner树搜索</li>
+<li>最优解保证的高效算法</li>
+<li>适用于网络路由等场景</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>Gem: Scalable Monotonic Graph Processing Beyond Billion-Scale on a Single Machine</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 2)</li>
+<li><strong>作者</strong>: Chengying Huan, Zhengyi Yang, Haoshen Yang, Shaonan Ma, Rong Gu, Fang Xi, Yongchao Liu, Guihai Chen, Chen Tian (Nanjing University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>单机支持十亿级规模图处理</li>
+<li>单调图算法的高效实现</li>
+<li>内存高效的数据结构</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h3>1.3 GPU数据流与并行处理</h3>
+<br/>
+<h4><strong>ACGraph: An Efficient Asynchronous Out-of-Core Graph Processing Framework</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 2)</li>
+<li><strong>作者</strong>: Dechuang Chen, Sibo Wang, Qintian Guo (CUHK)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>异步核外图处理框架</li>
+<li>支持超出GPU内存的大规模图</li>
+<li>高效的数据传输策略</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>Accelerating Stream Processing Engines via Hardware Offloading</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 3)</li>
+<li><strong>作者</strong>: Zhengyan Guo, Mingxing Zhang, Yingdi Shan, Kang Chen, Jinlei Jiang, Yongwei Wu (Tsinghua University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>硬件卸载加速流处理引擎</li>
+<li>GPU/FPGA协同处理</li>
+<li>低延迟流数据分析</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h3>1.4 GPU压缩数据直接处理</h3>
+<br/>
+<h4><strong>GPU Acceleration of SQL Analytics on Compressed Data</strong> (arXiv预印本)</h4>
+<ul>
+<li><strong>arXiv</strong>: 2506.10092</li>
+<li><strong>作者</strong>: Zezhou Huang, Krystian Sakowski, Hans Lehnert, Wei Wang</li>
+<li><strong>核心贡献</strong>:</li>
+<li>直接在压缩数据上执行SQL分析</li>
+<li>支持RLE、索引编码、位宽缩减等轻量级压缩</li>
+<li>避免解压缩开销，提升GPU利用率</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2506.10092</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>二、数据编码/解码与压缩 (Data Encoding/Compression)</h2>
+<br/>
+<h3>2.1 学习型压缩</h3>
+<br/>
+<h4><strong>L3: A GPU-Native Co-Designed Data Format for Learned Lossless Lightweight Compression</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 4)</li>
+<li><strong>作者</strong>: Youyang Xia, Feng Zhang, Junda Pan, Yihao Liu, Jiawei Guan, Huanchen Zhang, Xiaoyong Du (Renmin University of China)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>GPU原生协同设计的无损压缩格式</li>
+<li>学习型轻量级压缩</li>
+<li>针对GPU架构深度优化</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>LICO: An SIMD-Aware High-Performance Learned Inverted Index Compression Framework</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 4)</li>
+<li><strong>作者</strong>: Xianyu Zhu, Qiyu Liu, Guangyi Zhang, Zhibing Sha, Jianwei Liao, Sha Hu, Lei Chen (RUC/Southwest University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>SIMD感知的学习型倒排索引压缩</li>
+<li>高性能压缩框架</li>
+<li>适用于信息检索系统</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>Kangaroo: Efficient Lossless Floating-Point Compression via Dynamic Reference Selection</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 4)</li>
+<li><strong>作者</strong>: Shuo Li, Xiaochun Yang, Chunhui Shen, Yutong Han, Xiang Wang, Lingdu Kong, Bin Wang, Feibo Li (Northeastern University/Alibaba)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>动态参考选择的浮点压缩</li>
+<li>高效无损压缩算法</li>
+<li>适用于科学计算数据</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h3>2.2 时间序列与专用编码</h3>
+<br/>
+<h4><strong>FLEA: Frequency-based Lossless Encoding Algorithm for Periodic Time Series</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 4)</li>
+<li><strong>作者</strong>: Tianrui Xia, Jinzhao Xiao, Shaoxu Song (Tsinghua University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>针对周期性时间序列的频率编码</li>
+<li>无损压缩算法</li>
+<li>适合IoT和监控数据</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>DimWeaver: Dimensional Weaved Trajectory Compression</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 4)</li>
+<li><strong>作者</strong>: Xenophon Kitsios, Panagiotis Liakos, Katia Papakonstantinopoulou, Nikos Giatrakos, Yannis Kotidis (Athens University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>多维轨迹数据压缩</li>
+<li>维度编织压缩技术</li>
+<li>保持轨迹查询精度</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>Improving LZ4 for Effective Compression and Efficient Query</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 3)</li>
+<li><strong>作者</strong>: Zhiheng Liu, Shaoxu Song (Tsinghua University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>改进LZ4压缩算法</li>
+<li>平衡压缩率和查询效率</li>
+<li>直接查询压缩数据</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h3>2.3 学习型索引与编码</h3>
+<br/>
+<h4><strong>LINE: A Learned Index with Group-Enhanced Leaves and Cache-Optimized Inner Tree</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 4)</li>
+<li><strong>作者</strong>: Leying Chen, Shimin Chen (Chinese Academy of Sciences)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>组增强叶节点的学习型索引</li>
+<li>缓存优化的内部树结构</li>
+<li>提升索引查找性能</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>HIRE: A Hybrid Learned Index for Robust and Efficient Performance under Mixed Workloads</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 3)</li>
+<li><strong>作者</strong>: Xinyi Zhang, Liang Liang, Anastasia Ailamaki, Jianliang Xu (Hong Kong Baptist University/EPFL)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>混合学习型索引架构</li>
+<li>混合负载下的鲁棒性</li>
+<li>读写性能平衡</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>LM-Tree: A Hybrid Learned Index for Similarity Search in Metric Spaces</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 3)</li>
+<li><strong>作者</strong>: Yaqi Wang, Bin Wang, Rui Zhu, Wenli Sun, Xiaochun Yang (Northeastern University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>度量空间相似性搜索的学习型索引</li>
+<li>混合树结构</li>
+<li>支持多种距离度量</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h3>2.4 列式存储与数据格式</h3>
+<br/>
+<h4><strong>F3: The Open-Source Data File Format for the Future</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 1)</li>
+<li><strong>作者</strong>: Xinyu Zeng, Ruijun Meng, Martin Prammer, Wes McKinney, Jignesh Patel, Andrew Pavlo, Huanchen Zhang (Tsinghua University/CMU)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>面向未来的开源数据文件格式</li>
+<li>超越Parquet的下一代格式</li>
+<li>高效压缩和查询性能</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h4><strong>Hourglass: An Adaptive Range Filter with Lightweight Hybrid Encoding</strong></h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 1)</li>
+<li><strong>作者</strong>: Feifan Liu, Rong Gu, Meng Li, Haipeng Dai, Baohan Wang, Jie Tao, Dian Shen (Nanjing University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>自适应范围过滤</li>
+<li>轻量级混合编码</li>
+<li>高效的数据跳过</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>三、LLM与数据压缩交叉方向</h2>
+<br/>
+<h3><strong>CoDec: Prefix-Shared Decoding Kernel for LLMs</strong></h3>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (Round 4)</li>
+<li><strong>作者</strong>: Zhibin Wang, Rui Ning, Chao Fang, Zhonghui Zhang, Xi Lin, Shaobo Ma, Mo Zhou, Xue Li, Zhongfeng Wang, Chengying Huan, Rong Gu, Kun Yang, Guihai Chen, Sheng Zhong, Chen Tian (Nanjing University)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>LLM前缀共享解码内核</li>
+<li>提升LLM推理效率</li>
+<li>数据库与AI系统交叉创新</li>
+<li><strong>链接</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+</ul>
+<br/>
+<h3><strong>FineZip: Pushing the Limits of Large Language Models for Lossless Text Compression</strong> (相关持续研究)</h3>
+<ul>
+<li><strong>arXiv</strong>: 2409.17141</li>
+<li><strong>核心贡献</strong> (回顾):</li>
+<li>54倍速度提升</li>
+<li>50%压缩比提升</li>
+<li>在线记忆+动态上下文</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2409.17141</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>四、重要趋势分析</h2>
+<br/>
+<h3>4.1 GPU加速方向趋势</h3>
+<br/>
+<li><strong>十亿级向量搜索成为标准</strong>: FlashANNS、VecFlow-Chamfer等多篇论文聚焦十亿级规模，GPU异步I/O和计算-内存分离架构成为主流方案</li>
+<br/>
+<li><strong>GPU-native数据库架构</strong>: 从GPU加速走向GPU原生设计，如L3的GPU原生压缩格式</li>
+<br/>
+<li><strong>单GPU大规模处理</strong>: High-Throughput Billion-Scale Vector Search等研究致力于用单GPU处理更大规模数据</li>
+<br/>
+<h3>4.2 数据编码方向趋势</h3>
+<br/>
+<li><strong>学习型压缩兴起</strong>: L3、LICO、Kangaroo等论文展示学习型压缩在数据库中的应用潜力</li>
+<br/>
+<li><strong>专用领域编码</strong>: 针对时间序列(FLEA)、轨迹(DimWeaver)、浮点数据(Kangaroo)的专用编码方案</li>
+<br/>
+<li><strong>压缩数据直接处理</strong>: GPU Acceleration of SQL Analytics on Compressed Data等研究推动直接在压缩数据上执行查询</li>
+<br/>
+<h3>4.3 新兴交叉方向</h3>
+<br/>
+<li><strong>LLM与数据库融合</strong>: CoDec等论文探索LLM技术在数据库系统中的应用</li>
+<br/>
+<li><strong>向量检索成为基础设施</strong>: 大量论文聚焦ANN搜索，显示向量数据库技术成熟化</li>
+<br/>
+<hr/>
+<br/>
+<h2>五、值得关注的高影响力论文</h2>
+<br/>
+<h3>🔥 最高关注度</h3>
+<br/>
+<li><strong>FlashANNS</strong> (SIGMOD 2026) - GPU异步I/O流水线，十亿级搜索突破</li>
+<li><strong>L3</strong> (SIGMOD 2026) - GPU原生学习型压缩格式</li>
+<li><strong>VecFlow-Chamfer</strong> (SIGMOD 2026) - Superchip多向量搜索</li>
+<br/>
+<h3>📊 技术创新度</h3>
+<br/>
+<li><strong>CMANNS</strong> (SIGMOD 2026) - 计算-内存分离架构</li>
+<li><strong>Kangaroo</strong> (SIGMOD 2026) - 动态参考浮点压缩</li>
+<li><strong>GPU Acceleration of SQL Analytics on Compressed Data</strong> - 压缩数据直接查询</li>
+<br/>
+<hr/>
+<br/>
+<h2>六、会议统计</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>会议</th><th>GPU加速相关</th><th>数据编码相关</th><th>总计</th></tr>
+<tr><th>SIGMOD 2026</th><th>18篇</th><th>12篇</th><th>30篇</th></tr>
+<tr><th>VLDB 2026</th><th>持续跟踪中</th><th>持续跟踪中</th><th>-</th></tr>
+<tr><th>arXiv cs.DB</th><th>5+篇/周</th><th>3+篇/周</th><th>-</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>七、参考链接</h2>
+<br/>
+<ul>
+<li>SIGMOD 2026 Accepted Papers: https://2026.sigmod.org/sigmod_papers.shtml</li>
+<li>VLDB 2026: https://www.vldb.org/2026/</li>
+<li>arXiv cs.DB: https://arxiv.org/list/cs.DB/recent</li>
+<li>FineZip Paper: https://arxiv.org/abs/2409.17141</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>报告生成时间: 2026-04-27 09:00</em>  </p>
+<p><em>下次更新: 2026-04-28 09:00</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
