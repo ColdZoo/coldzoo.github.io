@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-04-28 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-04-28</h1>
+    <div class="article-meta">📅 2026-04-28 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>数据库研究论文追踪报告 - 2026年4月28日</h1>
+<br/>
+<h2>📊 概览统计</h2>
+<br/>
+<ul>
+<li><strong>报告日期</strong>: 2026年4月28日</li>
+<li><strong>论文来源</strong>: arXiv cs.DB, SIGMOD 2026</li>
+<li><strong>新发现论文</strong>: 8篇 (arXiv 4月27日提交)</li>
+<li><strong>重点关注</strong>: GPU加速 (5篇), 数据编码/压缩 (2篇), 索引优化 (1篇)</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>🔥 GPU 加速与计算 (GPU Acceleration)</h2>
+<br/>
+<h3>1. Garfield: GPU多属性范围过滤ANN搜索框架</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.20121</li>
+<li><strong>作者</strong>: Zhonggen Li, Haoran Yu, et al.</li>
+<li><strong>机构</strong>: 浙江大学</li>
+<li><strong>核心贡献</strong>:</li>
+<li>首个针对多属性范围过滤ANN搜索的GPU加速框架</li>
+<li>提出GMG索引结构：将数据分区为单元格并构建局部图索引</li>
+<li>聚类引导排序策略实现高效GPU逐单元格遍历</li>
+<li>面向单元格的核外流水线支持超出GPU内存的数据集</li>
+<li><strong>性能提升</strong>:</li>
+<li>索引大小减少 <strong>4.4倍</strong></li>
+<li>吞吐量提升 <strong>119.8倍</strong></li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2604.20121</li>
+</ul>
+<br/>
+<h3>2. SRDatalog: 最坏情况最优Datalog GPU扩展</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.20073</li>
+<li><strong>作者</strong>: Yihao Sun, Kunting Qi, et al.</li>
+<li><strong>核心贡献</strong>:</li>
+<li>首个基于WCOJ (Worst-Case Optimal Join) 的GPU Datalog引擎</li>
+<li>扁平列式存储 + 两阶段确定性内存分配</li>
+<li>根级直方图引导负载均衡缓解键倾斜</li>
+<li>流对齐规则多路复用隐藏硬件停滞</li>
+<li><strong>性能提升</strong>: 相比现有方案 <strong>21-47倍</strong> 几何平均加速</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2604.20073</li>
+</ul>
+<br/>
+<h3>3. 3DPipe: 多面体空间连接GPU流水线框架</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.19982</li>
+<li><strong>作者</strong>: Lyuheng Yuan, Da Yan, et al.</li>
+<li><strong>开源</strong>: https://github.com/lyuheng/3dpipe</li>
+<li><strong>核心贡献</strong>:</li>
+<li>首个专门针对多面体对象的3D空间连接GPU框架</li>
+<li>过滤和精化阶段全GPU并行</li>
+<li>多级剪枝策略实现高效候选集缩减</li>
+<li>分块流式传输支持超GPU内存数据集</li>
+<li><strong>性能提升</strong>: 相比TDBase <strong>9.0倍</strong> 加速</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2604.19982</li>
+</ul>
+<br/>
+<h3>4. GRAB-ANNS: GPU原生桶式混合搜索</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.16402 (已在4月25日报告收录)</li>
+<li><strong>更新</strong>: 确认被SIGMOD 2026接收</li>
+<li><strong>性能提升</strong>:</li>
+<li>查询吞吐量 <strong>240.1倍</strong></li>
+<li>索引构建速度 <strong>12.6倍</strong></li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2604.16402</li>
+</ul>
+<br/>
+<h3>5. FliX: 翻转索引范式</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.16725 (已在4月22日报告收录)</li>
+<li><strong>更新</strong>: 更多性能细节披露</li>
+<li><strong>核心创新</strong>: 将计算资源分配给数据桶，由桶定位操作</li>
+<li><strong>性能提升</strong>:</li>
+<li>查询延迟降低 <strong>6.5倍</strong> (vs GPU B树)</li>
+<li>内存效率 <strong>4倍</strong> (vs 有序竞争对手)</li>
+<li>插入吞吐量 <strong>8倍</strong> (vs 动态有序基线)</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2604.16725</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>🗜️ 数据编码与压缩 (Data Encoding/Compression)</h2>
+<br/>
+<h3>1. SAGE: Token高效提取框架</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.15583</li>
+<li><strong>作者</strong>: Xinzhi Wang, et al.</li>
+<li><strong>机构</strong>: MIT, Google等</li>
+<li><strong>核心贡献</strong>:</li>
+<li>无需训练的即插即用上下文缩减框架</li>
+<li>轻量级LLM单次预填充遍历生成相关性热力图</li>
+<li>差异注意力策略更好隔离问题相关证据</li>
+<li>用户定义令牌预算下选择高得分单元</li>
+<li><strong>性能提升</strong>:</li>
+<li><strong>90%令牌缩减</strong> 同时保持竞争力准确性</li>
+<li>QuALITY-hard基准10%预算下获得前4名</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2604.15583</li>
+</ul>
+<br/>
+<h3>2. MCI: 最大团索引 (索引压缩)</h3>
+<ul>
+<li><strong>arXiv</strong>: 2604.22171</li>
+<li><strong>作者</strong>: Xiaowei Ye, Rong-Hua Li, et al.</li>
+<li><strong>核心贡献</strong>:</li>
+<li>基于最大团的图索引用于任意过滤ANN搜索</li>
+<li>最大团覆盖(MCC)技术利用高维空间几何传递性</li>
+<li>几何稠密化策略从稀疏NNG构建近似大型NNG</li>
+<li>无锁并行构建 + 多种子查询策略</li>
+<li><strong>性能提升</strong>:</li>
+<li>QPS提升 <strong>一个数量级</strong></li>
+<li><strong>显著更小</strong>的存储空间</li>
+<li>在范围过滤和关键词过滤上保持竞争力</li>
+<li><strong>链接</strong>: https://arxiv.org/abs/2604.22171</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>📚 SIGMOD 2026 重要论文回顾</h2>
+<br/>
+<p>本次报告周期内，SIGMOD 2026论文列表已完整公布。以下是与关注领域高度相关的论文：</p>
+<br/>
+<h3>GPU加速方向 (15篇+)</h3>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>核心贡献</th></tr>
+<tr><th>FlashANNS</th><th>GPU异步I/O流水线，十亿级相似性搜索</th></tr>
+<tr><th>VecFlow-Chamfer</th><th>Superchip多向量搜索系统</th></tr>
+<tr><th>CMANNS</th><th>计算-内存分离的GPU图索引构建</th></tr>
+<tr><th>cuRPQ</th><th>GPU规则路径查询处理框架</th></tr>
+<tr><th>FastGNAS</th><th>多GPU图神经架构搜索</th></tr>
+</table></div>
+<br/>
+<h3>编码/压缩方向 (15篇+)</h3>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>核心贡献</th></tr>
+<tr><th>L3</th><th>GPU原生学习型无损压缩格式</th></tr>
+<tr><th>LICO</th><th>SIMD感知学习型倒排索引压缩</th></tr>
+<tr><th>Kangaroo</th><th>动态参考选择浮点压缩</th></tr>
+<tr><th>FLEA</th><th>周期性时间序列频率编码</th></tr>
+<tr><th>CoDec</th><th>LLM前缀共享解码内核</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🎯 本周重点推荐</h2>
+<br/>
+<h3>最具突破性论文</h3>
+<br/>
+<li><strong>Garfield (2604.20121)</strong> ⭐⭐⭐</li>
+<ul>
+<li>GPU范围过滤ANN搜索的重大突破</li>
+<li>119.8倍吞吐量提升 + 4.4倍索引压缩</li>
+<li>核外流水线设计解决GPU内存限制</li>
+</ul>
+<br/>
+<li><strong>SRDatalog (2604.20073)</strong> ⭐⭐⭐</li>
+<ul>
+<li>首次将WCOJ引入GPU Datalog引擎</li>
+<li>解决二元连接导致的AGM边界膨胀问题</li>
+<li>21-47倍加速对程序分析工作负载意义重大</li>
+</ul>
+<br/>
+<li><strong>SAGE (2604.15583)</strong> ⭐⭐</li>
+<ul>
+<li>90%令牌缩减且无需训练</li>
+<li>对LLM长文档处理成本优化极具价值</li>
+<li>差异注意力策略创新</li>
+</ul>
+<br/>
+<h3>技术趋势观察</h3>
+<br/>
+<ul>
+<li><strong>GPU-native架构成为主流</strong>: 从简单移植转向硬件协同设计</li>
+<li><strong>翻转索引范式</strong>: FliX代表的计算到桶映射颠覆传统索引设计</li>
+<li><strong>学习型压缩 + GPU加速结合</strong>: L3等论文展示协同优化潜力</li>
+<li><strong>十亿级向量搜索</strong>: FlashANNS、GRAB-ANNS推动规模边界</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>📎 参考链接</h2>
+<br/>
+<ul>
+<li><strong>arXiv cs.DB</strong>: https://arxiv.org/list/cs.DB/recent</li>
+<li><strong>SIGMOD 2026</strong>: https://2026.sigmod.org/sigmod_papers.shtml</li>
+<li><strong>VLDB 2026</strong>: https://vldb.org/2026/</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>报告生成时间: 2026-04-28 09:00</em>  </p>
+<p><em>追踪系统: Database Research Paper Tracker</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
