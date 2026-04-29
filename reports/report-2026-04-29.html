@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-04-29 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-gpu">GPU 加速</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-04-29</h1>
+    <div class="article-meta">📅 2026-04-29 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>数据库研究论文追踪报告 - 2026年4月29日</h1>
+<br/>
+<p><strong>报告日期</strong>: 2026年4月29日  </p>
+<p><strong>监控范围</strong>: VLDB, SIGMOD, arXiv cs.DB (2026年4月21日-28日)  </p>
+<p><strong>关键词</strong>: 数据编码/解码, GPU加速, GPU数据库, LLM压缩, 向量搜索</p>
+<br/>
+<hr/>
+<br/>
+<h2>📊 每日摘要</h2>
+<br/>
+<p>今日共发现 <strong>12篇相关论文</strong>，其中：</p>
+<ul>
+<li><strong>GPU加速方向</strong>: 6篇 (含GPU Datalog、GPU ANN搜索、GPU空间连接)</li>
+<li><strong>数据编码/压缩方向</strong>: 4篇 (含向量量化、上下文压缩、索引压缩)</li>
+<li><strong>查询处理方向</strong>: 2篇 (混合查询优化、文本转SQL)</li>
+</ul>
+<br/>
+<h3>🔥 亮点论文</h3>
+<li><strong>Garfield</strong> - GPU多属性范围过滤ANN搜索，<strong>119.8倍</strong>吞吐量提升</li>
+<li><strong>SRDatalog</strong> - 首个WCOJ-based GPU Datalog引擎，<strong>21-47倍</strong>加速</li>
+<li><strong>SAGE</strong> - 无需训练的上下文压缩框架，<strong>90%令牌缩减</strong></li>
+<li><strong>BoomHQ</strong> - 学习优化混合查询，峰值<strong>25倍</strong>加速</li>
+<br/>
+<hr/>
+<br/>
+<h2>🚀 GPU加速方向</h2>
+<br/>
+<h3>1. Garfield: GPU多属性范围过滤ANN搜索框架</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>A GPU-Accelerated Framework for Multi-Attribute Range Filtered Approximate Nearest Neighbor Search</th></tr>
+<tr><th><strong>作者</strong></th><th>Zhonggen Li, Haoran Yu, Zixuan Xu, Yifan Zhu, Yunjun Gao</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.20121</th></tr>
+<tr><th><strong>提交日期</strong></th><th>2026年4月22日</th></tr>
+</table></div>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li>提出<strong>GMG索引</strong>：将数据划分为单元格并构建局部图索引，通过恒定数量跨单元格边保证线性存储开销</li>
+<li><strong>聚类引导排序策略</strong>：重新排序查询相关单元格，实现高效GPU逐单元格遍历</li>
+<li><strong>候选点重用机制</strong>：跨单元格遍历时重用候选点作为入口点，减少重复计算</li>
+<li><strong>核外流水线</strong>：单元格导向的动态调度，重叠GPU计算与CPU-GPU数据传输</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>🏆 <strong>119.8倍</strong> 吞吐量提升（相比最先进RFANNS方法）</li>
+<li>🏆 <strong>4.4倍</strong> 索引压缩比</li>
+<li>线性存储和索引开销保证</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>2. SRDatalog: 最坏情况最优GPU Datalog引擎</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>Scaling Worst-Case Optimal Datalog to GPUs</th></tr>
+<tr><th><strong>作者</strong></th><th>Yihao Sun, Kunting Qi, Thomas Gilray, Sidharth Kumar, Kristopher Micinski</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.20073</th></tr>
+<tr><th><strong>提交日期</strong></th><th>2026年4月22日</th></tr>
+</table></div>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li><strong>首个WCOJ-based GPU Datalog引擎</strong>：区别于现有基于二元连接的GPU引擎</li>
+<li><strong>扁平列式存储 + 两阶段确定性内存分配</strong>：避免OOM故障和索引重建开销</li>
+<li><strong>负载均衡优化</strong>：</li>
+<li>根级直方图引导的负载均衡</li>
+<li>结构辅助关系拆分</li>
+<li>流对齐规则多路复用</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>🏆 <strong>几何平均21-47倍</strong>加速（真实世界程序分析工作负载）</li>
+<li>解决SIMT硬件上的键倾斜导致的流处理器负载不平衡问题</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>3. 3DPipe: 多面体空间连接GPU框架</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>3DPipe: A Pipelined GPU Framework for Scalable Generalized Spatial Join over Polyhedral Objects</th></tr>
+<tr><th><strong>作者</strong></th><th>Lyuheng Yuan, Da Yan, Akhlaque Ahmad, Fusheng Wang</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.19982</th></tr>
+<tr><th><strong>开源代码</strong></th><th>https://github.com/lyuheng/3dpipe</th></tr>
+</table></div>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li>面向3D数据的<strong>流水线式GPU空间连接框架</strong></li>
+<li>在过滤和精炼阶段均利用<strong>GPU并行性</strong></li>
+<li><strong>多级剪枝策略</strong>实现高效候选集缩减</li>
+<li><strong>分块流式处理</strong>支持超出GPU内存的数据集</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>🏆 <strong>9.0倍</strong>加速（相比最先进GPU方案TDBase）</li>
+<li>出色可扩展性</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>4. FPGA B+树批量搜索加速</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>Efficient Batch Search Algorithm for B+ Tree Index Structures with Level-Wise Traversal on FPGAs</th></tr>
+<tr><th><strong>作者</strong></th><th>Max Tzschoppe, Martin Wilhelm, Sven Groppe, Thilo Pionteck</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.21117 (cs.AR)</th></tr>
+<tr><th><strong>平台</strong></th><th>AMD Alveo U250数据中心加速卡</th></tr>
+</table></div>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li><strong>层级遍历策略</strong>：按层级处理批量搜索键，高效重用树节点</li>
+<li><strong>高层综合(HLS)</strong>方法：高度灵活可配置的内核设计</li>
+<li>支持可变批量大小、自定义节点大小、任意树深度</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>🏆 <strong>4.9倍</strong>加速（单内核FPGA vs 单线程CPU）</li>
+<li>🏆 <strong>2.1倍</strong>加速（4内核FPGA vs 16线程CPU）</li>
+<li>减少全局内存访问，提高节点数据重用率</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>🗜️ 数据编码/压缩方向</h2>
+<br/>
+<h3>5. SAGE: 选择性注意力引导提取框架</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>SAGE: Selective Attention-Guided Extraction for Token-Efficient Document Indexing</th></tr>
+<tr><th><strong>作者</strong></th><th>Xinzhi Wang, Peter Baile Chen, Gerardo Vitagliano, Matthew Russo, Jun Chen, Michael Cafarella, Samuel Madden, Chunwei Liu</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.15583</th></tr>
+<tr><th><strong>提交日期</strong></th><th>2026年4月16日 (v2: 4月24日)</th></tr>
+</table></div>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li><strong>无需训练、即插即用</strong>的上下文缩减框架</li>
+<li><strong>差分注意力策略</strong>：将LLM注意力信号转换为查询特定相关性热力图</li>
+<li><strong>可配置粒度</strong>：在用户定义的令牌预算下选择得分最高单元</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>🏆 <strong>90%令牌缩减</strong>（上下文限制在原始大小10%）</li>
+<li>QuALITY-hard基准<strong>前4名</strong>成绩</li>
+<li>在多个长文档QA基准上超越传统缩减技术</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>6. MCI: 最大团索引用于过滤ANN搜索</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>MCI: A Maximal Clique Index for Efficient Arbitrary-Filtered Approximate Nearest Neighbor Search</th></tr>
+<tr><th><strong>作者</strong></th><th>Xiaowei Ye, Rong-Hua Li, Guoren Wang, Kaiwen Xue, Daiyin Wang, Xubin Li</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.22171</th></tr>
+<tr><th><strong>提交日期</strong></th><th>2026年4月24日</th></tr>
+</table></div>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li><strong>最大团覆盖(MCC)</strong>：利用高维空间几何传递性，将稠密邻域编码为最大团</li>
+<li><strong>局部邻域图几何稠密化</strong>：从稀疏NNG构建近似大规模NNG索引</li>
+<li><strong>无锁并行构建</strong>：保证可扩展性</li>
+<li><strong>多种子策略查询</strong>：处理谓词诱导的碎片化子图</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>🏆 <strong>高达一个数量级</strong>QPS提升（高召回率条件）</li>
+<li>显著更小的存储空间</li>
+<li>在范围过滤和关键词过滤任务上保持竞争力</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>7. RaBitQ vs TurboQuant: 向量量化方法对比</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>Revisiting RaBitQ and TurboQuant: A Symmetric Comparison of Methods, Theory, and Experiments</th></tr>
+<tr><th><strong>作者</strong></th><th>Jianyang Gao, Yutong Gou, Yuexuan Xu, Jifan Shi, Yongyi Yang, Shuolin Li, Raymond Chi-Wing Wong, Cheng Long</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.19528</th></tr>
+<tr><th><strong>提交日期</strong></th><th>2026年4月21日</th></tr>
+</table></div>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li><strong>统一比较框架</strong>：对称、透明、可复现的评估</li>
+<li><strong>理论澄清</strong>：明确两种方法的共享结构与本质差异</li>
+<li><strong>可复现性验证</strong>：记录TurboQuant论文实验结果的复现问题</li>
+</ul>
+<br/>
+<p><strong>重要发现</strong>:</p>
+<ul>
+<li>TurboQuant<strong>未能在所有配置中一致优于</strong>RaBitQ</li>
+<li>在许多场景中TurboQuant表现<strong>劣于</strong>RaBitQ</li>
+<li>部分报告结果<strong>无法从开源实现复现</strong></li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>📊 查询处理方向</h2>
+<br/>
+<h3>8. BoomHQ: 学习优化向量数据库混合查询</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>BoomHQ: Learning to Boost Multiple Hybrid Queries on Vector DBMSs</th></tr>
+<tr><th><strong>作者</strong></th><th>Ermu Qiu, Tianyi Chen, Jun Gao, Xing Wei, Yaofeng Tu, Yinjun Han, Yang Lin</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.24552</th></tr>
+<tr><th><strong>提交日期</strong></th><th>2026年4月27日</th></tr>
+</table></div>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li><strong>属性关联建模</strong>：自编码器架构建模向量-标量相关性，对数据更新友好</li>
+<li><strong>查询模式捕获</strong>：利用查询向量邻域内标量谓词的选择性估计</li>
+<li><strong>查询重写优化</strong>：预测执行提示，将原始查询重写为优化版本</li>
+<li><strong>基准扩展</strong>：引入具有内在相关性的向量-标量数据集</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>🏆 <strong>平均2倍、峰值25倍以上</strong>加速</li>
+<li>在三个代表性向量数据库系统上验证</li>
+<li>对数据更新展现出强鲁棒性</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>9. Self-Aware Vector Embeddings (自感知向量嵌入)</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>Self-Aware Vector Embeddings for Retrieval-Augmented Generation: A Neuroscience-Inspired Framework</th></tr>
+<tr><th><strong>作者</strong></th><th>Naizhong Xu</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.20598</th></tr>
+</table></div>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<ul>
+<li>受神经科学启发的RAG向量嵌入框架</li>
+<li>支持时间、置信度加权和关系知识</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>📝 其他相关论文</h2>
+<br/>
+<h3>10. SQLyzr: Text-to-SQL基准测试平台</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>SQLyzr: A Comprehensive Benchmark and Evaluation Platform for Text-to-SQL</th></tr>
+<tr><th><strong>作者</strong></th><th>Sepideh Abedini, M. Tamer Özsu</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.21214</th></tr>
+</table></div>
+<br/>
+<h3>11. DW-Bench: 数据仓库图拓扑推理基准</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>DW-Bench: Benchmarking LLMs on Data Warehouse Graph Topology Reasoning</th></tr>
+<tr><th><strong>作者</strong></th><th>Ahmed G.A.H Ahmed, C. Okan Sakar</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.18964</th></tr>
+</table></div>
+<br/>
+<h3>12. 事务隔离检查实用化</h3>
+<div class="table-wrap"><table>
+<tr><th>属性</th><th>详情</th></tr>
+<tr><th><strong>标题</strong></th><th>Making Transaction Isolation Checking Practical</th></tr>
+<tr><th><strong>作者</strong></th><th>Jian Zhang, Shuai Mu, Cheng Tan</th></tr>
+<tr><th><strong>来源</strong></th><th>arXiv:2604.20587</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>📈 趋势分析</h2>
+<br/>
+<h3>GPU加速趋势</h3>
+<div class="table-wrap"><table>
+<tr><th>趋势</th><th>说明</th></tr>
+<tr><th><strong>范围过滤ANN成为热点</strong></th><th>Garfield等3篇论文聚焦RFANNS，GPU加速解决索引膨胀问题</th></tr>
+<tr><th><strong>WCOJ算法上GPU</strong></th><th>SRDatalog首次将最坏情况最优连接引入GPU Datalog</th></tr>
+<tr><th><strong>流水线核外处理</strong></th><th>3DPipe、Garfield均采用计算-传输重叠策略</th></tr>
+<tr><th><strong>FPGA作为补充</strong></th><th>B+树FPGA加速提供另一种硬件加速路径</th></tr>
+</table></div>
+<br/>
+<h3>编码/压缩趋势</h3>
+<div class="table-wrap"><table>
+<tr><th>趋势</th><th>说明</th></tr>
+<tr><th><strong>LLM上下文压缩</strong></th><th>SAGE等框架利用注意力机制实现90%+压缩比</th></tr>
+<tr><th><strong>图索引压缩</strong></th><th>MCI通过最大团实现高压缩率+高连通性</th></tr>
+<tr><th><strong>量化方法对比</strong></th><th>RaBitQ/TurboQuant对比揭示可复现性问题</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🔗 论文链接汇总</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>arXiv ID</th><th>链接</th></tr>
+<tr><th>Garfield</th><th>2604.20121</th><th>https://arxiv.org/abs/2604.20121</th></tr>
+<tr><th>SRDatalog</th><th>2604.20073</th><th>https://arxiv.org/abs/2604.20073</th></tr>
+<tr><th>3DPipe</th><th>2604.19982</th><th>https://arxiv.org/abs/2604.19982</th></tr>
+<tr><th>SAGE</th><th>2604.15583</th><th>https://arxiv.org/abs/2604.15583</th></tr>
+<tr><th>MCI</th><th>2604.22171</th><th>https://arxiv.org/abs/2604.22171</th></tr>
+<tr><th>BoomHQ</th><th>2604.24552</th><th>https://arxiv.org/abs/2604.24552</th></tr>
+<tr><th>RaBitQ对比</th><th>2604.19528</th><th>https://arxiv.org/abs/2604.19528</th></tr>
+<tr><th>FPGA B+树</th><th>2604.21117</th><th>https://arxiv.org/abs/2604.21117</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<p><em>报告生成时间: 2026-04-29 09:00</em>  </p>
+<p><em>自动化系统: Database Research Paper Tracker</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
