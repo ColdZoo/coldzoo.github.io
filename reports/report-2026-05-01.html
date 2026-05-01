@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-05-01 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-gpu">GPU 加速</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-05-01</h1>
+    <div class="article-meta">📅 2026-05-01 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>数据库研究论文追踪报告 - 2026年5月1日</h1>
+<br/>
+<p><strong>报告日期</strong>: 2026-05-01  </p>
+<p><strong>追踪范围</strong>: VLDB, SIGMOD, arXiv cs.DB (2026年4月27日 - 5月1日)  </p>
+<p><strong>论文总数</strong>: 33篇新提交  </p>
+<p><strong>重点关注</strong>: 数据编码/解码、GPU加速计算</p>
+<br/>
+<hr/>
+<br/>
+<h2>摘要统计</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>类别</th><th>相关论文数</th><th>亮点论文</th></tr>
+<tr><th>GPU加速</th><th>4篇</th><th>BoomHQ, Tailwind, MCI</th></tr>
+<tr><th>数据编码/抽样</th><th>2篇</th><th>Index-Assisted Stratified Sampling</th></tr>
+<tr><th>其他相关</th><th>2篇</th><th>SynSQL</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>GPU加速方向</h2>
+<br/>
+<h3>1. BoomHQ: Learning to Boost Multiple Hybrid Queries on Vector DBMSs</h3>
+<br/>
+<ul>
+<li><strong>arXiv</strong>: 2604.24552</li>
+<li><strong>作者</strong>: Ermu Qiu, Tianyi Chen, Jun Gao, Xing Wei, Yaofeng Tu, Yinjun Han, Yang Lin</li>
+<li><strong>提交日期</strong>: 2026年4月27日</li>
+</ul>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<p>BoomHQ是一个基于学习的框架，专门用于加速向量数据库上的混合查询（结合向量最近邻搜索与标量谓词过滤）。现有方法通常限制向量列数量或标量谓词复杂性，而BoomHQ通过以下创新解决了这些问题：</p>
+<br/>
+<li><strong>属性相关性建模</strong>: 采用自编码器架构建模向量与标量属性之间的相关性，对数据更新友好</li>
+<li><strong>查询模式捕捉</strong>: 利用查询向量邻域内标量谓词的估计选择性优化查询执行</li>
+<li><strong>查询重写与优化</strong>: 基于特征预测执行提示，将原始查询重写为优化版本</li>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>平均加速 <strong>2倍</strong></li>
+<li>峰值加速超过 <strong>25倍</strong></li>
+<li>在三种代表性向量数据库系统中均保持一致优化效果</li>
+</ul>
+<br/>
+<p><strong>链接</strong>: https://arxiv.org/abs/2604.24552</p>
+<br/>
+<hr/>
+<br/>
+<h3>2. Tailwind: A Practical Framework for Query Accelerators</h3>
+<br/>
+<ul>
+<li><strong>arXiv</strong>: 2604.28079</li>
+<li><strong>作者</strong>: Geoffrey X. Yu, Ryan Marcus, Tim Kraska</li>
+<li><strong>提交日期</strong>: 2026年4月30日</li>
+</ul>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<p>Tailwind是一个外部查询规划器，能够将查询加速器集成到任何支持数据导入/导出的RDBMS中，无需修改数据库内核。这解决了查询加速器在实际中难以部署的问题（工程成本与收益不匹配）。</p>
+<br/>
+<p><strong>技术创新</strong>:</p>
+<li><strong>抽象逻辑计划（ALPs）</strong>: 基于正则树表达式的新型声明式关系算子抽象</li>
+<li><strong>智能收益预测</strong>: 基于ALPs自动构建定制的神经网络模型，估计加速器使用场景</li>
+<li><strong>透明查询重写</strong>: 在RDBMS之上作为透明层，自动路由到加速器或原生引擎</li>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>在Redshift和DuckDB上测试</li>
+<li>平均加速比: <strong>1.38倍</strong></li>
+<li>最大加速比: <strong>29倍</strong> (TPC-H查询集)</li>
+</ul>
+<br/>
+<p><strong>链接</strong>: https://arxiv.org/abs/2604.28079</p>
+<br/>
+<hr/>
+<br/>
+<h3>3. MCI: A Maximal Clique Index for Efficient Arbitrary-Filtered Approximate Nearest Neighbor Search</h3>
+<br/>
+<ul>
+<li><strong>arXiv</strong>: 2604.22171</li>
+<li><strong>作者</strong>: Xiaowei Ye, Rong-Hua Li, Guoren Wang, Kaiwen Xue, Daiyin Wang, Xubin Li</li>
+<li><strong>提交日期</strong>: 2026年4月24日</li>
+</ul>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<p>MCI（最大团索引）是一种专为任意过滤近似最近邻搜索（AFANNS）设计的新型基于图的索引。它通过紧凑的基于团的表示来近似稠密最近邻图（NNG）。</p>
+<br/>
+<p><strong>技术方案</strong>:</p>
+<li><strong>最大团覆盖（MCC）</strong>: 利用高维空间的几何传递性，将稠密邻域编码为最大团</li>
+<li><strong>局部邻域图几何稠密化</strong>: 从稀疏NNG逐步构建近似稠密NNG，恢复全局连通性</li>
+<li><strong>无锁并行构建</strong>: 确保索引构建的可扩展性</li>
+<li><strong>多种子查询策略</strong>: 处理由谓词诱导的碎片化子图</li>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>QPS（每秒查询数）比最先进方法<strong>高出一个数量级</strong></li>
+<li>空间效率显著优于SOTA方法</li>
+<li>在10个数据集上验证有效</li>
+</ul>
+<br/>
+<p><strong>链接</strong>: https://arxiv.org/abs/2604.22171</p>
+<br/>
+<hr/>
+<br/>
+<h3>4. GPU-Accelerated Algorithms for Graph Vector Search (综述)</h3>
+<br/>
+<ul>
+<li><strong>arXiv</strong>: 2602.16719</li>
+<li><strong>提交日期</strong>: 2026年2月</li>
+</ul>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<p>这是一篇关于GPU加速图向量搜索算法的全面综述和实验研究。论文建立了GPU优化策略的详细分类法，研究了如何最好地利用现代GPU架构进行基于图的近似最近邻（ANN）搜索。</p>
+<br/>
+<p><strong>链接</strong>: https://arxiv.org/abs/2602.16719</p>
+<br/>
+<hr/>
+<br/>
+<h2>数据编码/抽样方向</h2>
+<br/>
+<h3>1. Index-Assisted Stratified Sampling for Online Aggregation</h3>
+<br/>
+<ul>
+<li><strong>arXiv</strong>: 2604.28141</li>
+<li><strong>作者</strong>: Yunnan Yu, Zhuoyue Zhao</li>
+<li><strong>提交日期</strong>: 2026年4月30日</li>
+</ul>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<p>针对在线聚合（Online Aggregation）中高方差数据分布和高选择性查询导致的抽样成本过高问题，本文提出了索引辅助分层抽样方法。</p>
+<br/>
+<p><strong>技术创新</strong>:</p>
+<li><strong>两阶段抽样框架</strong>:</li>
+<ul>
+<li>第一阶段抽取样本用于在线聚合，同时优化后续抽样成本</li>
+<li>第二阶段基于优化的分层策略继续执行</li>
+</ul>
+<br/>
+<li><strong>针对索引访问成本的优化理论</strong>:</li>
+<ul>
+<li>证明了针对基于索引的抽样成本模型的最优分层策略</li>
+<li>设计了贪婪算法和动态规划算法平衡优化成本与效果</li>
+</ul>
+<br/>
+<p><strong>性能提升</strong>:</p>
+<ul>
+<li>与基于索引的均匀抽样相比: 最高 <strong>3倍加速</strong></li>
+<li>与经典基于扫描的分层抽样相比: 最高 <strong>98,708倍加速</strong> (极端情况)</li>
+</ul>
+<br/>
+<p><strong>链接</strong>: https://arxiv.org/abs/2604.28141</p>
+<br/>
+<hr/>
+<br/>
+<h2>其他相关论文</h2>
+<br/>
+<h3>SynSQL: Synthesizing Relational Databases for Robust Evaluation of Text-to-SQL Systems</h3>
+<br/>
+<ul>
+<li><strong>arXiv</strong>: 2604.27261</li>
+<li><strong>作者</strong>: Mohammadamin Habibollah, Davood Rafiei</li>
+<li><strong>提交日期</strong>: 2026年4月29日</li>
+</ul>
+<br/>
+<p><strong>核心贡献</strong>:</p>
+<p>SynSQL是一个基于问题-模式对齐（而非黄金SQL查询）来合成测试数据库的框架。它通过合成数据库来评估text-to-SQL系统，而非依赖静态基准数据库。</p>
+<br/>
+<p><strong>关键发现</strong>:</p>
+<p>使用SynSQL生成数据库评估时，模型性能比静态评估下降<strong>3-14%</strong>，暴露了被基准伪影掩盖的错误。</p>
+<br/>
+<p><strong>链接</strong>: https://arxiv.org/abs/2604.27261</p>
+<br/>
+<hr/>
+<br/>
+<h2>近期趋势观察</h2>
+<br/>
+<h3>GPU加速方向趋势</h3>
+<li><strong>学习型优化成为主流</strong>: BoomHQ和Tailwind都采用了机器学习方法来预测和优化查询执行</li>
+<li><strong>混合查询优化</strong>: 向量+标量谓词的混合查询优化成为热点</li>
+<li><strong>无侵入式加速</strong>: Tailwind展示了无需修改数据库内核即可实现加速的可能性</li>
+<li><strong>新型索引结构</strong>: MCI通过最大团索引实现了存储和查询效率的双重突破</li>
+<br/>
+<h3>数据编码/处理方向趋势</h3>
+<li><strong>在线聚合优化</strong>: 分层抽样与索引结合实现了数量级性能提升</li>
+<li><strong>合成数据评估</strong>: 使用LLM合成数据库来压力测试系统成为新范式</li>
+<br/>
+<hr/>
+<br/>
+<h2>重点关注论文推荐</h2>
+<br/>
+<h3>🔥 本周最值得关注</h3>
+<br/>
+<li><strong>Tailwind</strong> (2604.28079) - 实用查询加速器框架</li>
+<ul>
+<li>无需修改数据库内核</li>
+<li>最大29倍加速</li>
+<li>适用于Redshift和DuckDB</li>
+</ul>
+<br/>
+<li><strong>Index-Assisted Stratified Sampling</strong> (2604.28141) - 在线聚合新突破</li>
+<ul>
+<li>最高98,708倍加速</li>
+<li>两阶段抽样框架</li>
+<li>针对索引访问成本优化</li>
+</ul>
+<br/>
+<li><strong>BoomHQ</strong> (2604.24552) - 混合查询学习优化</li>
+<ul>
+<li>峰值25倍加速</li>
+<li>自编码器建模属性相关性</li>
+<li>三种向量DB验证</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>论文链接汇总</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>arXiv链接</th></tr>
+<tr><th>BoomHQ</th><th>https://arxiv.org/abs/2604.24552</th></tr>
+<tr><th>Tailwind</th><th>https://arxiv.org/abs/2604.28079</th></tr>
+<tr><th>MCI</th><th>https://arxiv.org/abs/2604.22171</th></tr>
+<tr><th>Index-Assisted Stratified Sampling</th><th>https://arxiv.org/abs/2604.28141</th></tr>
+<tr><th>SynSQL</th><th>https://arxiv.org/abs/2604.27261</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>附录: arXiv cs.DB 本周全部新提交 (33篇)</h2>
+<br/>
+<p><strong>2026年5月1日 (8篇)</strong>:</p>
+<ul>
+<li>2604.28141 - Index-Assisted Stratified Sampling for Online Aggregation</li>
+<li>2604.28079 - Tailwind: A Practical Framework for Query Accelerators</li>
+<li>2604.27261 - SynSQL: Synthesizing Relational Databases for Robust Evaluation of Text-to-SQL Systems</li>
+<li>2604.27252 - Unified Data Discovery across Query Modalities and User Intents</li>
+<li>2604.27223 - Graphify: Automated Synthesis of Type-Safe Graph Backends</li>
+<li>2604.28028 - Reliable Answers for Recurring Questions: Boosting Text-to-SQL Accuracy</li>
+<li>2604.27974 - FineState-Bench: Benchmarking State-Conditioned Grounding</li>
+<li>2604.27820 - ObjectGraph: From Document Injection to Knowledge Traversal</li>
+</ul>
+<br/>
+<p><strong>2026年4月30日 (5篇)</strong>:</p>
+<ul>
+<li>2604.26356 - PiLLar: Matching for Pivot Table Schema via LLM-guided Monte-Carlo Tree Search</li>
+<li>2604.26180 - Evergreen: Efficient Claim Verification for Semantic Aggregates</li>
+<li>2604.26176 - CacheRAG: A Semantic Caching System for Retrieval-Augmented Generation</li>
+<li>2604.25968 - Mining Negative Sequential Patterns</li>
+<li>2604.26676 - A Toolkit for Detecting Spurious Correlations in Speech Datasets</li>
+</ul>
+<br/>
+<p><strong>2026年4月29日 (7篇)</strong>:</p>
+<ul>
+<li>2604.25283 - VisualNeo: Bridging the Gap between Visual Query Interfaces</li>
+<li>2604.25605 - Health System Scale Semantic Search Across Unstructured Clinical Notes</li>
+<li>2604.25400 - An Efficient Streaming Algorithm for Approximating Graphlet Distributions</li>
+<li>2604.25154 - Prior-Aligned Data Cleaning for Tabular Foundation Models</li>
+<li>2604.25061 - Spark Policy Toolkit: Semantic Contracts and Scalable Execution</li>
+<li>2604.24975 - Poisoning Learned Index Structures: Static and Dynamic Adversarial Attacks on ALEX</li>
+<li>2604.24806 - Versioned Late Materialization for Ultra-Long Sequence Training</li>
+</ul>
+<br/>
+<p><strong>2026年4月28日 (5篇)</strong>:</p>
+<ul>
+<li>2604.24552 - BoomHQ: Learning to Boost Multiple Hybrid Queries on Vector DBMSs</li>
+<li>2604.24122 - Exact Mining of Dense Patterns</li>
+<li>2604.24067 - DataClaw: An Autonomous Data Agent with Instant Messaging Integration</li>
+<li>2604.23477 - SEMA-SQL: Beyond Traditional Relational Querying with Large Language Models</li>
+<li>2604.23993 - EPM-RL: Reinforcement Learning for On-Premise Product Mapping</li>
+</ul>
+<br/>
+<p><strong>2026年4月27日 (8篇)</strong>:</p>
+<ul>
+<li>2604.22652 - A dataset of early blockchain-registered AI agents on Ethereum</li>
+<li>2604.22619 - It's Time to Standardize RDF Messages</li>
+<li>2604.22422 - How Hard is it to Decide if a Fact is Relevant to a Query?</li>
+<li>2604.22415 - A Model-Driven Approach to Database Migration</li>
+<li>2604.22171 - MCI: A Maximal Clique Index for Efficient Arbitrary-Filtered ANN Search</li>
+<li>2604.22100 - Implementation and Privacy Guarantees for Scalable Keyword Search</li>
+<li>2604.22663 - Cuts and Gauges for Submodular Width</li>
+<li>2604.22531 - The Chase in Lean</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>报告生成时间: 2026-05-01 18:00</em>  </p>
+<p><em>数据来源: arXiv cs.DB, VLDB, SIGMOD</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
