@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>数据库研究论文追踪报告 · 2026-05-03 · 蔡政</title>
+  <style>
+    :root {
+      --bg-base:#f2f1f6; --bg-card:rgba(255,255,255,0.72);
+      --glass-border:rgba(255,255,255,0.6);
+      --glass-shadow:0 8px 32px rgba(60,60,100,0.10),0 1.5px 4px rgba(60,60,100,0.06);
+      --color-primary:#5b6cf9; --color-text:#1c1c1e;
+      --color-text-secondary:#48484a; --color-text-muted:#8e8e93;
+      --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+      --font-mono:"SF Mono","Menlo","Monaco","Consolas",monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-sans);background:var(--bg-base);color:var(--color-text);-webkit-font-smoothing:antialiased;}
+    .menubar{position:sticky;top:0;z-index:100;height:48px;background:rgba(242,241,246,0.88);backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(0,0,0,0.07);display:flex;align-items:center;padding:0 20px;gap:16px;}
+    .menubar .logo{font-size:15px;font-weight:700;color:var(--color-text);text-decoration:none;}
+    .menubar .menu-item{font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;color:var(--color-text);text-decoration:none;transition:background 0.15s;}
+    .menubar .menu-item:hover{background:rgba(0,0,0,0.07);}
+    .menubar .spacer{flex:1;}
+    .menubar-time{font-size:13px;font-weight:500;color:var(--color-text-secondary);}
+    .back-bar{max-width:720px;margin:0 auto;padding:20px 24px 0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-primary);text-decoration:none;padding:6px 12px;border-radius:8px;background:rgba(91,108,249,0.07);transition:all 0.15s;}
+    .back-link:hover{background:rgba(91,108,249,0.13);}
+    .article-wrap{max-width:720px;margin:0 auto;padding:20px 24px 100px;}
+    .article-header{margin-bottom:36px;}
+    .article-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:7px;border:1px solid transparent;}
+    .tag-encoding{background:rgba(91,108,249,0.1);color:#5b6cf9;border-color:rgba(91,108,249,0.18);}
+    .tag-gpu{background:rgba(255,159,10,0.1);color:#b56200;border-color:rgba(255,159,10,0.2);}
+    .tag-combined{background:rgba(167,139,250,0.12);color:#6741d9;border-color:rgba(167,139,250,0.2);}
+    .tag-default{background:rgba(0,0,0,0.05);color:#8e8e93;border-color:rgba(0,0,0,0.08);}
+    .article-title{font-size:34px;font-weight:700;letter-spacing:-0.8px;line-height:1.2;margin-bottom:12px;}
+    .article-meta{font-size:13px;color:var(--color-text-muted);}
+    .article-body{background:var(--bg-card);border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(20px);padding:32px 36px;}
+    .article-body h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.06);}
+    .article-body h1:first-child{margin-top:0;}
+    .article-body h2{font-size:20px;font-weight:700;margin:24px 0 10px;}
+    .article-body h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--color-primary);}
+    .article-body h4{font-size:14px;font-weight:700;margin:16px 0 6px;}
+    .article-body p{font-size:15px;line-height:1.75;color:var(--color-text-secondary);margin-bottom:10px;}
+    .article-body ul{padding-left:20px;margin-bottom:12px;}
+    .article-body li{font-size:14px;line-height:1.7;color:var(--color-text-secondary);margin-bottom:4px;}
+    .article-body strong{color:var(--color-text);font-weight:700;}
+    .article-body em{color:var(--color-primary);font-style:normal;font-weight:500;}
+    .article-body code{font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.05);border-radius:4px;padding:1px 5px;}
+    .article-body pre{background:rgba(28,28,30,0.9);border-radius:12px;padding:20px;margin:16px 0;overflow-x:auto;}
+    .article-body pre code{color:#e5e5ea;background:none;font-size:13px;line-height:1.6;}
+    .article-body hr{border:none;border-top:1px solid rgba(0,0,0,0.07);margin:24px 0;}
+    .article-body br{display:block;margin:4px 0;content:"";}
+    .article-body a{color:var(--color-primary);text-decoration:none;font-weight:500;}
+    .article-body a:hover{text-decoration:underline;}
+    .table-wrap{overflow-x:auto;margin:16px 0;}
+    .article-body table{width:100%;border-collapse:collapse;font-size:13px;}
+    .article-body th{background:rgba(91,108,249,0.07);font-weight:700;text-align:left;padding:8px 12px;border-bottom:2px solid rgba(91,108,249,0.15);}
+    .article-body td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.06);color:var(--color-text-secondary);vertical-align:top;}
+    .article-body tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+<nav class="menubar">
+  <a href="../index.html" class="logo"> 蔡政</a>
+  <a href="../blog.html" class="menu-item">← 研究笔记</a>
+  <span class="spacer"></span>
+  <span class="menubar-time" id="menubar-time"></span>
+</nav>
+<div class="back-bar"><a href="../blog.html" class="back-link">← 返回列表</a></div>
+<div class="article-wrap">
+  <div class="article-header">
+    <div class="article-tags"><span class="tag tag-combined">编码 + GPU</span></div>
+    <h1 class="article-title">数据库研究论文追踪报告 · 2026-05-03</h1>
+    <div class="article-meta">📅 2026-05-03 &nbsp;·&nbsp; 数据库研究论文追踪</div>
+  </div>
+  <div class="article-body"><h1>数据库研究论文追踪日报 - 2026年5月3日</h1>
+<br/>
+<h2>概览统计</h2>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>指标</th><th>数值</th></tr>
+<tr><th><strong>报告日期</strong></th><th>2026年5月3日</th></tr>
+<tr><th><strong>arXiv新提交</strong></th><th>20篇 (4月29日-5月1日)</th></tr>
+<tr><th><strong>相关论文发现</strong></th><th>8篇</th></tr>
+<tr><th>- GPU加速相关</th><th>5篇</th></tr>
+<tr><th>- 编码/压缩相关</th><th>4篇</th></tr>
+<tr><th><strong>重叠</strong> (GPU+压缩)</th><th>2篇</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🆕 本周新发现论文 (May 1-3, 2026)</h2>
+<br/>
+<h3>GPU加速方向</h3>
+<br/>
+<h4>1. Tailwind: A Practical Framework for Query Accelerators</h4>
+<ul>
+<li><strong>arXiv ID</strong>: <a href="https://arxiv.org/abs/2604.28079" target="_blank">2604.28079</a></li>
+<li><strong>作者</strong>: Geoffrey X. Yu, Ryan Marcus, Tim Kraska</li>
+<li><strong>提交日期</strong>: 2026年4月30日</li>
+<li><strong>核心贡献</strong>:</li>
+<li>提出外部查询规划器框架，无需修改RDBMS内核即可集成查询加速器</li>
+<li>使用抽象逻辑计划(ALPs)和神经网络模型预测加速器收益</li>
+<li>在Redshift和DuckDB上实现透明查询重写</li>
+<li><strong>性能提升</strong>:</li>
+<li>TPC-H查询平均加速 <strong>1.38倍</strong></li>
+<li>最大加速 <strong>29倍</strong></li>
+<li><strong>备注</strong>: 软件级加速框架，非GPU专用，但架构可扩展</li>
+</ul>
+<br/>
+<h4>2. Index-Assisted Stratified Sampling for Online Aggregation</h4>
+<ul>
+<li><strong>arXiv ID</strong>: <a href="https://arxiv.org/abs/2604.28141" target="_blank">2604.28141</a></li>
+<li><strong>作者</strong>: Yunnan Yu, Zhuoyue Zhao</li>
+<li><strong>提交日期</strong>: 2026年5月1日</li>
+<li><strong>核心贡献</strong>:</li>
+<li>针对实时数据分析的两阶段分层采样框架</li>
+<li>证明最优分层和样本分配策略</li>
+<li>设计贪婪和动态规划优化方法</li>
+<li><strong>性能提升</strong>:</li>
+<li>相比索引辅助均匀采样最高 <strong>3倍加速</strong></li>
+<li>相比经典扫描分层采样最高 <strong>98,708倍加速</strong></li>
+<li><strong>备注</strong>: 专注于近似查询处理优化，不涉及GPU</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>📚 持续关注的重点论文</h2>
+<br/>
+<h3>🔥 GPU加速 + 压缩 (交叉领域)</h3>
+<br/>
+<h4>3. GPU Acceleration of SQL Analytics on Compressed Data</h4>
+<ul>
+<li><strong>arXiv ID</strong>: <a href="https://arxiv.org/abs/2506.10092" target="_blank">2506.10092</a></li>
+<li><strong>作者</strong>: Zezhou Huang, Krystian Sakowski, Hans Lehnert, Wei Cui, Carlo Curino, Matteo Interlandi, Marius Dumitru, Rathijit Sen</li>
+<li><strong>提交日期</strong>: 2025年6月 (v2: 2025年9月)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>直接在轻量级压缩数据上运行SQL查询的新方法</li>
+<li>支持RLE、索引编码、位宽缩减、字典编码等多种压缩方案</li>
+<li>支持多RLE列联合操作而无需解压</li>
+<li>利用PyTorch张量操作实现跨设备可移植性</li>
+<li><strong>性能提升</strong>:</li>
+<li>相比商业CPU分析系统达到 <strong>一个数量级加速</strong></li>
+<li>可处理无法放入GPU内存解压后的生产数据集</li>
+<li><strong>意义</strong>: 解决了GPU HBM容量限制问题，扩展GPU在大规模分析中的应用</li>
+</ul>
+<br/>
+<h4>4. ZipFlow: a Compiler-based Framework to Unleash Compressed Data Movement for Modern GPUs</h4>
+<ul>
+<li><strong>arXiv ID</strong>: <a href="https://arxiv.org/abs/2602.08190" target="_blank">2602.08190</a></li>
+<li><strong>作者</strong>: Gwangoo Yeo, Zhiyang Shen, Wei Cui, Matteo Interlandi, Rathijit Sen, Bailu Ding, Qi Chen, Minsoo Rhu</li>
+<li><strong>提交日期</strong>: 2026年2月9日</li>
+<li><strong>核心贡献</strong>:</li>
+<li>基于编译器的GPU加速数据分析压缩数据传输优化框架</li>
+<li>将压缩算法按固有并行性分类为3种模式</li>
+<li>为每种模式设计通用调度策略</li>
+<li>端到端优化压缩→传输→解压工作流</li>
+<li><strong>性能提升</strong>:</li>
+<li>相比nvCOMP平均提升 <strong>2.08倍</strong></li>
+<li>相比CPU引擎(如DuckDB)加速 <strong>3.14倍</strong></li>
+<li><strong>测试基准</strong>: TPC-H</li>
+</ul>
+<br/>
+<h4>5. L3: A GPU-Native Co-Designed Data Format for Learned Lossless Lightweight Compression</h4>
+<ul>
+<li><strong>会议</strong>: SIGMOD 2026 (班加罗尔)</li>
+<li><strong>作者</strong>: 夏有阳, 张峰(通讯), 潘俊达, 刘奕好, 官佳薇, 张焕晨, 杜小勇 (中国人民大学)</li>
+<li><strong>核心贡献</strong>:</li>
+<li>GPU原生学习型无损轻量级压缩格式</li>
+<li>SLAP垂直存储布局：lane-major方式组织位打包残差流</li>
+<li>Warp协作学习型解压：按分区映射线程块，按warp tile协作解码</li>
+<li>GPU原生压缩流水线：完全在GPU上完成自适应分区、模型选择、元数据生成</li>
+<li><strong>性能提升</strong>:</li>
+<li>编码速度比Tile和FastLanes-GPU快 <strong>3-6倍</strong></li>
+<li>解压吞吐量 <strong>1.08-1.90 TB/s</strong></li>
+<li>强相关数据压缩比高达 <strong>77倍</strong></li>
+<li><strong>意义</strong>: 首个端到端GPU原生学习型压缩方案</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>📦 编码/压缩方向</h3>
+<br/>
+<h4>6. Nacrith: Neural Lossless Compression via Ensemble Context Modeling and High-Precision CDF Coding</h4>
+<ul>
+<li><strong>arXiv ID</strong>: <a href="https://arxiv.org/abs/2602.19626" target="_blank">2602.19626</a></li>
+<li><strong>作者</strong>: Roberto Tacconelli</li>
+<li><strong>提交日期</strong>: 2026年2月23日</li>
+<li><strong>核心贡献</strong>:</li>
+<li>结合135M参数Transformer(SmolLM2-135M)与轻量级在线预测器集成</li>
+<li>CDF精度从2^16升级到2^24，消除75%量化开销</li>
+<li>Token级N-gram模型实现快速本地预测</li>
+<li>自适应log-space偏置头通过在线梯度下降纠正文档级误差</li>
+<li>基于置信度的LLM跳过加速高可预测token</li>
+<li>混合二进制格式(NC06)扩展到任意二进制文件</li>
+<li><strong>性能提升</strong>:</li>
+<li>enwik8: <strong>0.9389 bpb (11.74%)</strong> - 超越FineZip 8%</li>
+<li>alice29: <strong>0.918 bpb</strong> - 超越CMIX v21 44%，ts_zip 20%</li>
+<li>使用比FineZip <strong>小60倍</strong>的模型，无需微调</li>
+<li><strong>资源需求</strong>:</li>
+<li>模型权重: ~500 MB GGUF</li>
+<li>VRAM: ~1.2 GB/工作线程</li>
+<li>支持最多8个GPU并行</li>
+<li><strong>意义</strong>: 目前神经无损压缩的最先进成果</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h3>🚀 GPU加速方向 (其他)</h3>
+<br/>
+<h4>7. FineZip: Pushing the Limits of Large Language Models for Lossless Text Compression</h4>
+<ul>
+<li><strong>arXiv ID</strong>: <a href="https://arxiv.org/abs/2409.17141" target="_blank">2409.17141</a></li>
+<li><strong>核心贡献</strong>:</li>
+<li>在线记忆 + 动态上下文技术</li>
+<li>相比传统算法压缩比提升约50%</li>
+<li>相比LLMZip速度提升 <strong>54倍</strong></li>
+<li><strong>状态</strong>: 已被Nacrith超越，但仍是重要基线</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<h2>📊 分类汇总</h2>
+<br/>
+<h3>GPU加速相关论文 (5篇)</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>来源</th><th>核心性能</th><th>关键创新</th></tr>
+<tr><th>GPU SQL on Compressed Data</th><th>arXiv 2506.10092</th><th>10倍加速</th><th>直接查询压缩数据</th></tr>
+<tr><th>ZipFlow</th><th>arXiv 2602.08190</th><th>2.08倍 vs nvCOMP</th><th>编译器驱动压缩传输</th></tr>
+<tr><th>L3</th><th>SIGMOD 2026</th><th>3-6倍编码速度</th><th>GPU原生学习型压缩</th></tr>
+<tr><th>Tailwind</th><th>arXiv 2604.28079</th><th>29倍最大加速</th><th>外部查询加速器框架</th></tr>
+<tr><th>FineZip</th><th>arXiv 2409.17141</th><th>54倍速度提升</th><th>LLM文本压缩</th></tr>
+</table></div>
+<br/>
+<h3>编码/压缩相关论文 (4篇)</h3>
+<br/>
+<div class="table-wrap"><table>
+<tr><th>论文</th><th>来源</th><th>核心性能</th><th>关键创新</th></tr>
+<tr><th>Nacrith</th><th>arXiv 2602.19626</th><th>0.9389 bpb</th><th>集成上下文+高精度CDF</th></tr>
+<tr><th>L3</th><th>SIGMOD 2026</th><th>77倍压缩比</th><th>GPU原生学习型压缩</th></tr>
+<tr><th>ZipFlow</th><th>arXiv 2602.08190</th><th>2.08倍 vs nvCOMP</th><th>编译器优化压缩传输</th></tr>
+<tr><th>GPU SQL on Compressed</th><th>arXiv 2506.10092</th><th>10倍加速</th><th>多编码直接查询</th></tr>
+</table></div>
+<br/>
+<hr/>
+<br/>
+<h2>🎯 本周亮点</h2>
+<br/>
+<h3>最值得关注的论文</h3>
+<br/>
+<li><strong>Tailwind</strong> (arXiv:2604.28079)</li>
+<ul>
+<li>实用主义框架，无需修改数据库内核</li>
+<li>最大29倍加速，平均1.38倍</li>
+<li>适用于Redshift和DuckDB</li>
+</ul>
+<br/>
+<li><strong>Index-Assisted Stratified Sampling</strong> (arXiv:2604.28141)</li>
+<ul>
+<li>在线聚合近似查询</li>
+<li>极端情况下98,708倍加速</li>
+<li>适用于实时数据分析场景</li>
+</ul>
+<br/>
+<h3>持续关注的重要论文</h3>
+<br/>
+<li><strong>Nacrith</strong> - 目前神经压缩的最先进成果，超越FineZip</li>
+<li><strong>L3</strong> - 首个端到端GPU原生学习型压缩 (SIGMOD 2026)</li>
+<li><strong>ZipFlow</strong> - 编译器驱动的GPU压缩优化框架</li>
+<li><strong>GPU SQL on Compressed Data</strong> - 直接查询压缩数据的实用方案</li>
+<br/>
+<hr/>
+<br/>
+<h2>🔗 相关链接</h2>
+<br/>
+<ul>
+<li>arXiv cs.DB: https://arxiv.org/list/cs.DB/recent</li>
+<li>VLDB 2026: https://vldb.org/2026/</li>
+<li>SIGMOD 2026: https://2026.sigmod.org/</li>
+<li>FineZip: https://arxiv.org/abs/2409.17141</li>
+<li>Nacrith: https://arxiv.org/abs/2602.19626</li>
+</ul>
+<br/>
+<hr/>
+<br/>
+<p><em>报告生成时间: 2026年5月3日 09:00:25 GMT+8</em></p>
+<p><em>自动化追踪系统: Database Research Paper Tracker</em></p>
+<br/></div>
+</div>
+<script>
+  function updateTime() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('menubar-time').textContent = days[now.getDay()] + ' ' + h + ':' + m;
+  }
+  updateTime(); setInterval(updateTime, 60000);
+</script>
+</body>
+</html>
